@@ -6,6 +6,7 @@ interface PipelineColumnProps {
   stage: RecruitmentStage;
   candidates: Candidate[];
   onCandidateClick?: (candidate: Candidate) => void;
+  compact?: boolean;
 }
 
 // Color mapping for stage headers
@@ -27,32 +28,75 @@ const stageHeaderColors: Record<RecruitmentStage, string> = {
   closed_not_placed: 'border-l-red-500',
 };
 
-export function PipelineColumn({ stage, candidates, onCandidateClick }: PipelineColumnProps) {
+// Short labels for compact view
+const compactStageLabels: Record<RecruitmentStage, string> = {
+  sourced: 'Sourced',
+  contacted: 'Contacted',
+  application_received: 'App Recv',
+  screening: 'Screening',
+  shortlisted: 'Shortlist',
+  submitted_to_client: 'Submitted',
+  client_feedback: 'Feedback',
+  interview_completed: 'Interview',
+  offer_extended: 'Offer Ext',
+  offer_accepted: 'Offer Acc',
+  visa_processing: 'Visa',
+  medical_checks: 'Medical',
+  onboarding: 'Onboard',
+  placed: 'Placed',
+  closed_not_placed: 'Closed',
+};
+
+export function PipelineColumn({ stage, candidates, onCandidateClick, compact = false }: PipelineColumnProps) {
   const stageCandidates = candidates.filter((c) => c.current_stage === stage);
-  const shortLabel = getStageLabel(stage).split(' / ')[0];
+  const label = compact 
+    ? compactStageLabels[stage] 
+    : getStageLabel(stage).split(' / ')[0];
 
   return (
-    <div className="pipeline-column min-w-[280px] max-w-[320px] flex-shrink-0">
+    <div className={cn(
+      "flex-shrink-0",
+      compact 
+        ? "pipeline-column-compact min-w-[160px] max-w-[200px]" 
+        : "pipeline-column min-w-[280px] max-w-[320px]"
+    )}>
       <div className={cn(
-        "flex items-center gap-3 mb-4 pl-3 border-l-4",
+        "flex items-center gap-2 mb-3 pl-2 border-l-4",
         stageHeaderColors[stage]
       )}>
-        <h3 className="font-semibold text-foreground text-sm">{shortLabel}</h3>
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+        <h3 className={cn(
+          "font-semibold text-foreground truncate",
+          compact ? "text-xs" : "text-sm"
+        )}>
+          {label}
+        </h3>
+        <span className={cn(
+          "flex items-center justify-center rounded-full bg-muted font-medium text-muted-foreground",
+          compact ? "h-5 w-5 text-[10px]" : "h-6 w-6 text-xs"
+        )}>
           {stageCandidates.length}
         </span>
       </div>
-      <div className="space-y-3">
+      <div className={compact ? "space-y-1.5" : "space-y-3"}>
         {stageCandidates.map((candidate) => (
           <CandidateCard 
             key={candidate.id} 
             candidate={candidate} 
             onClick={() => onCandidateClick?.(candidate)}
+            compact={compact}
           />
         ))}
         {stageCandidates.length === 0 && (
-          <div className="rounded-lg border-2 border-dashed border-border/60 p-6 text-center">
-            <p className="text-sm text-muted-foreground">No candidates</p>
+          <div className={cn(
+            "rounded-lg border-2 border-dashed border-border/60 text-center",
+            compact ? "p-3" : "p-6"
+          )}>
+            <p className={cn(
+              "text-muted-foreground",
+              compact ? "text-[10px]" : "text-sm"
+            )}>
+              No candidates
+            </p>
           </div>
         )}
       </div>

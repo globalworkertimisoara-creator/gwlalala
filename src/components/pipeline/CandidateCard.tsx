@@ -1,12 +1,19 @@
-import { Candidate, getStageColor } from '@/types/database';
+import { Candidate } from '@/types/database';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar, MapPin } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface CandidateCardProps {
   candidate: Candidate;
   onClick?: () => void;
+  compact?: boolean;
 }
 
 // Simple flag emoji mapping for common nationalities
@@ -119,9 +126,58 @@ function getInitials(fullName: string): string {
     .slice(0, 2);
 }
 
-export function CandidateCard({ candidate, onClick }: CandidateCardProps) {
+export function CandidateCard({ candidate, onClick, compact = false }: CandidateCardProps) {
   const daysInStage = differenceInDays(new Date(), new Date(candidate.updated_at));
   const isLongWait = daysInStage > 14;
+
+  if (compact) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div 
+              className="candidate-card-compact"
+              onClick={onClick}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-sm flex-shrink-0">{getFlag(candidate.nationality)}</span>
+                  <span className="font-medium text-foreground text-sm truncate">
+                    {candidate.full_name}
+                  </span>
+                </div>
+                <span className={cn(
+                  "text-xs flex-shrink-0",
+                  isLongWait ? "text-warning font-medium" : "text-muted-foreground"
+                )}>
+                  {daysInStage}d
+                </span>
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-xs">
+            <div className="space-y-1.5">
+              <p className="font-medium">{candidate.full_name}</p>
+              <p className="text-xs text-muted-foreground">{candidate.email}</p>
+              {candidate.current_country && (
+                <div className="flex items-center gap-1 text-xs">
+                  <MapPin className="h-3 w-3" />
+                  <span>{candidate.current_country}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1 text-xs">
+                <Calendar className="h-3 w-3" />
+                <span>{daysInStage} days in stage</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Updated {formatDistanceToNow(new Date(candidate.updated_at), { addSuffix: true })}
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
 
   return (
     <div 

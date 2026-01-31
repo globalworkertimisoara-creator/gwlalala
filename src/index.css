@@ -142,6 +142,14 @@
   .candidate-card {
     @apply bg-card rounded-lg border border-border/60 p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/30 cursor-pointer;
   }
+
+  .candidate-card-compact {
+    @apply bg-card rounded-md border border-border/60 px-2.5 py-1.5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/30 cursor-pointer;
+  }
+
+  .pipeline-column-compact {
+    @apply bg-muted/50 rounded-lg p-2 min-h-[300px];
+  }
 }
 
 @layer utilities {
