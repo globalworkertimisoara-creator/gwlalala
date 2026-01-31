@@ -1,14 +1,128 @@
-import { Candidate } from '@/types/candidate';
+import { Candidate, getStageColor } from '@/types/database';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Calendar, Building2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { Calendar, MapPin } from 'lucide-react';
+import { formatDistanceToNow, differenceInDays } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface CandidateCardProps {
   candidate: Candidate;
   onClick?: () => void;
 }
 
+// Simple flag emoji mapping for common nationalities
+const nationalityFlags: Record<string, string> = {
+  'Romanian': '🇷🇴',
+  'Romania': '🇷🇴',
+  'Polish': '🇵🇱',
+  'Poland': '🇵🇱',
+  'German': '🇩🇪',
+  'Germany': '🇩🇪',
+  'British': '🇬🇧',
+  'UK': '🇬🇧',
+  'American': '🇺🇸',
+  'USA': '🇺🇸',
+  'French': '🇫🇷',
+  'France': '🇫🇷',
+  'Italian': '🇮🇹',
+  'Italy': '🇮🇹',
+  'Spanish': '🇪🇸',
+  'Spain': '🇪🇸',
+  'Indian': '🇮🇳',
+  'India': '🇮🇳',
+  'Chinese': '🇨🇳',
+  'China': '🇨🇳',
+  'Filipino': '🇵🇭',
+  'Philippines': '🇵🇭',
+  'Ukrainian': '🇺🇦',
+  'Ukraine': '🇺🇦',
+  'Bulgarian': '🇧🇬',
+  'Bulgaria': '🇧🇬',
+  'Hungarian': '🇭🇺',
+  'Hungary': '🇭🇺',
+  'Czech': '🇨🇿',
+  'Czechia': '🇨🇿',
+  'Slovak': '🇸🇰',
+  'Slovakia': '🇸🇰',
+  'Greek': '🇬🇷',
+  'Greece': '🇬🇷',
+  'Turkish': '🇹🇷',
+  'Turkey': '🇹🇷',
+  'Dutch': '🇳🇱',
+  'Netherlands': '🇳🇱',
+  'Belgian': '🇧🇪',
+  'Belgium': '🇧🇪',
+  'Portuguese': '🇵🇹',
+  'Portugal': '🇵🇹',
+  'Brazilian': '🇧🇷',
+  'Brazil': '🇧🇷',
+  'Mexican': '🇲🇽',
+  'Mexico': '🇲🇽',
+  'Canadian': '🇨🇦',
+  'Canada': '🇨🇦',
+  'Australian': '🇦🇺',
+  'Australia': '🇦🇺',
+  'Japanese': '🇯🇵',
+  'Japan': '🇯🇵',
+  'Korean': '🇰🇷',
+  'South Korea': '🇰🇷',
+  'Vietnamese': '🇻🇳',
+  'Vietnam': '🇻🇳',
+  'Indonesian': '🇮🇩',
+  'Indonesia': '🇮🇩',
+  'Pakistani': '🇵🇰',
+  'Pakistan': '🇵🇰',
+  'Bangladeshi': '🇧🇩',
+  'Bangladesh': '🇧🇩',
+  'Egyptian': '🇪🇬',
+  'Egypt': '🇪🇬',
+  'Moroccan': '🇲🇦',
+  'Morocco': '🇲🇦',
+  'Nigerian': '🇳🇬',
+  'Nigeria': '🇳🇬',
+  'South African': '🇿🇦',
+  'South Africa': '🇿🇦',
+  'Moldovan': '🇲🇩',
+  'Moldova': '🇲🇩',
+  'Serbian': '🇷🇸',
+  'Serbia': '🇷🇸',
+  'Croatian': '🇭🇷',
+  'Croatia': '🇭🇷',
+  'Slovenian': '🇸🇮',
+  'Slovenia': '🇸🇮',
+  'Austrian': '🇦🇹',
+  'Austria': '🇦🇹',
+  'Swiss': '🇨🇭',
+  'Switzerland': '🇨🇭',
+  'Irish': '🇮🇪',
+  'Ireland': '🇮🇪',
+  'Swedish': '🇸🇪',
+  'Sweden': '🇸🇪',
+  'Norwegian': '🇳🇴',
+  'Norway': '🇳🇴',
+  'Danish': '🇩🇰',
+  'Denmark': '🇩🇰',
+  'Finnish': '🇫🇮',
+  'Finland': '🇫🇮',
+};
+
+function getFlag(nationality: string | null): string {
+  if (!nationality) return '🌍';
+  return nationalityFlags[nationality] || '🌍';
+}
+
+function getInitials(fullName: string): string {
+  return fullName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export function CandidateCard({ candidate, onClick }: CandidateCardProps) {
+  const daysInStage = differenceInDays(new Date(), new Date(candidate.updated_at));
+  const isLongWait = daysInStage > 14;
+
   return (
     <div 
       className="candidate-card"
@@ -17,35 +131,41 @@ export function CandidateCard({ candidate, onClick }: CandidateCardProps) {
       <div className="flex items-start gap-3">
         <Avatar className="h-10 w-10">
           <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-            {candidate.firstName[0]}{candidate.lastName[0]}
+            {getInitials(candidate.full_name)}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-foreground truncate">
-            {candidate.firstName} {candidate.lastName}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-foreground truncate">
+              {candidate.full_name}
+            </p>
+            <span className="text-lg" title={candidate.nationality || undefined}>
+              {getFlag(candidate.nationality)}
+            </span>
+          </div>
           <p className="text-sm text-muted-foreground truncate">
-            {candidate.position}
+            {candidate.email}
           </p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Building2 className="h-3.5 w-3.5" />
-          <span>{candidate.department}</span>
-        </div>
-        <div className="flex items-center gap-1">
+        {candidate.current_country && (
+          <div className="flex items-center gap-1">
+            <MapPin className="h-3.5 w-3.5" />
+            <span>{candidate.current_country}</span>
+          </div>
+        )}
+        <div className={cn(
+          "flex items-center gap-1",
+          isLongWait && "text-warning font-medium"
+        )}>
           <Calendar className="h-3.5 w-3.5" />
-          <span>{format(new Date(candidate.appliedDate), 'MMM d')}</span>
+          <span>{daysInStage}d in stage</span>
         </div>
       </div>
-      {candidate.source && (
-        <div className="mt-2">
-          <span className="inline-flex items-center rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
-            {candidate.source}
-          </span>
-        </div>
-      )}
+      <div className="mt-2 text-xs text-muted-foreground">
+        Updated {formatDistanceToNow(new Date(candidate.updated_at), { addSuffix: true })}
+      </div>
     </div>
   );
 }
