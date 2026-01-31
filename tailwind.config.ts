@@ -69,36 +69,6 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
           muted: "hsl(var(--sidebar-muted))",
         },
-        stage: {
-          sourced: {
-            DEFAULT: "hsl(var(--stage-sourced))",
-            foreground: "hsl(var(--stage-sourced-foreground))",
-          },
-          screening: {
-            DEFAULT: "hsl(var(--stage-screening))",
-            foreground: "hsl(var(--stage-screening-foreground))",
-          },
-          interview: {
-            DEFAULT: "hsl(var(--stage-interview))",
-            foreground: "hsl(var(--stage-interview-foreground))",
-          },
-          technical: {
-            DEFAULT: "hsl(var(--stage-technical))",
-            foreground: "hsl(var(--stage-technical-foreground))",
-          },
-          offer: {
-            DEFAULT: "hsl(var(--stage-offer))",
-            foreground: "hsl(var(--stage-offer-foreground))",
-          },
-          hired: {
-            DEFAULT: "hsl(var(--stage-hired))",
-            foreground: "hsl(var(--stage-hired-foreground))",
-          },
-          rejected: {
-            DEFAULT: "hsl(var(--stage-rejected))",
-            foreground: "hsl(var(--stage-rejected-foreground))",
-          },
-        },
       },
       borderRadius: {
         lg: "var(--radius)",

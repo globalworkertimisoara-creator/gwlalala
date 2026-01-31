@@ -5,6 +5,7 @@ import { RecruitmentStage, STAGES, Candidate } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2, Search, LayoutGrid, List } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ const pipelineStages: RecruitmentStage[] = STAGES
 const Pipeline = () => {
   const { data: candidates, isLoading } = useCandidates();
   const createCandidate = useCreateCandidate();
+  const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   // Filter states
@@ -87,8 +89,7 @@ const Pipeline = () => {
   };
 
   const handleCandidateClick = (candidate: Candidate) => {
-    // TODO: Open candidate detail modal/page
-    console.log('Clicked candidate:', candidate);
+    navigate(`/candidates/${candidate.id}`);
   };
 
   const isCompact = viewMode === 'compact';

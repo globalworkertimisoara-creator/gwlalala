@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { CandidateTable } from '@/components/candidates/CandidateTable';
 import { useCandidates } from '@/hooks/useCandidates';
@@ -22,6 +23,8 @@ const Candidates = () => {
     stage: stageFilter === 'all' ? undefined : (stageFilter as RecruitmentStage),
     search: searchQuery || undefined,
   });
+
+  const navigate = useNavigate();
 
   const handleExportCSV = () => {
     if (!candidates || candidates.length === 0) return;
@@ -49,8 +52,7 @@ const Candidates = () => {
   };
 
   const handleCandidateClick = (candidate: Candidate) => {
-    // TODO: Open candidate detail modal/page
-    console.log('Clicked candidate:', candidate);
+    navigate(`/candidates/${candidate.id}`);
   };
 
   return (
