@@ -59,10 +59,10 @@ const Pipeline = () => {
       if (searchTerm && !c.full_name.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
-      if (nationalityFilter && c.nationality !== nationalityFilter) {
+      if (nationalityFilter && nationalityFilter !== 'all' && c.nationality !== nationalityFilter) {
         return false;
       }
-      if (countryFilter && c.current_country !== countryFilter) {
+      if (countryFilter && countryFilter !== 'all' && c.current_country !== countryFilter) {
         return false;
       }
       return true;
@@ -191,7 +191,7 @@ const Pipeline = () => {
               <SelectValue placeholder="Nationality" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Nationalities</SelectItem>
+              <SelectItem value="all">All Nationalities</SelectItem>
               {nationalities.map(nat => (
                 <SelectItem key={nat} value={nat}>{nat}</SelectItem>
               ))}
@@ -202,7 +202,7 @@ const Pipeline = () => {
               <SelectValue placeholder="Country" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Countries</SelectItem>
+              <SelectItem value="all">All Countries</SelectItem>
               {countries.map(country => (
                 <SelectItem key={country} value={country}>{country}</SelectItem>
               ))}
