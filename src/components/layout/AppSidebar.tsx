@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -9,6 +10,7 @@ import {
   Briefcase,
   LogOut,
   User,
+  PanelLeftClose,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -26,6 +28,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,9 +49,33 @@ const navItems = [
 ];
 
 export function AppSidebar() {
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, setOpen } = useSidebar();
   const { user, role, signOut } = useAuth();
   const isCollapsed = state === 'collapsed';
+  
+  // Auto-fade state - persisted in localStorage
+  const [autoFade, setAutoFade] = useState(() => {
+    const saved = localStorage.getItem('sidebar-auto-fade');
+    return saved === 'true';
+  });
+
+  // Save auto-fade preference
+  useEffect(() => {
+    localStorage.setItem('sidebar-auto-fade', String(autoFade));
+  }, [autoFade]);
+
+  // Handle mouse enter/leave for auto-fade
+  const handleMouseEnter = () => {
+    if (autoFade) {
+      setOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (autoFade) {
+      setOpen(false);
+    }
+  };
 
   const userInitials = user?.user_metadata?.full_name
     ?.split(' ')
@@ -56,7 +84,12 @@ export function AppSidebar() {
     .toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar 
+      collapsible="icon" 
+      className="border-r border-sidebar-border"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-primary">
@@ -96,6 +129,36 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-2 space-y-2">
+        {/* Auto-fade Toggle */}
+        <div className={`flex items-center gap-2 px-3 py-2 ${isCollapsed ? 'justify-center' : ''}`}>
+          {isCollapsed ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-sidebar-muted hover:text-sidebar-foreground"
+              onClick={() => setAutoFade(!autoFade)}
+              title={autoFade ? 'Auto-fade on' : 'Auto-fade off'}
+            >
+              <PanelLeftClose className={`h-4 w-4 ${autoFade ? 'text-sidebar-primary' : ''}`} />
+            </Button>
+          ) : (
+            <>
+              <Switch
+                id="auto-fade"
+                checked={autoFade}
+                onCheckedChange={setAutoFade}
+                className="data-[state=checked]:bg-sidebar-primary"
+              />
+              <Label 
+                htmlFor="auto-fade" 
+                className="text-xs text-sidebar-muted cursor-pointer"
+              >
+                Auto-fade
+              </Label>
+            </>
+          )}
+        </div>
+
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -141,19 +204,21 @@ export function AppSidebar() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Collapse Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="w-full h-9 text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
-        >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
+        {/* Collapse Toggle - only show when auto-fade is off */}
+        {!autoFade && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="w-full h-9 text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
