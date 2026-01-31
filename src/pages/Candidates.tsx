@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { CandidateTable } from '@/components/candidates/CandidateTable';
-import { mockCandidates } from '@/data/mockCandidates';
+import { useCandidates } from '@/hooks/useCandidates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,27 +11,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Search } from 'lucide-react';
-import { RecruitmentStage, stageLabels } from '@/types/candidate';
+import { Plus, Search, Download, Loader2 } from 'lucide-react';
+import { RecruitmentStage, STAGES, Candidate } from '@/types/database';
 
 const Candidates = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('all');
 
-  const filteredCandidates = mockCandidates.filter((candidate) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      `${candidate.firstName} ${candidate.lastName}`
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      candidate.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      candidate.email.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStage =
-      stageFilter === 'all' || candidate.stage === stageFilter;
-
-    return matchesSearch && matchesStage;
+  const { data: candidates, isLoading } = useCandidates({
+    stage: stageFilter === 'all' ? undefined : (stageFilter as RecruitmentStage),
+    search: searchQuery || undefined,
   });
+
+  const handleExportCSV = () => {
+    if (!candidates || candidates.length === 0) return;
+
+    const headers = ['Full Name', 'Email', 'Phone', 'Nationality', 'Country', 'Stage', 'Created At'];
+    const rows = candidates.map(c => [
+      c.full_name,
+      c.email,
+      c.phone || '',
+      c.nationality || '',
+      c.current_country || '',
+      c.current_stage,
+      new Date(c.created_at).toLocaleDateString(),
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `candidates-export-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const handleCandidateClick = (candidate: Candidate) => {
+    // TODO: Open candidate detail modal/page
+    console.log('Clicked candidate:', candidate);
+  };
 
   return (
     <AppLayout>
@@ -44,10 +64,16 @@ const Candidates = () => {
               Manage and review all candidate applications
             </p>
           </div>
-          <Button className="gap-2 w-fit">
-            <Plus className="h-4 w-4" />
-            Add Candidate
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={handleExportCSV}>
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Candidate
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -55,36 +81,43 @@ const Candidates = () => {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search candidates..."
+              placeholder="Search by name, email, or nationality..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
           <Select value={stageFilter} onValueChange={setStageFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Filter by stage" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Stages</SelectItem>
-              {(Object.entries(stageLabels) as [RecruitmentStage, string][]).map(
-                ([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                )
-              )}
+              {STAGES.map(stage => (
+                <SelectItem key={stage.value} value={stage.value}>
+                  {stage.label.split(' / ')[0]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
 
         {/* Results count */}
         <p className="text-sm text-muted-foreground">
-          Showing {filteredCandidates.length} of {mockCandidates.length} candidates
+          {isLoading ? 'Loading...' : `Showing ${candidates?.length || 0} candidates`}
         </p>
 
         {/* Table */}
-        <CandidateTable candidates={filteredCandidates} />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <CandidateTable 
+            candidates={candidates || []} 
+            onCandidateClick={handleCandidateClick}
+          />
+        )}
       </div>
     </AppLayout>
   );

@@ -2,19 +2,44 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RecentCandidates } from '@/components/dashboard/RecentCandidates';
 import { StageChart } from '@/components/dashboard/StageChart';
-import { mockCandidates } from '@/data/mockCandidates';
-import { Users, UserCheck, Clock, TrendingUp } from 'lucide-react';
+import { useCandidates } from '@/hooks/useCandidates';
+import { useJobs } from '@/hooks/useJobs';
+import { Users, UserCheck, Clock, Briefcase, AlertTriangle, Loader2 } from 'lucide-react';
+import { differenceInDays } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Index = () => {
-  const totalCandidates = mockCandidates.length;
-  const hiredCount = mockCandidates.filter((c) => c.stage === 'hired').length;
-  const inProgress = mockCandidates.filter(
-    (c) => !['hired', 'rejected'].includes(c.stage)
-  ).length;
-  const interviewRate = Math.round(
-    (mockCandidates.filter((c) => ['interview', 'technical', 'offer', 'hired'].includes(c.stage)).length / 
-    totalCandidates) * 100
-  );
+  const { data: candidates, isLoading: candidatesLoading } = useCandidates();
+  const { data: jobs, isLoading: jobsLoading } = useJobs({ status: 'open' });
+
+  const isLoading = candidatesLoading || jobsLoading;
+
+  // Calculate stats
+  const totalCandidates = candidates?.length || 0;
+  const placedCount = candidates?.filter((c) => c.current_stage === 'placed').length || 0;
+  const inProgressCount = candidates?.filter(
+    (c) => !['placed', 'closed_not_placed'].includes(c.current_stage)
+  ).length || 0;
+  const openJobsCount = jobs?.length || 0;
+
+  // Candidates in visa/onboarding stages for more than 30 days
+  const longWaitCandidates = candidates?.filter((c) => {
+    if (!['visa_processing', 'medical_checks', 'onboarding'].includes(c.current_stage)) {
+      return false;
+    }
+    const daysInStage = differenceInDays(new Date(), new Date(c.updated_at));
+    return daysInStage > 30;
+  }) || [];
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -27,6 +52,23 @@ const Index = () => {
           </p>
         </div>
 
+        {/* Warning Alert */}
+        {longWaitCandidates.length > 0 && (
+          <Card className="border-warning/50 bg-warning/5">
+            <CardContent className="flex items-center gap-3 py-4">
+              <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+              <div>
+                <p className="font-medium text-foreground">
+                  {longWaitCandidates.length} candidate{longWaitCandidates.length > 1 ? 's' : ''} in visa/onboarding for 30+ days
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Review these candidates to ensure timely processing.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
@@ -34,34 +76,31 @@ const Index = () => {
             value={totalCandidates}
             subtitle="All time"
             icon={Users}
-            trend={{ value: 12, isPositive: true }}
           />
           <StatCard
-            title="Hired"
-            value={hiredCount}
-            subtitle="This quarter"
+            title="Placed"
+            value={placedCount}
+            subtitle="Successfully placed"
             icon={UserCheck}
-            trend={{ value: 8, isPositive: true }}
           />
           <StatCard
             title="In Progress"
-            value={inProgress}
+            value={inProgressCount}
             subtitle="Active candidates"
             icon={Clock}
           />
           <StatCard
-            title="Interview Rate"
-            value={`${interviewRate}%`}
-            subtitle="Screening to interview"
-            icon={TrendingUp}
-            trend={{ value: 5, isPositive: true }}
+            title="Open Jobs"
+            value={openJobsCount}
+            subtitle="Available positions"
+            icon={Briefcase}
           />
         </div>
 
         {/* Charts and Activity */}
         <div className="grid gap-6 lg:grid-cols-2">
-          <StageChart candidates={mockCandidates} />
-          <RecentCandidates candidates={mockCandidates} />
+          <StageChart candidates={candidates || []} />
+          <RecentCandidates candidates={candidates || []} />
         </div>
       </div>
     </AppLayout>

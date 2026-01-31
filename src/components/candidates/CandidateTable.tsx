@@ -1,4 +1,4 @@
-import { Candidate, stageLabels } from '@/types/candidate';
+import { Candidate, getStageLabel, getStageColor } from '@/types/database';
 import {
   Table,
   TableBody,
@@ -9,78 +9,104 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Users } from 'lucide-react';
 
 interface CandidateTableProps {
   candidates: Candidate[];
   onCandidateClick?: (candidate: Candidate) => void;
 }
 
-const stageBadgeStyles: Record<string, string> = {
-  sourced: 'bg-stage-sourced text-stage-sourced-foreground',
-  screening: 'bg-stage-screening text-stage-screening-foreground',
-  interview: 'bg-stage-interview text-stage-interview-foreground',
-  technical: 'bg-stage-technical text-stage-technical-foreground',
-  offer: 'bg-stage-offer text-stage-offer-foreground',
-  hired: 'bg-stage-hired text-stage-hired-foreground',
-  rejected: 'bg-stage-rejected text-stage-rejected-foreground',
-};
+function getInitials(fullName: string): string {
+  return fullName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export function CandidateTable({ candidates, onCandidateClick }: CandidateTableProps) {
+  if (candidates.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-12 text-center">
+        <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+        <p className="text-muted-foreground">No candidates found</p>
+        <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filters.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
             <TableHead className="w-[280px]">Candidate</TableHead>
-            <TableHead>Position</TableHead>
-            <TableHead>Department</TableHead>
+            <TableHead>Nationality</TableHead>
+            <TableHead>Country</TableHead>
             <TableHead>Stage</TableHead>
-            <TableHead>Source</TableHead>
-            <TableHead>Applied</TableHead>
+            <TableHead>Days in Stage</TableHead>
+            <TableHead>Added</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {candidates.map((candidate) => (
-            <TableRow 
-              key={candidate.id}
-              className="cursor-pointer hover:bg-muted/30"
-              onClick={() => onCandidateClick?.(candidate)}
-            >
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-                      {candidate.firstName[0]}{candidate.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {candidate.firstName} {candidate.lastName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {candidate.email}
-                    </p>
+          {candidates.map((candidate) => {
+            const daysInStage = differenceInDays(new Date(), new Date(candidate.updated_at));
+            const isLongWait = daysInStage > 14;
+
+            return (
+              <TableRow 
+                key={candidate.id}
+                className="cursor-pointer hover:bg-muted/30"
+                onClick={() => onCandidateClick?.(candidate)}
+              >
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+                        {getInitials(candidate.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-foreground">
+                        {candidate.full_name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {candidate.email}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell className="font-medium">{candidate.position}</TableCell>
-              <TableCell className="text-muted-foreground">{candidate.department}</TableCell>
-              <TableCell>
-                <Badge 
-                  variant="secondary" 
-                  className={cn(stageBadgeStyles[candidate.stage])}
-                >
-                  {stageLabels[candidate.stage]}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground">{candidate.source}</TableCell>
-              <TableCell className="text-muted-foreground">
-                {format(new Date(candidate.appliedDate), 'MMM d, yyyy')}
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {candidate.nationality || '-'}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {candidate.current_country || '-'}
+                </TableCell>
+                <TableCell>
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(getStageColor(candidate.current_stage))}
+                  >
+                    {getStageLabel(candidate.current_stage).split(' / ')[0]}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <span className={cn(
+                    "font-medium",
+                    isLongWait && "text-warning"
+                  )}>
+                    {daysInStage}d
+                  </span>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {format(new Date(candidate.created_at), 'MMM d, yyyy')}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

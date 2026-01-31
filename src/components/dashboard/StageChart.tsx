@@ -1,66 +1,83 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Candidate, RecruitmentStage, stageLabels } from '@/types/candidate';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts';
+import { Candidate, RecruitmentStage, STAGES, getStageLabel } from '@/types/database';
 
 interface StageChartProps {
   candidates: Candidate[];
 }
 
-const stageChartColors: Record<RecruitmentStage, string> = {
-  sourced: 'hsl(30, 15%, 75%)',
-  screening: 'hsl(24, 95%, 53%)',
-  interview: 'hsl(168, 76%, 42%)',
-  technical: 'hsl(38, 80%, 55%)',
-  offer: 'hsl(152, 50%, 50%)',
-  hired: 'hsl(152, 69%, 40%)',
-  rejected: 'hsl(0, 60%, 55%)',
+// Blue-based color palette for 15 stages
+const stageColors: Record<RecruitmentStage, string> = {
+  sourced: 'hsl(215, 20%, 75%)',
+  contacted: 'hsl(210, 50%, 70%)',
+  application_received: 'hsl(205, 60%, 65%)',
+  screening: 'hsl(200, 70%, 55%)',
+  shortlisted: 'hsl(195, 80%, 50%)',
+  submitted_to_client: 'hsl(221, 83%, 53%)',
+  client_feedback: 'hsl(230, 70%, 55%)',
+  interview_completed: 'hsl(250, 60%, 60%)',
+  offer_extended: 'hsl(45, 80%, 50%)',
+  offer_accepted: 'hsl(50, 90%, 45%)',
+  visa_processing: 'hsl(35, 85%, 50%)',
+  medical_checks: 'hsl(20, 80%, 55%)',
+  onboarding: 'hsl(100, 60%, 45%)',
+  placed: 'hsl(142, 71%, 45%)',
+  closed_not_placed: 'hsl(0, 72%, 51%)',
 };
 
 export function StageChart({ candidates }: StageChartProps) {
   const stageCounts = candidates.reduce((acc, candidate) => {
-    acc[candidate.stage] = (acc[candidate.stage] || 0) + 1;
+    acc[candidate.current_stage] = (acc[candidate.current_stage] || 0) + 1;
     return acc;
   }, {} as Record<RecruitmentStage, number>);
 
-  const data = (Object.entries(stageCounts) as [RecruitmentStage, number][])
-    .filter(([_, count]) => count > 0)
-    .map(([stage, count]) => ({
-      name: stageLabels[stage],
-      value: count,
-      color: stageChartColors[stage],
+  // Create data for all stages in order
+  const data = STAGES
+    .filter(stage => stageCounts[stage.value] && stageCounts[stage.value] > 0)
+    .map(stage => ({
+      name: stage.label.split(' / ')[0], // Use short label
+      fullName: stage.label,
+      value: stageCounts[stage.value] || 0,
+      color: stageColors[stage.value],
     }));
+
+  if (data.length === 0) {
+    return (
+      <div className="stat-card animate-fade-in">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Pipeline Overview</h3>
+        <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+          No candidates to display
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="stat-card animate-fade-in">
       <h3 className="text-lg font-semibold text-foreground mb-4">Pipeline Overview</h3>
       <div className="h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={90}
-              paddingAngle={3}
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
+          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 20 }}>
+            <XAxis type="number" />
+            <YAxis 
+              type="category" 
+              dataKey="name" 
+              width={120}
+              tick={{ fontSize: 12 }}
+            />
             <Tooltip 
+              formatter={(value, name, props) => [value, props.payload.fullName]}
               contentStyle={{ 
                 backgroundColor: 'hsl(var(--card))', 
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
               }}
             />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              formatter={(value) => <span className="text-sm text-muted-foreground">{value}</span>}
-            />
-          </PieChart>
+            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>

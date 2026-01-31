@@ -1,26 +1,37 @@
-import { Candidate, stageLabels } from '@/types/candidate';
+import { Candidate, getStageLabel, getStageColor } from '@/types/database';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 interface RecentCandidatesProps {
   candidates: Candidate[];
 }
 
-const stageBadgeStyles: Record<string, string> = {
-  sourced: 'bg-stage-sourced text-stage-sourced-foreground',
-  screening: 'bg-stage-screening text-stage-screening-foreground',
-  interview: 'bg-stage-interview text-stage-interview-foreground',
-  technical: 'bg-stage-technical text-stage-technical-foreground',
-  offer: 'bg-stage-offer text-stage-offer-foreground',
-  hired: 'bg-stage-hired text-stage-hired-foreground',
-  rejected: 'bg-stage-rejected text-stage-rejected-foreground',
-};
-
 export function RecentCandidates({ candidates }: RecentCandidatesProps) {
   const recentCandidates = [...candidates]
-    .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime())
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 5);
+
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (recentCandidates.length === 0) {
+    return (
+      <div className="stat-card animate-fade-in">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Recent Activity</h3>
+        <div className="h-[280px] flex items-center justify-center text-muted-foreground">
+          No recent activity
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="stat-card animate-fade-in">
@@ -33,22 +44,23 @@ export function RecentCandidates({ candidates }: RecentCandidatesProps) {
           >
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                {candidate.firstName[0]}{candidate.lastName[0]}
+                {getInitials(candidate.full_name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-foreground truncate">
-                {candidate.firstName} {candidate.lastName}
+                {candidate.full_name}
               </p>
               <p className="text-sm text-muted-foreground truncate">
-                {candidate.position}
+                {candidate.nationality && `${candidate.nationality} • `}
+                {formatDistanceToNow(new Date(candidate.updated_at), { addSuffix: true })}
               </p>
             </div>
             <Badge 
               variant="secondary" 
-              className={cn("shrink-0", stageBadgeStyles[candidate.stage])}
+              className={cn("shrink-0", getStageColor(candidate.current_stage))}
             >
-              {stageLabels[candidate.stage]}
+              {getStageLabel(candidate.current_stage).split(' / ')[0]}
             </Badge>
           </div>
         ))}
