@@ -6,9 +6,9 @@ interface StageChartProps {
 }
 
 const stageChartColors: Record<RecruitmentStage, string> = {
-  sourced: 'hsl(210, 15%, 75%)',
-  screening: 'hsl(199, 70%, 55%)',
-  interview: 'hsl(262, 60%, 60%)',
+  sourced: 'hsl(30, 15%, 75%)',
+  screening: 'hsl(24, 95%, 53%)',
+  interview: 'hsl(168, 76%, 42%)',
   technical: 'hsl(38, 80%, 55%)',
   offer: 'hsl(152, 50%, 50%)',
   hired: 'hsl(152, 69%, 40%)',

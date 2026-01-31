@@ -4,36 +4,36 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GlobalWorker Recruitment Tracker Design System */
+/* GlobalWorker Recruitment Tracker Design System - Brand Colors */
 
 @layer base {
   :root {
-    /* Core backgrounds */
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    /* Core backgrounds - Warm cream/beige like globalworker.ro */
+    --background: 30 33% 96%;
+    --foreground: 220 20% 15%;
 
     /* Cards and surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 220 20% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 220 20% 15%;
 
-    /* Brand colors - Professional teal/blue */
-    --primary: 199 89% 38%;
+    /* Brand colors - GlobalWorker Orange */
+    --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - Warm neutral */
-    --secondary: 210 15% 95%;
-    --secondary-foreground: 215 25% 25%;
+    --secondary: 30 20% 93%;
+    --secondary-foreground: 220 20% 25%;
 
     /* Muted elements */
-    --muted: 210 15% 93%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 30 15% 92%;
+    --muted-foreground: 220 10% 50%;
 
-    /* Accent - Soft teal */
-    --accent: 199 60% 94%;
-    --accent-foreground: 199 89% 30%;
+    /* Accent - GlobalWorker Teal/Green */
+    --accent: 168 76% 42%;
+    --accent-foreground: 0 0% 100%;
 
     /* Status colors */
     --destructive: 0 72% 51%;
@@ -46,32 +46,32 @@
     --warning-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 199 89% 48%;
+    --border: 30 15% 88%;
+    --input: 30 15% 88%;
+    --ring: 24 95% 53%;
 
     --radius: 0.625rem;
 
-    /* Sidebar */
-    --sidebar-background: 215 30% 12%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 199 89% 55%;
+    /* Sidebar - Dark professional */
+    --sidebar-background: 220 25% 12%;
+    --sidebar-foreground: 30 20% 90%;
+    --sidebar-primary: 24 95% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 25% 18%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 215 25% 20%;
-    --sidebar-ring: 199 89% 55%;
-    --sidebar-muted: 215 20% 45%;
+    --sidebar-accent: 220 20% 18%;
+    --sidebar-accent-foreground: 30 20% 95%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 24 95% 55%;
+    --sidebar-muted: 220 15% 50%;
 
     /* Stage colors */
-    --stage-sourced: 210 15% 88%;
-    --stage-sourced-foreground: 215 25% 30%;
+    --stage-sourced: 30 15% 88%;
+    --stage-sourced-foreground: 220 20% 30%;
     
-    --stage-screening: 199 70% 90%;
-    --stage-screening-foreground: 199 89% 30%;
+    --stage-screening: 24 80% 92%;
+    --stage-screening-foreground: 24 95% 40%;
     
-    --stage-interview: 262 60% 90%;
-    --stage-interview-foreground: 262 60% 40%;
+    --stage-interview: 168 50% 90%;
+    --stage-interview-foreground: 168 76% 30%;
     
     --stage-technical: 38 80% 90%;
     --stage-technical-foreground: 38 80% 35%;
@@ -86,50 +86,50 @@
     --stage-rejected-foreground: 0 60% 40%;
 
     /* Chart colors */
-    --chart-1: 199 89% 48%;
-    --chart-2: 152 69% 45%;
-    --chart-3: 262 60% 55%;
-    --chart-4: 38 92% 55%;
+    --chart-1: 24 95% 53%;
+    --chart-2: 168 76% 42%;
+    --chart-3: 38 92% 55%;
+    --chart-4: 152 69% 45%;
     --chart-5: 0 72% 55%;
   }
 
   .dark {
-    --background: 215 30% 8%;
-    --foreground: 210 20% 95%;
+    --background: 220 25% 8%;
+    --foreground: 30 20% 95%;
 
-    --card: 215 28% 12%;
-    --card-foreground: 210 20% 95%;
+    --card: 220 22% 12%;
+    --card-foreground: 30 20% 95%;
 
-    --popover: 215 28% 12%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 220 22% 12%;
+    --popover-foreground: 30 20% 95%;
 
-    --primary: 199 89% 55%;
-    --primary-foreground: 215 30% 10%;
+    --primary: 24 95% 55%;
+    --primary-foreground: 220 25% 10%;
 
-    --secondary: 215 25% 18%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 30 20% 90%;
 
-    --muted: 215 25% 18%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 10% 55%;
 
-    --accent: 199 50% 20%;
-    --accent-foreground: 199 89% 70%;
+    --accent: 168 70% 35%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 20%;
-    --input: 215 25% 20%;
-    --ring: 199 89% 55%;
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 24 95% 55%;
 
-    --sidebar-background: 215 35% 6%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 199 89% 55%;
+    --sidebar-background: 220 30% 6%;
+    --sidebar-foreground: 30 20% 85%;
+    --sidebar-primary: 24 95% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 25% 12%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 215 25% 15%;
-    --sidebar-ring: 199 89% 55%;
+    --sidebar-accent: 220 20% 12%;
+    --sidebar-accent-foreground: 30 20% 95%;
+    --sidebar-border: 220 20% 15%;
+    --sidebar-ring: 24 95% 55%;
   }
 }
 
@@ -168,7 +168,7 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
   }
 
   .animate-fade-in {
