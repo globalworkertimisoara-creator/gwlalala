@@ -7,12 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Globe, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,7 +30,16 @@ export default function Auth() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const { error } = await signIn(email, password);
+    // Update session persistence based on "Remember me" checkbox
+    await supabase.auth.setSession({ 
+      access_token: '', 
+      refresh_token: '' 
+    }).catch(() => {}); // Clear any existing session first
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
       toast({
@@ -37,6 +48,14 @@ export default function Auth() {
         description: error.message,
       });
     } else {
+      // If "Remember me" is not checked, store session in sessionStorage instead
+      if (!rememberMe) {
+        // Session will be cleared when browser is closed
+        sessionStorage.setItem('supabase-session-temporary', 'true');
+      } else {
+        sessionStorage.removeItem('supabase-session-temporary');
+      }
+      
       toast({
         title: 'Welcome back!',
         description: 'You have successfully signed in.',
@@ -213,6 +232,20 @@ export default function Auth() {
                     required
                     disabled={isLoading}
                   />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember-me"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    disabled={isLoading}
+                  />
+                  <Label 
+                    htmlFor="remember-me" 
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Remember me
+                  </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
