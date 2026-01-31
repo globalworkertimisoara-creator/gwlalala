@@ -1,101 +1,159 @@
-# GlobalWorker Recruitment Tracker - Implementation Progress
 
-## ✅ Completed
 
-### Phase 1: Backend Setup
-- [x] Enabled Lovable Cloud
-- [x] Created database schema (candidates, jobs, notes, documents, stage_history, user_roles, profiles, candidate_job_links)
-- [x] Created enums (app_role, recruitment_stage, job_status, doc_type, submission_status)
-- [x] Set up RLS policies for all tables
-- [x] Created security definer functions (has_role, is_authenticated)
-- [x] Created storage bucket (candidate-documents)
-- [x] Enabled realtime for candidates and stage_history
-- [x] Created triggers for updated_at, new user handling, and stage change logging
+# Compact Pipeline with Filters
 
-### Phase 2: Authentication
-- [x] Created AuthContext with session management
-- [x] Built Auth page with Sign In/Sign Up tabs
-- [x] Created ProtectedRoute wrapper component
-- [x] Role-based access (Admin/Recruiter) - first user becomes admin
+## Overview
 
-### Phase 3: Theme Update
-- [x] Updated to professional blue/white theme (#2563eb primary)
-- [x] Dark mode support configured
-- [x] Stage colors for 15 stages
-
-### Phase 4: Type Definitions
-- [x] Created comprehensive types in src/types/database.ts
-- [x] 15-stage configuration with labels and colors
-- [x] Input types for mutations
-
-### Phase 5: Data Layer
-- [x] useCandidates hook with filters
-- [x] useJobs hook with filters
-- [x] useNotes hook
-- [x] useStageHistory hook
-- [x] useDocuments hook with upload/delete
-- [x] All mutation hooks (create, update, delete)
-
-### Phase 6: Dashboard
-- [x] Stat cards (Total Candidates, Placed, In Progress, Open Jobs)
-- [x] Warning alert for candidates in visa/onboarding >30 days
-- [x] Bar chart showing pipeline distribution
-- [x] Recent activity feed
-
-### Phase 7: Pipeline (Kanban)
-- [x] 14 scrollable columns (excluding closed)
-- [x] Color-coded stage headers
-- [x] Candidate cards with flag emoji, days in stage
-- [x] Add Candidate dialog
-
-### Phase 8: Candidates Table
-- [x] Search by name/email/nationality
-- [x] Stage filter dropdown
-- [x] Sortable table with key columns
-- [x] Export to CSV functionality
-
-### Phase 10: Jobs Section
-- [x] Jobs table with filters
-- [x] Create job dialog
-- [x] Candidate count per job
-
-### Phase 11: Navigation
-- [x] Sidebar with all nav items (Dashboard, Pipeline, Candidates, Jobs, Settings)
-- [x] User menu with role badge and logout
-
-### Phase 12: Seed Data
-- [x] 10 sample candidates across stages
-- [x] 5 sample jobs
-- [x] Sample notes and stage history
+This plan redesigns the Pipeline page to be more compact for better overview of the entire 15-stage process, and adds comprehensive filtering capabilities.
 
 ---
 
-## 🔲 Remaining
+## Current Issues
 
-### Phase 7: Kanban Enhancements
-- [ ] Drag-and-drop functionality (@dnd-kit/core)
-- [ ] Stage change confirmation modal
-- [ ] Optional note on stage transitions
-
-### Phase 9: Candidate Detail Page
-- [ ] Full candidate detail page/modal
-- [ ] Edit basic info form
-- [ ] Stage navigation buttons (next/prev)
-- [ ] Timeline section (stage history + notes)
-- [ ] Notes section with add form
-- [ ] Documents section with upload
-- [ ] Linked jobs section
-
-### Phase 10: Job Detail
-- [ ] Job detail page
-- [ ] Edit job form
-- [ ] Linked candidates list
+1. **Cards are too large** - Each card takes significant vertical space with avatar, email, location, days in stage, and update time
+2. **Columns are too wide** - min-width of 280px makes it hard to see all 14 active stages at once
+3. **No filters** - Cannot filter by nationality, country, job, or search terms on the pipeline view
 
 ---
 
-## Technical Notes
+## Solution
 
-- All stage changes automatically log to stage_history via database trigger
-- First user signup becomes admin, subsequent users become recruiters
-- RLS policies ensure proper access control
-- Real-time subscriptions enabled for candidates and stage_history tables
+### 1. Compact Card Design
+
+Create a new compact card variant that shows essential info in a condensed format:
+
+```text
+Current Card (~120px height):
++---------------------------+
+| [Avatar] Name       🇷🇴   |
+|          email@example.com|
+| 📍 Romania   📅 5d in stage|
+| Updated 3 days ago        |
++---------------------------+
+
+Compact Card (~48px height):
++---------------------------+
+| 🇷🇴 Name              5d  |
++---------------------------+
+```
+
+- Single row with flag, name, and days in stage
+- Hover tooltip shows full details
+- Click still opens detail view
+
+### 2. Narrower Columns
+
+Reduce column widths to fit more stages on screen:
+
+| Property | Current | Compact |
+|----------|---------|---------|
+| min-width | 280px | 160px |
+| max-width | 320px | 200px |
+| gap | 16px (gap-4) | 8px (gap-2) |
+| padding | p-3 | p-2 |
+
+### 3. Filter Bar
+
+Add a collapsible filter section above the pipeline:
+
+```text
++--------------------------------------------------+
+| 🔍 Search...    | Stage ▼ | Nationality ▼ | Country ▼ |
++--------------------------------------------------+
+```
+
+Filters:
+- **Search**: Text search by name
+- **Nationality**: Dropdown with unique nationalities from candidates
+- **Country**: Dropdown with unique current countries
+- **View toggle**: Compact/Expanded view switch
+
+### 4. View Mode Toggle
+
+Add toggle to switch between:
+- **Compact view** (default) - Small cards for overview
+- **Detailed view** - Current larger cards
+
+---
+
+## Technical Changes
+
+### Files to Modify
+
+**src/pages/Pipeline.tsx**
+- Add filter state (search, nationality, country)
+- Add view mode toggle (compact/detailed)
+- Add filter bar UI with dropdowns
+- Pass filtered candidates to columns
+- Pass compact prop to columns
+
+**src/components/pipeline/PipelineColumn.tsx**
+- Accept `compact` prop
+- Reduce column widths when compact
+- Reduce card spacing when compact
+
+**src/components/pipeline/CandidateCard.tsx**
+- Accept `compact` prop  
+- Render condensed single-line version when compact
+- Add hover tooltip with full details in compact mode
+
+**src/index.css**
+- Add `.candidate-card-compact` style variant
+- Add `.pipeline-column-compact` style variant
+
+---
+
+## UI Components Used
+
+- `Input` for search field
+- `Select` for filter dropdowns (nationality, country)
+- `ToggleGroup` for view mode toggle
+- `Tooltip` for compact card hover details
+- Existing filter pattern from Candidates page
+
+---
+
+## Filter Logic
+
+```typescript
+// Filter candidates client-side
+const filteredCandidates = useMemo(() => {
+  return (candidates || []).filter(c => {
+    if (searchTerm && !c.full_name.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+    if (nationalityFilter && c.nationality !== nationalityFilter) {
+      return false;
+    }
+    if (countryFilter && c.current_country !== countryFilter) {
+      return false;
+    }
+    return true;
+  });
+}, [candidates, searchTerm, nationalityFilter, countryFilter]);
+```
+
+---
+
+## Visual Result
+
+Before (14 stages require significant scrolling):
+```text
+[Sourced][Contacted][Application][Screening] →→→ scroll →→→
+```
+
+After (more stages visible at once):
+```text
+[Sourced][Contacted][Application][Screening][Shortlisted][Submitted][Feedback][Interview]...
+```
+
+---
+
+## Implementation Steps
+
+1. Update `src/index.css` with compact style variants
+2. Update `CandidateCard.tsx` to support compact mode with tooltip
+3. Update `PipelineColumn.tsx` to support compact mode and narrower widths
+4. Update `Pipeline.tsx` with filter bar and view toggle
+5. Extract unique nationalities/countries from candidates for dropdowns
+
