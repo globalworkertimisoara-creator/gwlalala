@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -55,6 +56,7 @@ const navItems = [
 export function AppSidebar() {
   const { state, toggleSidebar, setOpen } = useSidebar();
   const { user, role, signOut } = useAuth();
+  const navigate = useNavigate();
   const isCollapsed = state === 'collapsed';
   
   // Auto-fade state - persisted in localStorage
@@ -192,11 +194,11 @@ export function AppSidebar() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/profile')}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>

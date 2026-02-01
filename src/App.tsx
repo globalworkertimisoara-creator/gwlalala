@@ -10,6 +10,7 @@ import Pipeline from "./pages/Pipeline";
 import Candidates from "./pages/Candidates";
 import Jobs from "./pages/Jobs";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import CandidateDetail from "./pages/CandidateDetail";
@@ -59,6 +60,11 @@ const App = () => (
             <Route path="/settings" element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             } />
             <Route path="/jobs/:id" element={
