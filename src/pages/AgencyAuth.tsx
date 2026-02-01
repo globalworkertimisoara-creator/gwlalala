@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Building2, ArrowLeft } from 'lucide-react';
+import { Loader2, Building2, ArrowLeft, Shield } from 'lucide-react';
+import { verifyRegistrationCode } from '@/hooks/useRegistrationCodes';
 
 export default function AgencyAuth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -96,6 +97,19 @@ export default function AgencyAuth() {
     const password = formData.get('password') as string;
     const companyName = formData.get('companyName') as string;
     const contactPerson = formData.get('contactPerson') as string;
+    const registrationCode = formData.get('registrationCode') as string;
+
+    // Verify registration code first
+    const isValidCode = await verifyRegistrationCode('agency', registrationCode);
+    if (!isValidCode) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid registration code',
+        description: 'Please enter a valid agency registration code to register.',
+      });
+      setIsLoading(false);
+      return;
+    }
 
     // Sign up user with agency role metadata - the trigger handles role assignment
     const { error } = await supabase.auth.signUp({
@@ -381,6 +395,23 @@ export default function AgencyAuth() {
                     required
                     disabled={isLoading}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-code" className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Registration Code
+                  </Label>
+                  <Input
+                    id="signup-code"
+                    name="registrationCode"
+                    type="password"
+                    placeholder="Enter registration code"
+                    required
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Contact GlobalWorker for your agency registration code
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (

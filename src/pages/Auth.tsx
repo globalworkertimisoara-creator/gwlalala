@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Globe, ArrowLeft } from 'lucide-react';
+import { Loader2, Globe, ArrowLeft, Shield } from 'lucide-react';
+import { verifyRegistrationCode } from '@/hooks/useRegistrationCodes';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -102,6 +103,19 @@ export default function Auth() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
+    const registrationCode = formData.get('registrationCode') as string;
+
+    // Verify registration code first
+    const isValidCode = await verifyRegistrationCode('staff', registrationCode);
+    if (!isValidCode) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid registration code',
+        description: 'Please enter a valid staff registration code to create an account.',
+      });
+      setIsLoading(false);
+      return;
+    }
 
     const { error } = await signUp(email, password, fullName);
 
@@ -364,6 +378,23 @@ export default function Auth() {
                     required
                     disabled={isLoading}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-code" className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Registration Code
+                  </Label>
+                  <Input
+                    id="signup-code"
+                    name="registrationCode"
+                    type="password"
+                    placeholder="Enter registration code"
+                    required
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Contact your administrator for the registration code
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
