@@ -106,15 +106,41 @@ export function useTeams() {
   });
 
   const createTeam = useMutation({
-    mutationFn: async ({ name, description }: { name: string; description?: string }) => {
-      const { data, error } = await supabase
+    mutationFn: async ({ 
+      name, 
+      description, 
+      members 
+    }: { 
+      name: string; 
+      description?: string; 
+      members?: { userId: string; isLead: boolean }[] 
+    }) => {
+      const { data: team, error } = await supabase
         .from('teams')
         .insert({ name, description, created_by: user?.id })
         .select()
         .single();
       
       if (error) throw error;
-      return data;
+
+      // Add initial members if provided
+      if (members && members.length > 0) {
+        const memberInserts = members.map(m => ({
+          team_id: team.id,
+          user_id: m.userId,
+          is_lead: m.isLead,
+        }));
+
+        const { error: membersError } = await supabase
+          .from('team_members')
+          .insert(memberInserts);
+
+        if (membersError) {
+          console.error('Failed to add initial members:', membersError);
+        }
+      }
+
+      return team;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
