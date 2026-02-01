@@ -293,12 +293,9 @@ export function useReviewWorker() {
         updateData.current_stage = newStage;
       }
       
-      // Select limited agency info for non-admin staff (only need user_id for notification)
-      // We still need user_id to send notifications, but that's internal system use
-      const agencySelect = isAdmin 
-        ? 'agency:agency_profiles(id, user_id, company_name, country)'
-        : 'agency:agency_profiles(id, user_id, company_name, country)';
-      
+      // For notifications we need user_id - this is internal system use only
+      // RLS on agency_profiles ensures only admins can see full contact details
+      // Non-admins will get null for restricted columns due to RLS
       const { data, error } = await supabase
         .from('agency_workers')
         .update(updateData)
@@ -306,7 +303,7 @@ export function useReviewWorker() {
         .select(`
           *,
           job:jobs(id, title, client_company, country, status),
-          ${agencySelect}
+          agency:agency_profiles(id, user_id, company_name, country)
         `)
         .single();
       
