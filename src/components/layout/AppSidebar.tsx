@@ -12,6 +12,7 @@ import {
   User,
   PanelLeftClose,
   Building2,
+  FolderKanban,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -43,6 +44,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
+  { title: 'Projects', url: '/projects', icon: FolderKanban },
   { title: 'Pipeline', url: '/pipeline', icon: Kanban },
   { title: 'Candidates', url: '/candidates', icon: Users },
   { title: 'Jobs', url: '/jobs', icon: Briefcase },

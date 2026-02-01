@@ -183,6 +183,10 @@ export default function AgencyDashboard() {
               </Button>
             }
           />
+          <Button variant="outline" onClick={() => navigate('/agency/jobs')}>
+            <Briefcase className="mr-2 h-4 w-4" />
+            View Available Jobs
+          </Button>
         </div>
 
         {/* Workers Table */}
