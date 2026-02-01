@@ -75,6 +75,30 @@ serve(async (req) => {
       throw new Error("Missing required fields: storage_path, bucket");
     }
 
+    // SECURITY: Validate storage_path format - prevent path traversal attacks
+    if (storage_path.includes('..') || storage_path.includes('\\') || 
+        !/^[a-zA-Z0-9_\-\/\.]+$/.test(storage_path)) {
+      console.error(`Security: Invalid storage path format attempted: ${storage_path}`);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid storage path format', data: null }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // SECURITY: Validate doc_type against allowed enum values
+    const allowedDocTypes = [
+      'cv', 'passport', 'photo', 'working_video', 'presentation_video',
+      'trade_certificate', 'medical_clearance', 'training_doc', 'plane_ticket',
+      'visa_document', 'residence_permit', 'resume', 'contract', 'other'
+    ];
+    if (doc_type && !allowedDocTypes.includes(doc_type)) {
+      console.error(`Security: Invalid doc_type attempted: ${doc_type}`);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid document type', data: null }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Validate bucket is one of the allowed buckets
     const allowedBuckets = ['candidate-documents', 'agency-documents'];
     if (!allowedBuckets.includes(bucket)) {
@@ -118,9 +142,15 @@ serve(async (req) => {
     if (bucket === 'agency-documents' && isAgency) {
       // Verify agency can only access their own documents
       const { data: agencyProfile } = await userSupabase.from('agency_profiles').select('id').eq('user_id', user.id).single();
-      if (!agencyProfile || !storage_path.startsWith(agencyProfile.id)) {
+      
+      // SECURITY: Normalize path and ensure strict folder containment (prevent traversal)
+      const normalizedPath = storage_path.replace(/\/+/g, '/');
+      
+      // Path must start with agency ID followed by a slash - prevents accessing other folders
+      if (!agencyProfile || !normalizedPath.startsWith(agencyProfile.id + '/')) {
+        console.error(`Security: Agency ${user.id} attempted to access unauthorized path: ${storage_path}`);
         return new Response(
-          JSON.stringify({ success: false, error: 'Access denied', data: null }),
+          JSON.stringify({ success: false, error: 'Access denied to this path', data: null }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
