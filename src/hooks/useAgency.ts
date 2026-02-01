@@ -589,6 +589,9 @@ export function useWorkerDocumentUrl(storagePath: string | undefined) {
 export function useAllAgencyWorkers(filters?: { stage?: string; jobId?: string }) {
   const { role } = useAuth();
   
+  // All internal staff roles can view agency workers
+  const isInternalStaff = role === 'admin' || role === 'recruiter' || role === 'operations_manager' || role === 'documentation_staff';
+  
   return useQuery({
     queryKey: ['all-agency-workers', filters],
     queryFn: async () => {
@@ -614,6 +617,6 @@ export function useAllAgencyWorkers(filters?: { stage?: string; jobId?: string }
       if (error) throw error;
       return data;
     },
-    enabled: role === 'admin' || role === 'recruiter',
+    enabled: isInternalStaff,
   });
 }

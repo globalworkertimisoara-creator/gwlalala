@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AppRole } from '@/types/database';
+import { AppRole, isInternalRole } from '@/types/database';
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +13,9 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isAgency: boolean;
+  isInternalStaff: boolean;
+  isOperationsManager: boolean;
+  isDocumentationStaff: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -113,6 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     isAdmin: role === 'admin',
     isAgency: role === 'agency',
+    isInternalStaff: role ? isInternalRole(role) : false,
+    isOperationsManager: role === 'operations_manager',
+    isDocumentationStaff: role === 'documentation_staff',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
