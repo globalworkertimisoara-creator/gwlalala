@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +34,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getRoleLabel, AppRole } from '@/types/database';
-import { Users, Plus, Trash2, UserPlus, Crown, Network } from 'lucide-react';
+import { Users, Plus, Trash2, UserPlus, Crown, Network, X } from 'lucide-react';
+
+interface SelectedMember {
+  userId: string;
+  fullName: string;
+  role: AppRole;
+  isLead: boolean;
+}
 
 export function TeamsDashboard() {
   const { canManageAssignments, isAdmin } = useAuth();
@@ -41,6 +50,7 @@ export function TeamsDashboard() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamDescription, setNewTeamDescription] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState<SelectedMember[]>([]);
   
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
@@ -79,11 +89,40 @@ export function TeamsDashboard() {
     await createTeam.mutateAsync({
       name: newTeamName,
       description: newTeamDescription || undefined,
+      members: selectedMembers.map(m => ({ userId: m.userId, isLead: m.isLead })),
     });
     
     setNewTeamName('');
     setNewTeamDescription('');
+    setSelectedMembers([]);
     setCreateDialogOpen(false);
+  };
+
+  const handleAddSelectedMember = (userId: string) => {
+    const user = allUsers.find(u => u.user_id === userId);
+    if (!user || selectedMembers.some(m => m.userId === userId)) return;
+    
+    setSelectedMembers(prev => [...prev, {
+      userId: user.user_id,
+      fullName: user.full_name || 'Unknown',
+      role: user.role,
+      isLead: false,
+    }]);
+  };
+
+  const handleRemoveSelectedMember = (userId: string) => {
+    setSelectedMembers(prev => prev.filter(m => m.userId !== userId));
+  };
+
+  const handleToggleLead = (userId: string) => {
+    setSelectedMembers(prev => prev.map(m => 
+      m.userId === userId ? { ...m, isLead: !m.isLead } : m
+    ));
+  };
+
+  const getAvailableUsersForCreate = () => {
+    const selectedIds = selectedMembers.map(m => m.userId);
+    return allUsers.filter(u => !selectedIds.includes(u.user_id));
   };
 
   const handleAddMember = async () => {
@@ -176,13 +215,86 @@ export function TeamsDashboard() {
                       placeholder="Brief description of the team's focus"
                     />
                   </div>
+
+                  {/* Team Members Selection */}
+                  <div className="space-y-2">
+                    <Label>Add Team Members</Label>
+                    <Select onValueChange={handleAddSelectedMember} value="">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select staff members to add..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableUsersForCreate().map((user) => (
+                          <SelectItem key={user.user_id} value={user.user_id}>
+                            {user.full_name || 'Unknown'} ({getRoleLabel(user.role)})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Selected Members List */}
+                    {selectedMembers.length > 0 && (
+                      <ScrollArea className="max-h-40 mt-2">
+                        <div className="space-y-2">
+                          {selectedMembers.map((member) => (
+                            <div
+                              key={member.userId}
+                              className="flex items-center justify-between gap-2 p-2 rounded-md bg-accent/50"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Avatar className="h-6 w-6 shrink-0">
+                                  <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                                    {getInitials(member.fullName)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm font-medium truncate">{member.fullName}</span>
+                                <Badge variant="secondary" className="text-[9px] shrink-0">
+                                  {getRoleLabel(member.role)}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center gap-1">
+                                  <Checkbox
+                                    id={`lead-${member.userId}`}
+                                    checked={member.isLead}
+                                    onCheckedChange={() => handleToggleLead(member.userId)}
+                                  />
+                                  <Label htmlFor={`lead-${member.userId}`} className="text-xs cursor-pointer">
+                                    Lead
+                                  </Label>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleRemoveSelectedMember(member.userId)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    )}
+                    {selectedMembers.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        You can add members now or later after creating the team.
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => {
+                    setCreateDialogOpen(false);
+                    setSelectedMembers([]);
+                    setNewTeamName('');
+                    setNewTeamDescription('');
+                  }}>
                     Cancel
                   </Button>
                   <Button onClick={handleCreateTeam} disabled={!newTeamName.trim() || createTeam.isPending}>
-                    {createTeam.isPending ? 'Creating...' : 'Create Team'}
+                    {createTeam.isPending ? 'Creating...' : `Create Team${selectedMembers.length > 0 ? ` with ${selectedMembers.length} member${selectedMembers.length > 1 ? 's' : ''}` : ''}`}
                   </Button>
                 </DialogFooter>
               </DialogContent>
