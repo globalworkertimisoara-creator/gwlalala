@@ -1,6 +1,6 @@
 // Database types for GlobalWorker Recruitment Tracker
 
-export type AppRole = 'admin' | 'recruiter';
+export type AppRole = 'admin' | 'recruiter' | 'agency';
 
 export type RecruitmentStage = 
   | 'sourced'
