@@ -298,6 +298,11 @@ export type Database = {
           id: string
           linkedin: string | null
           nationality: string | null
+          parents_names: string | null
+          passport_expiry: string | null
+          passport_issue_date: string | null
+          passport_issued_by: string | null
+          passport_number: string | null
           phone: string | null
           rejection_reason: string | null
           updated_at: string
@@ -313,6 +318,11 @@ export type Database = {
           id?: string
           linkedin?: string | null
           nationality?: string | null
+          parents_names?: string | null
+          passport_expiry?: string | null
+          passport_issue_date?: string | null
+          passport_issued_by?: string | null
+          passport_number?: string | null
           phone?: string | null
           rejection_reason?: string | null
           updated_at?: string
@@ -328,6 +338,11 @@ export type Database = {
           id?: string
           linkedin?: string | null
           nationality?: string | null
+          parents_names?: string | null
+          passport_expiry?: string | null
+          passport_issue_date?: string | null
+          passport_issued_by?: string | null
+          passport_number?: string | null
           phone?: string | null
           rejection_reason?: string | null
           updated_at?: string
@@ -662,7 +677,13 @@ export type Database = {
         | "approved"
         | "rejected"
         | "needs_documents"
-      doc_type: "resume" | "passport" | "visa" | "contract" | "other"
+      doc_type:
+        | "resume"
+        | "passport"
+        | "visa"
+        | "contract"
+        | "other"
+        | "residence_permit"
       job_status: "open" | "closed" | "filled"
       project_status: "draft" | "active" | "on_hold" | "completed" | "cancelled"
       recruitment_stage:
@@ -834,7 +855,14 @@ export const Constants = {
         "rejected",
         "needs_documents",
       ],
-      doc_type: ["resume", "passport", "visa", "contract", "other"],
+      doc_type: [
+        "resume",
+        "passport",
+        "visa",
+        "contract",
+        "other",
+        "residence_permit",
+      ],
       job_status: ["open", "closed", "filled"],
       project_status: ["draft", "active", "on_hold", "completed", "cancelled"],
       recruitment_stage: [

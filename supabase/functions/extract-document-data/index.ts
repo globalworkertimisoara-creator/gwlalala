@@ -20,10 +20,13 @@ interface ExtractedData {
   date_of_birth?: string;
   nationality?: string;
   current_country?: string;
+  parents_names?: string;
   
   // Passport specific
   passport_number?: string;
   passport_expiry?: string;
+  passport_issue_date?: string;
+  passport_issued_by?: string;
   
   // CV/Resume specific
   skills?: string;
@@ -34,13 +37,16 @@ interface ExtractedData {
   medical_status?: string;
   medical_date?: string;
   
-  // Visa
+  // Visa / Residence permit
   visa_type?: string;
   visa_expiry?: string;
+  residence_permit_number?: string;
+  residence_permit_expiry?: string;
   
   // General
   document_type?: string;
   confidence?: number;
+  original_language?: string;
 }
 
 serve(async (req) => {
@@ -91,9 +97,11 @@ serve(async (req) => {
 - Full name (as written)
 - Date of birth
 - Nationality
+- Parents names (father and mother if visible)
 - Passport number
+- Issue date
 - Expiry date
-- Country of issue`,
+- Issuing authority/country`,
       
       photo: `This is a photo. If there's any text visible, extract:
 - Any name or identification text`,
@@ -134,10 +142,18 @@ serve(async (req) => {
 - Full name
 - Email
 - Phone
-- Any dates
-- Any identification numbers`,
+- Parents names (if visible)
+- Any dates (issue dates, expiry dates)
+- Any identification numbers (passport, visa, permit)`,
       
       // For candidate documents (internal staff)
+      residence_permit: `Extract from this residence permit:
+- Full name
+- Nationality
+- Permit/card number
+- Issue date
+- Expiry date
+- Issuing authority`,
       resume: `Extract the following from this CV/Resume:
 - Full name
 - Email address
@@ -182,8 +198,11 @@ Return ONLY a JSON object with these possible fields:
   "date_of_birth": "YYYY-MM-DD or null",
   "nationality": "string or null (in English)",
   "current_country": "string or null (in English)",
+  "parents_names": "string or null (format: 'Father: Name, Mother: Name')",
   "passport_number": "string or null",
   "passport_expiry": "YYYY-MM-DD or null",
+  "passport_issue_date": "YYYY-MM-DD or null",
+  "passport_issued_by": "string or null (issuing authority/country)",
   "skills": "comma-separated string in English or null",
   "experience_years": "number or null",
   "linkedin": "URL string or null",
@@ -191,6 +210,8 @@ Return ONLY a JSON object with these possible fields:
   "medical_date": "YYYY-MM-DD or null",
   "visa_type": "string or null",
   "visa_expiry": "YYYY-MM-DD or null",
+  "residence_permit_number": "string or null",
+  "residence_permit_expiry": "YYYY-MM-DD or null",
   "document_type": "detected type",
   "confidence": "0-100 percentage",
   "original_language": "detected language of the document"
