@@ -50,6 +50,7 @@ const navItems = [
   { title: 'Candidates', url: '/candidates', icon: Users },
   { title: 'Jobs', url: '/jobs', icon: Briefcase },
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2 },
+  { title: 'My Account', url: '/my-account', icon: User },
   { title: 'Settings', url: '/settings', icon: Settings },
 ];
 
