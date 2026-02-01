@@ -3,8 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationOverview } from '@/components/account/OrganizationOverview';
 import { TeamsDashboard } from '@/components/account/TeamsDashboard';
 import { UserManagementCard } from '@/components/settings/UserManagementCard';
+import { AgencyListCard } from '@/components/account/AgencyListCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Network, Users } from 'lucide-react';
+import { Building2, Network, Users, Handshake } from 'lucide-react';
 
 const OrganizationStructure = () => {
   const { isAgency, isAdmin } = useAuth();
@@ -48,12 +49,16 @@ const OrganizationStructure = () => {
               <Network className="h-4 w-4" />
               Teams
             </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger value="users" className="gap-2">
-                <Users className="h-4 w-4" />
-                Users
-              </TabsTrigger>
-            )}
+          {isAdmin && (
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="h-4 w-4" />
+              Staff
+            </TabsTrigger>
+          )}
+            <TabsTrigger value="agencies" className="gap-2">
+              <Handshake className="h-4 w-4" />
+              Agencies
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="roles" className="space-y-6">
@@ -69,6 +74,10 @@ const OrganizationStructure = () => {
               <UserManagementCard />
             </TabsContent>
           )}
+
+          <TabsContent value="agencies" className="space-y-6">
+            <AgencyListCard />
+          </TabsContent>
         </Tabs>
       </div>
     </AppLayout>
