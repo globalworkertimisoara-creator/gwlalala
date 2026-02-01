@@ -111,7 +111,7 @@ export default function AgencyAuth() {
       return;
     }
 
-    // Sign up user with agency role metadata - the trigger handles role assignment
+    // Sign up user with agency role metadata - the trigger handles role assignment and verifies code
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -121,6 +121,7 @@ export default function AgencyAuth() {
           full_name: contactPerson,
           is_agency: true,
           company_name: companyName,
+          registration_code: registrationCode,
         },
       },
     });
