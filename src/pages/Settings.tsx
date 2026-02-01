@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import GoogleDriveSetup from '@/components/settings/GoogleDriveSetup';
 
 const Settings = () => {
   return (
@@ -16,6 +17,11 @@ const Settings = () => {
             Manage your recruitment tracker preferences
           </p>
         </div>
+
+        {/* Google Drive Integration */}
+        <GoogleDriveSetup />
+
+        <Separator />
 
         {/* Company Settings */}
         <Card>
