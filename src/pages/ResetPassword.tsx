@@ -17,32 +17,37 @@ export default function ResetPassword() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if we have a valid recovery session
+    let sub: ReturnType<typeof supabase.auth.onAuthStateChange>['data']['subscription'] | null = null;
+
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      // The user should have a session from clicking the reset link
+
       if (session) {
         setIsValidSession(true);
+        setIsCheckingSession(false);
       } else {
-        // Listen for auth state changes (in case the token is being processed)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        // Listen for the PASSWORD_RECOVERY event that arrives after the URL hash is consumed
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+          if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && s)) {
             setIsValidSession(true);
+            setIsCheckingSession(false);
           }
         });
+        sub = subscription;
 
-        // Give it a moment for the auth state to update
+        // Fallback: stop the spinner after 2 s even if no event fires
         setTimeout(() => {
           setIsCheckingSession(false);
         }, 2000);
-
-        return () => subscription.unsubscribe();
       }
-      setIsCheckingSession(false);
     };
 
     checkSession();
+
+    // Real cleanup — runs when the component unmounts
+    return () => {
+      sub?.unsubscribe();
+    };
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {

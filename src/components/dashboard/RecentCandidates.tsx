@@ -6,9 +6,10 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface RecentCandidatesProps {
   candidates: Candidate[];
+  onCandidateClick?: (candidate: Candidate) => void;
 }
 
-export function RecentCandidates({ candidates }: RecentCandidatesProps) {
+export function RecentCandidates({ candidates, onCandidateClick }: RecentCandidatesProps) {
   const recentCandidates = [...candidates]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 5);
@@ -41,6 +42,7 @@ export function RecentCandidates({ candidates }: RecentCandidatesProps) {
           <div 
             key={candidate.id} 
             className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+            onClick={() => onCandidateClick?.(candidate)}
           >
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-primary/10 text-primary font-medium">

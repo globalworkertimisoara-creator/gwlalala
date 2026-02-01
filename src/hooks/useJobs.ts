@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Job, CreateJobInput, UpdateJobInput, JobStatus } from '@/types/database';
+import { Job, Candidate, CreateJobInput, UpdateJobInput, JobStatus, LinkCandidateToJobInput } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 
 export function useJobs(filters?: {
@@ -169,6 +169,132 @@ export function useJobCandidateCount() {
       });
       
       return counts;
+    },
+  });
+}
+
+// Fetch all candidate_job_links for a given job, with the full candidate row joined
+export function useJobCandidates(jobId: string | undefined) {
+  return useQuery({
+    queryKey: ['job-candidates', jobId],
+    queryFn: async () => {
+      if (!jobId) return [];
+
+      const { data, error } = await supabase
+        .from('candidate_job_links')
+        .select('*, candidates(*)')
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as unknown as Array<{
+        id: string;
+        candidate_id: string;
+        job_id: string;
+        submitted_date: string;
+        current_status: string;
+        created_at: string;
+        candidates: Candidate;
+      }>;
+    },
+    enabled: !!jobId,
+  });
+}
+
+// Fetch all candidate_job_links for a given candidate, with the full job row joined
+export function useCandidateJobs(candidateId: string | undefined) {
+  return useQuery({
+    queryKey: ['candidate-jobs', candidateId],
+    queryFn: async () => {
+      if (!candidateId) return [];
+
+      const { data, error } = await supabase
+        .from('candidate_job_links')
+        .select('*, jobs(*)')
+        .eq('candidate_id', candidateId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as unknown as Array<{
+        id: string;
+        candidate_id: string;
+        job_id: string;
+        submitted_date: string;
+        current_status: string;
+        created_at: string;
+        jobs: Job;
+      }>;
+    },
+    enabled: !!candidateId,
+  });
+}
+
+export function useLinkCandidateToJob() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (input: LinkCandidateToJobInput) => {
+      const { data, error } = await supabase
+        .from('candidate_job_links')
+        .insert({
+          candidate_id: input.candidate_id,
+          job_id: input.job_id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-candidates'] });
+      queryClient.invalidateQueries({ queryKey: ['candidate-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['job-candidate-counts'] });
+      toast({
+        title: 'Candidate linked',
+        description: 'The candidate has been linked to this job.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to link candidate',
+        description: error.message,
+      });
+    },
+  });
+}
+
+export function useUnlinkCandidateFromJob() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ candidateId, jobId }: { candidateId: string; jobId: string }) => {
+      const { error } = await supabase
+        .from('candidate_job_links')
+        .delete()
+        .eq('candidate_id', candidateId)
+        .eq('job_id', jobId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-candidates'] });
+      queryClient.invalidateQueries({ queryKey: ['candidate-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['job-candidate-counts'] });
+      toast({
+        title: 'Candidate unlinked',
+        description: 'The candidate has been removed from this job.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to unlink candidate',
+        description: error.message,
+      });
     },
   });
 }

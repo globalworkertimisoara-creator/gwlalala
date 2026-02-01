@@ -6,11 +6,13 @@ import { useCandidates } from '@/hooks/useCandidates';
 import { useJobs } from '@/hooks/useJobs';
 import { Users, UserCheck, Clock, Briefcase, AlertTriangle, Loader2 } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const { data: candidates, isLoading: candidatesLoading } = useCandidates();
   const { data: jobs, isLoading: jobsLoading } = useJobs({ status: 'open' });
+  const navigate = useNavigate();
 
   const isLoading = candidatesLoading || jobsLoading;
 
@@ -100,7 +102,7 @@ const Index = () => {
         {/* Charts and Activity */}
         <div className="grid gap-6 lg:grid-cols-2">
           <StageChart candidates={candidates || []} />
-          <RecentCandidates candidates={candidates || []} />
+          <RecentCandidates candidates={candidates || []} onCandidateClick={(c) => navigate(`/candidates/${c.id}`)} />
         </div>
       </div>
     </AppLayout>

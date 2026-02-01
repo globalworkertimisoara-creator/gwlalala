@@ -30,12 +30,6 @@ export default function Auth() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    // Update session persistence based on "Remember me" checkbox
-    await supabase.auth.setSession({ 
-      access_token: '', 
-      refresh_token: '' 
-    }).catch(() => {}); // Clear any existing session first
-
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,

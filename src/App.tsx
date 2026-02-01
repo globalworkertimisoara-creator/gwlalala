@@ -13,6 +13,7 @@ import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import CandidateDetail from "./pages/CandidateDetail";
+import JobDetail from "./pages/JobDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,11 @@ const App = () => (
             <Route path="/settings" element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/jobs/:id" element={
+              <ProtectedRoute>
+                <JobDetail />
               </ProtectedRoute>
             } />
             <Route path="/candidates/:id" element={

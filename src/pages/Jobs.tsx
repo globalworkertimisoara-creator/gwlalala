@@ -22,6 +22,7 @@ import { useJobs, useCreateJob, useJobCandidateCount } from '@/hooks/useJobs';
 import { JobStatus } from '@/types/database';
 import { Plus, Search, Building2, MapPin, DollarSign, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ export default function Jobs() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const { data: jobs, isLoading } = useJobs({
     status: statusFilter === 'all' ? undefined : statusFilter,
@@ -184,7 +186,7 @@ export default function Jobs() {
                   </TableHeader>
                   <TableBody>
                     {jobs.map((job) => (
-                      <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50">
+                      <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/jobs/${job.id}`)}>
                         <TableCell className="font-medium">{job.title}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
