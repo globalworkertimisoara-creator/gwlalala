@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import GoogleDriveSetup from '@/components/settings/GoogleDriveSetup';
 import { RegistrationCodesCard } from '@/components/settings/RegistrationCodesCard';
-import { UserManagementCard } from '@/components/settings/UserManagementCard';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
   const { isAdmin } = useAuth();
+  
   return (
     <AppLayout>
       <div className="p-6 lg:p-8 space-y-6 max-w-4xl">
@@ -21,14 +21,6 @@ const Settings = () => {
             Manage your recruitment tracker preferences
           </p>
         </div>
-
-        {/* User Management - Admin Only */}
-        {isAdmin && (
-          <>
-            <UserManagementCard />
-            <Separator />
-          </>
-        )}
 
         {/* Registration Codes - Admin Only */}
         {isAdmin && (

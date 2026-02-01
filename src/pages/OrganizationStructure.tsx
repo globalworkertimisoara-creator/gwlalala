@@ -2,11 +2,12 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrganizationOverview } from '@/components/account/OrganizationOverview';
 import { TeamsDashboard } from '@/components/account/TeamsDashboard';
+import { UserManagementCard } from '@/components/settings/UserManagementCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { Building2, Users, Network } from 'lucide-react';
+import { Building2, Network, Users } from 'lucide-react';
 
-const MyAccount = () => {
-  const { isAgency } = useAuth();
+const OrganizationStructure = () => {
+  const { isAgency, isAdmin } = useAuth();
 
   // Agency users shouldn't see internal organization structure
   if (isAgency) {
@@ -30,36 +31,48 @@ const MyAccount = () => {
       <div className="p-6 lg:p-8 space-y-6 max-w-6xl">
         {/* Header */}
         <div className="space-y-1">
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">My Account</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Organization Structure</h1>
           <p className="text-muted-foreground">
-            View organization structure, roles, and teams
+            View organization structure, roles, teams, and staff
           </p>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="organization" className="space-y-6">
+        <Tabs defaultValue="roles" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="organization" className="gap-2">
+            <TabsTrigger value="roles" className="gap-2">
               <Building2 className="h-4 w-4" />
-              Organization
+              Roles
             </TabsTrigger>
             <TabsTrigger value="teams" className="gap-2">
               <Network className="h-4 w-4" />
               Teams
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="users" className="gap-2">
+                <Users className="h-4 w-4" />
+                Users
+              </TabsTrigger>
+            )}
           </TabsList>
 
-          <TabsContent value="organization" className="space-y-6">
+          <TabsContent value="roles" className="space-y-6">
             <OrganizationOverview />
           </TabsContent>
 
           <TabsContent value="teams" className="space-y-6">
             <TeamsDashboard />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="users" className="space-y-6">
+              <UserManagementCard />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </AppLayout>
   );
 };
 
-export default MyAccount;
+export default OrganizationStructure;
