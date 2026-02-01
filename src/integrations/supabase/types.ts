@@ -913,6 +913,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_assignments: { Args: { _user_id: string }; Returns: boolean }
       get_agency_profile_id: { Args: { _user_id: string }; Returns: string }
       get_agency_profiles_limited: {
         Args: never
@@ -930,6 +931,14 @@ export type Database = {
         Returns: boolean
       }
       is_agency: { Args: { _user_id: string }; Returns: boolean }
+      is_assigned_to_job: {
+        Args: { _job_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_assigned_to_project: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_authenticated: { Args: never; Returns: boolean }
     }
     Enums: {

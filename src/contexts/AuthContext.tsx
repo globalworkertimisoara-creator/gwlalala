@@ -16,6 +16,10 @@ interface AuthContextType {
   isInternalStaff: boolean;
   isOperationsManager: boolean;
   isDocumentationStaff: boolean;
+  isDocumentationLead: boolean;
+  isSalesManager: boolean;
+  isProjectManager: boolean;
+  canManageAssignments: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -106,6 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(null);
   };
 
+  const isAdmin = role === 'admin';
+  const isSalesManager = role === 'sales_manager';
+  const isProjectManager = role === 'project_manager';
+
   const value = {
     user,
     session,
@@ -114,11 +122,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
-    isAdmin: role === 'admin',
+    isAdmin,
     isAgency: role === 'agency',
     isInternalStaff: role ? isInternalRole(role) : false,
     isOperationsManager: role === 'operations_manager',
     isDocumentationStaff: role === 'documentation_staff',
+    isDocumentationLead: role === 'documentation_lead',
+    isSalesManager,
+    isProjectManager,
+    canManageAssignments: isAdmin || isSalesManager || isProjectManager,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
