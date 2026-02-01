@@ -671,7 +671,12 @@ export type Database = {
         | "plane_ticket"
         | "visa_document"
         | "other"
-      app_role: "admin" | "recruiter" | "agency"
+      app_role:
+        | "admin"
+        | "recruiter"
+        | "agency"
+        | "documentation_staff"
+        | "operations_manager"
       approval_status:
         | "pending_review"
         | "approved"
@@ -848,7 +853,13 @@ export const Constants = {
         "visa_document",
         "other",
       ],
-      app_role: ["admin", "recruiter", "agency"],
+      app_role: [
+        "admin",
+        "recruiter",
+        "agency",
+        "documentation_staff",
+        "operations_manager",
+      ],
       approval_status: [
         "pending_review",
         "approved",

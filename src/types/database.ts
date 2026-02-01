@@ -1,6 +1,23 @@
 // Database types for GlobalWorker Recruitment Tracker
 
-export type AppRole = 'admin' | 'recruiter' | 'agency';
+export type AppRole = 'admin' | 'recruiter' | 'agency' | 'documentation_staff' | 'operations_manager';
+
+// Role configuration with labels and descriptions
+export const ROLES: { value: AppRole; label: string; description: string; isInternal: boolean }[] = [
+  { value: 'admin', label: 'Admin', description: 'Full system access', isInternal: true },
+  { value: 'recruiter', label: 'Recruiter', description: 'Recruitment operations', isInternal: true },
+  { value: 'operations_manager', label: 'Operations Manager', description: 'Supervises recruitment operations', isInternal: true },
+  { value: 'documentation_staff', label: 'Documentation Staff', description: 'Document processing and compliance', isInternal: true },
+  { value: 'agency', label: 'Agency', description: 'External supplier portal', isInternal: false },
+];
+
+export const getRoleLabel = (role: AppRole): string => {
+  return ROLES.find(r => r.value === role)?.label || role;
+};
+
+export const isInternalRole = (role: AppRole): boolean => {
+  return ROLES.find(r => r.value === role)?.isInternal ?? false;
+};
 
 export type RecruitmentStage = 
   | 'sourced'
