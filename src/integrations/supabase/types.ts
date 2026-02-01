@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_job_invitations: {
+        Row: {
+          agency_id: string
+          id: string
+          invited_at: string
+          invited_by: string | null
+          job_id: string
+        }
+        Insert: {
+          agency_id: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          job_id: string
+        }
+        Update: {
+          agency_id?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          job_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_job_invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_job_invitations_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_profiles: {
         Row: {
           address: string | null
@@ -341,6 +380,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          project_id: string | null
           required_skills: string | null
           salary_range: string | null
           status: Database["public"]["Enums"]["job_status"]
@@ -354,6 +394,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          project_id?: string | null
           required_skills?: string | null
           salary_range?: string | null
           status?: Database["public"]["Enums"]["job_status"]
@@ -367,13 +408,22 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          project_id?: string | null
           required_skills?: string | null
           salary_range?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notes: {
         Row: {
@@ -467,6 +517,54 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          contract_signed_at: string | null
+          countries_in_contract: string[]
+          created_at: string
+          created_by: string | null
+          employer_name: string
+          id: string
+          location: string
+          name: string
+          notes: string | null
+          sales_person_id: string | null
+          sales_person_name: string | null
+          status: Database["public"]["Enums"]["project_status"]
+          updated_at: string
+        }
+        Insert: {
+          contract_signed_at?: string | null
+          countries_in_contract?: string[]
+          created_at?: string
+          created_by?: string | null
+          employer_name: string
+          id?: string
+          location: string
+          name: string
+          notes?: string | null
+          sales_person_id?: string | null
+          sales_person_name?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
+        }
+        Update: {
+          contract_signed_at?: string | null
+          countries_in_contract?: string[]
+          created_at?: string
+          created_by?: string | null
+          employer_name?: string
+          id?: string
+          location?: string
+          name?: string
+          notes?: string | null
+          sales_person_id?: string | null
+          sales_person_name?: string | null
+          status?: Database["public"]["Enums"]["project_status"]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -566,6 +664,7 @@ export type Database = {
         | "needs_documents"
       doc_type: "resume" | "passport" | "visa" | "contract" | "other"
       job_status: "open" | "closed" | "filled"
+      project_status: "draft" | "active" | "on_hold" | "completed" | "cancelled"
       recruitment_stage:
         | "sourced"
         | "contacted"
@@ -737,6 +836,7 @@ export const Constants = {
       ],
       doc_type: ["resume", "passport", "visa", "contract", "other"],
       job_status: ["open", "closed", "filled"],
+      project_status: ["draft", "active", "on_hold", "completed", "cancelled"],
       recruitment_stage: [
         "sourced",
         "contacted",

@@ -15,10 +15,13 @@ import ResetPassword from "./pages/ResetPassword";
 import CandidateDetail from "./pages/CandidateDetail";
 import JobDetail from "./pages/JobDetail";
 import NotFound from "./pages/NotFound";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import AgencyDashboard from "./pages/AgencyDashboard";
 import AgencyWorkerDetail from "./pages/AgencyWorkerDetail";
 import AgencyWorkers from "./pages/AgencyWorkers";
 import AgencyAuth from "./pages/AgencyAuth";
+import AgencyJobs from "./pages/AgencyJobs";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +71,16 @@ const App = () => (
                 <CandidateDetail />
               </ProtectedRoute>
             } />
+            <Route path="/projects" element={
+              <ProtectedRoute>
+                <Projects />
+              </ProtectedRoute>
+            } />
+            <Route path="/projects/:id" element={
+              <ProtectedRoute>
+                <ProjectDetail />
+              </ProtectedRoute>
+            } />
             {/* Agency Routes */}
             <Route path="/agency" element={
               <ProtectedRoute requireAgency>
@@ -77,6 +90,11 @@ const App = () => (
             <Route path="/agency/workers/:id" element={
               <ProtectedRoute requireAgency>
                 <AgencyWorkerDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/agency/jobs" element={
+              <ProtectedRoute requireAgency>
+                <AgencyJobs />
               </ProtectedRoute>
             } />
             {/* Staff view of agency workers */}

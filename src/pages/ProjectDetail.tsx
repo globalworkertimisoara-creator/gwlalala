@@ -1,0 +1,304 @@
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { useProject, useUpdateProject, useDeleteProject } from '@/hooks/useProjects';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  ArrowLeft,
+  Building2,
+  MapPin,
+  Users,
+  Clock,
+  Calendar,
+  Briefcase,
+  Trash2,
+  Loader2,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { getProjectStatusColor, getProjectStatusLabel, PROJECT_STATUS_CONFIG, ProjectStatus } from '@/types/project';
+
+export default function ProjectDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { data: project, isLoading } = useProject(id!);
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
+
+  const handleStatusChange = (status: ProjectStatus) => {
+    if (project) {
+      updateProject.mutate({ id: project.id, status });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (project) {
+      await deleteProject.mutateAsync(project.id);
+      navigate('/projects');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!project) {
+    return (
+      <AppLayout>
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold mb-2">Project not found</h2>
+          <Button onClick={() => navigate('/projects')}>Back to Projects</Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/projects')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">{project.name}</h1>
+            <p className="text-muted-foreground">{project.employer_name}</p>
+          </div>
+          <Select value={project.status} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(PROJECT_STATUS_CONFIG).map(([value, config]) => (
+                <SelectItem key={value} value={value}>
+                  {config.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="icon">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Project?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete this project. Jobs linked to this project will be unlinked but not deleted.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Details */}
+          <div className="lg:col-span-1 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Project Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Employer</p>
+                    <p className="font-medium">{project.employer_name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Location</p>
+                    <p className="font-medium">{project.location}</p>
+                  </div>
+                </div>
+                {project.sales_person_name && (
+                  <div className="flex items-center gap-3">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Sales Person</p>
+                      <p className="font-medium">{project.sales_person_name}</p>
+                    </div>
+                  </div>
+                )}
+                {project.contract_signed_at && (
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Contract Signed</p>
+                      <p className="font-medium">
+                        {format(new Date(project.contract_signed_at), 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {project.days_since_contract !== null && (
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Time Since Contract</p>
+                      <p className="font-medium">{project.days_since_contract} days</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Contract Countries</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {project.countries_in_contract.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {project.countries_in_contract.map(country => (
+                      <Badge key={country} variant="outline">
+                        {country}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No countries specified</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {project.notes && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Notes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm whitespace-pre-wrap">{project.notes}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column - Metrics & Jobs */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Fulfillment Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Contract Fulfillment</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-3xl font-bold">{project.fill_percentage}%</span>
+                  <span className="text-muted-foreground">
+                    {project.filled_positions} of {project.total_positions} positions filled
+                  </span>
+                </div>
+                <Progress value={project.fill_percentage} className="h-3" />
+              </CardContent>
+            </Card>
+
+            {/* Jobs Table */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Linked Jobs ({project.jobs.length})
+                </CardTitle>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/jobs">Manage Jobs</Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {project.jobs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No jobs linked to this project yet</p>
+                    <p className="text-sm">Link jobs from the Jobs page</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-center">Total</TableHead>
+                        <TableHead className="text-center">Placed</TableHead>
+                        <TableHead className="text-right">Fill Rate</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {project.jobs.map(job => {
+                        const fillRate = job.total_candidates > 0
+                          ? Math.round((job.placed_candidates / job.total_candidates) * 100)
+                          : 0;
+                        return (
+                          <TableRow 
+                            key={job.id} 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => navigate(`/jobs/${job.id}`)}
+                          >
+                            <TableCell className="font-medium">{job.title}</TableCell>
+                            <TableCell>
+                              <Badge variant={job.status === 'open' ? 'default' : 'secondary'}>
+                                {job.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">{job.total_candidates}</TableCell>
+                            <TableCell className="text-center">{job.placed_candidates}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Progress value={fillRate} className="w-16 h-2" />
+                                <span className="text-sm w-10">{fillRate}%</span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
+  );
+}

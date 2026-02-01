@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useJob, useUpdateJob, useJobCandidates, useLinkCandidateToJob } from '@/hooks/useJobs';
 import { useCandidates } from '@/hooks/useCandidates';
+import { useProjects, useLinkJobToProject } from '@/hooks/useProjects';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import {
   ExternalLink,
   Search,
   Plus,
+  FolderKanban,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { JobStatus, getStageLabel, getStageColor } from '@/types/database';
@@ -52,8 +54,10 @@ export default function JobDetail() {
   const { data: job, isLoading: jobLoading } = useJob(id);
   const { data: jobCandidateLinks, isLoading: linkedLoading } = useJobCandidates(id);
   const { data: allCandidates } = useCandidates();
+  const { data: projects } = useProjects();
   const updateJob = useUpdateJob();
   const linkCandidate = useLinkCandidateToJob();
+  const linkJobToProject = useLinkJobToProject();
 
   const [newStatus, setNewStatus] = useState<string>('');
   const [linkSearch, setLinkSearch] = useState('');
@@ -96,7 +100,15 @@ export default function JobDetail() {
     setLinkSearch('');
   };
 
-  // ─── Loading / Not Found ─────────────────────────────────────────────────
+  const handleProjectLink = async (projectId: string | null) => {
+    if (!id) return;
+    await linkJobToProject.mutateAsync({ jobId: id, projectId });
+  };
+
+  // Get current project for this job
+  const currentProject = projects?.find(p => 
+    p.jobs.some(j => j.id === id)
+  );
 
   if (jobLoading) {
     return (
@@ -237,6 +249,60 @@ export default function JobDetail() {
                   {updateJob.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Update Status
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Link to Project */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FolderKanban className="h-4 w-4" />
+                  Project
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {currentProject ? (
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <Link 
+                        to={`/projects/${currentProject.id}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {currentProject.name}
+                      </Link>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {currentProject.employer_name}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleProjectLink(null)}
+                      disabled={linkJobToProject.isPending}
+                    >
+                      Unlink from Project
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Select onValueChange={(value) => handleProjectLink(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a project…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projects?.map(p => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Link this job to a project for tracking
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
