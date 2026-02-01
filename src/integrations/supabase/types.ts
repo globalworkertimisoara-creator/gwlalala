@@ -914,6 +914,10 @@ export type Database = {
     }
     Functions: {
       can_manage_assignments: { Args: { _user_id: string }; Returns: boolean }
+      can_view_candidate_history: {
+        Args: { _candidate_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_agency_profile_id: { Args: { _user_id: string }; Returns: string }
       get_agency_profiles_limited: {
         Args: never
