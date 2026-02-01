@@ -117,7 +117,7 @@ export default function Auth() {
       return;
     }
 
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName, registrationCode, false);
 
     if (error) {
       toast({
