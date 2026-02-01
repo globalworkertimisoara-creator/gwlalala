@@ -3,7 +3,15 @@
  *
  * Google Drive API v3 client.
  * Uses OAuth2 with PKCE — no backend server needed.
+ *
+ * Token lifecycle:
+ *   • PKCE flow → no client secret on the frontend.
+ *   • Access token lasts ~1 hour.  If a refresh token is returned
+ *     it is used automatically; otherwise the user re-authenticates.
+ *   • Tokens are persisted in sessionStorage (cleared on tab close).
  */
+
+import { GOOGLE_CLIENT_ID } from '../config/googleConfig';
 
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -83,10 +91,9 @@ export function disconnectGoogleDrive(): void {
  * with a `code` query parameter.  Call `handleOAuthCallback` with that code.
  */
 export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  if (!clientId) {
+  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
     throw new Error(
-      'VITE_GOOGLE_CLIENT_ID is not set.\nAdd it as an env variable in Lovable (Settings → Environment).'
+      'Google Client ID is not configured.\nUpdate src/config/googleConfig.ts with your OAuth Client ID.'
     );
   }
 
@@ -95,7 +102,7 @@ export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
   sessionStorage.setItem(VERIFIER_KEY, verifier);
 
   const params = new URLSearchParams({
-    client_id: clientId,
+    client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
     response_type: 'code',
     scope: 'https://www.googleapis.com/auth/drive.file',
@@ -113,10 +120,9 @@ export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
  * Call this once after the OAuth redirect lands back in your app.
  */
 export async function handleOAuthCallback(code: string, redirectUri: string): Promise<void> {
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const verifier = sessionStorage.getItem(VERIFIER_KEY);
 
-  if (!clientId || !verifier) {
+  if (!GOOGLE_CLIENT_ID || !verifier) {
     throw new Error('OAuth flow broken — missing client ID or PKCE verifier.');
   }
 
@@ -125,7 +131,7 @@ export async function handleOAuthCallback(code: string, redirectUri: string): Pr
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code,
-      client_id: clientId,
+      client_id: GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
       code_verifier: verifier,
@@ -161,7 +167,7 @@ async function refreshAccessToken(): Promise<string> {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       refresh_token: tokens.refreshToken,
-      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      client_id: GOOGLE_CLIENT_ID,
       grant_type: 'refresh_token',
     }).toString(),
   });
