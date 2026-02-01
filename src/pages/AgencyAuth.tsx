@@ -63,8 +63,8 @@ export default function AgencyAuth() {
     const companyName = formData.get('companyName') as string;
     const contactPerson = formData.get('contactPerson') as string;
 
-    // Sign up user with agency role metadata
-    const { data, error } = await supabase.auth.signUp({
+    // Sign up user with agency role metadata - the trigger handles role assignment
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -84,14 +84,6 @@ export default function AgencyAuth() {
         description: error.message,
       });
     } else {
-      // After signup, manually insert agency role
-      if (data.user) {
-        await supabase.from('user_roles').insert({
-          user_id: data.user.id,
-          role: 'agency',
-        });
-      }
-      
       toast({
         title: 'Check your email',
         description: 'We sent you a confirmation link. Please verify your email to continue.',
