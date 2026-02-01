@@ -55,6 +55,15 @@ serve(async (req) => {
   }
 
   try {
+    // SECURITY: Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized', data: null }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -66,9 +75,58 @@ serve(async (req) => {
       throw new Error("Missing required fields: storage_path, bucket");
     }
 
-    // Create Supabase client to get the file
+    // Validate bucket is one of the allowed buckets
+    const allowedBuckets = ['candidate-documents', 'agency-documents'];
+    if (!allowedBuckets.includes(bucket)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid bucket', data: null }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // SECURITY: First verify user has access to this file using their token
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get user info to verify they're authenticated
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid authentication', data: null }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if user has access to the storage path via RLS
+    // For agency-documents, verify the path starts with their agency folder
+    // For candidate-documents, only staff can access
+    const { data: roleData } = await userSupabase.from('user_roles').select('role').eq('user_id', user.id).single();
+    const isAgency = roleData?.role === 'agency';
+
+    if (bucket === 'candidate-documents' && isAgency) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Access denied', data: null }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (bucket === 'agency-documents' && isAgency) {
+      // Verify agency can only access their own documents
+      const { data: agencyProfile } = await userSupabase.from('agency_profiles').select('id').eq('user_id', user.id).single();
+      if (!agencyProfile || !storage_path.startsWith(agencyProfile.id)) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Access denied', data: null }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Only after authorization checks pass, use service key for signed URL
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get signed URL for the file
