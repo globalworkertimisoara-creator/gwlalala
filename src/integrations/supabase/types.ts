@@ -667,6 +667,25 @@ export type Database = {
       is_authenticated: { Args: never; Returns: boolean }
     }
     Enums: {
+      activity_action:
+        | "created"
+        | "updated"
+        | "deleted"
+        | "viewed"
+        | "assigned"
+        | "unassigned"
+        | "status_changed"
+        | "escalated"
+        | "escalation_resolved"
+        | "escalation_acknowledged"
+        | "candidate_added"
+        | "candidate_removed"
+        | "stage_changed"
+        | "document_uploaded"
+        | "document_deleted"
+        | "note_added"
+        | "job_linked"
+        | "job_unlinked"
       agency_doc_type:
         | "cv"
         | "passport"
@@ -685,6 +704,9 @@ export type Database = {
         | "agency"
         | "documentation_staff"
         | "operations_manager"
+        | "documentation_lead"
+        | "sales_manager"
+        | "project_manager"
       approval_status:
         | "pending_review"
         | "approved"
@@ -697,6 +719,12 @@ export type Database = {
         | "contract"
         | "other"
         | "residence_permit"
+      escalation_status:
+        | "open"
+        | "acknowledged"
+        | "in_progress"
+        | "resolved"
+        | "closed"
       job_status: "open" | "closed" | "filled"
       project_status: "draft" | "active" | "on_hold" | "completed" | "cancelled"
       recruitment_stage:
@@ -848,6 +876,26 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_action: [
+        "created",
+        "updated",
+        "deleted",
+        "viewed",
+        "assigned",
+        "unassigned",
+        "status_changed",
+        "escalated",
+        "escalation_resolved",
+        "escalation_acknowledged",
+        "candidate_added",
+        "candidate_removed",
+        "stage_changed",
+        "document_uploaded",
+        "document_deleted",
+        "note_added",
+        "job_linked",
+        "job_unlinked",
+      ],
       agency_doc_type: [
         "cv",
         "passport",
@@ -867,6 +915,9 @@ export const Constants = {
         "agency",
         "documentation_staff",
         "operations_manager",
+        "documentation_lead",
+        "sales_manager",
+        "project_manager",
       ],
       approval_status: [
         "pending_review",
@@ -881,6 +932,13 @@ export const Constants = {
         "contract",
         "other",
         "residence_permit",
+      ],
+      escalation_status: [
+        "open",
+        "acknowledged",
+        "in_progress",
+        "resolved",
+        "closed",
       ],
       job_status: ["open", "closed", "filled"],
       project_status: ["draft", "active", "on_hold", "completed", "cancelled"],
