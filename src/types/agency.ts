@@ -15,6 +15,28 @@ export type AgencyDocType =
   | 'visa_document'
   | 'other';
 
+export type ApprovalStatus = 'pending_review' | 'approved' | 'rejected' | 'needs_documents';
+
+export const APPROVAL_STATUS_CONFIG: { 
+  value: ApprovalStatus; 
+  label: string; 
+  color: string; 
+  description: string;
+}[] = [
+  { value: 'pending_review', label: 'Pending Review', color: 'bg-yellow-100 text-yellow-800', description: 'Awaiting staff review' },
+  { value: 'approved', label: 'Approved', color: 'bg-green-100 text-green-800', description: 'Worker approved to proceed' },
+  { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800', description: 'Worker rejected' },
+  { value: 'needs_documents', label: 'Needs Documents', color: 'bg-orange-100 text-orange-800', description: 'Missing required documents' },
+];
+
+export const getApprovalStatusLabel = (status: ApprovalStatus): string => {
+  return APPROVAL_STATUS_CONFIG.find(s => s.value === status)?.label || status;
+};
+
+export const getApprovalStatusColor = (status: ApprovalStatus): string => {
+  return APPROVAL_STATUS_CONFIG.find(s => s.value === status)?.color || 'bg-gray-100 text-gray-700';
+};
+
 // Document type configuration with labels and stage requirements
 export const AGENCY_DOC_TYPES: { 
   value: AgencyDocType; 
@@ -88,6 +110,11 @@ export interface AgencyWorker {
   notes: string | null;
   submitted_at: string;
   updated_at: string;
+  // Approval workflow
+  approval_status: ApprovalStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_notes: string | null;
   // Joined data
   job?: {
     id: string;
@@ -95,6 +122,11 @@ export interface AgencyWorker {
     client_company: string;
     country: string;
     status: string;
+  };
+  agency?: {
+    id: string;
+    company_name: string;
+    country: string;
   };
   documents?: AgencyWorkerDocument[];
 }
@@ -146,4 +178,18 @@ export interface UpdateAgencyWorkerInput extends Partial<Omit<CreateAgencyWorker
   current_stage?: RecruitmentStage;
   rejection_reason?: string;
   notes?: string;
+  approval_status?: ApprovalStatus;
+  review_notes?: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  related_entity_type: string | null;
+  related_entity_id: string | null;
+  is_read: boolean;
+  created_at: string;
 }

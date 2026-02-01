@@ -10,7 +10,10 @@ import {
   UpdateAgencyProfileInput,
   CreateAgencyWorkerInput,
   UpdateAgencyWorkerInput,
-  AgencyDocType
+  AgencyDocType,
+  ApprovalStatus,
+  Notification,
+  INITIAL_REQUIRED_DOCS
 } from '@/types/agency';
 
 // Hook to get agency profile for current user
@@ -219,13 +222,21 @@ export function useCreateAgencyWorker() {
 // Hook to update worker (for internal staff)
 export function useUpdateAgencyWorker() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { toast } = useToast();
   
   return useMutation({
     mutationFn: async ({ id, ...input }: UpdateAgencyWorkerInput & { id: string }) => {
+      // If approving/rejecting, add reviewer info
+      const updateData: any = { ...input };
+      if (input.approval_status && input.approval_status !== 'pending_review') {
+        updateData.reviewed_by = user?.id;
+        updateData.reviewed_at = new Date().toISOString();
+      }
+      
       const { data, error } = await supabase
         .from('agency_workers')
-        .update(input)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
@@ -236,6 +247,7 @@ export function useUpdateAgencyWorker() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agency-workers'] });
       queryClient.invalidateQueries({ queryKey: ['agency-worker'] });
+      queryClient.invalidateQueries({ queryKey: ['all-agency-workers'] });
       toast({
         title: 'Worker updated',
         description: 'The worker information has been updated.',
@@ -249,6 +261,184 @@ export function useUpdateAgencyWorker() {
       });
     },
   });
+}
+
+// Hook for staff to approve/reject workers
+export function useReviewWorker() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      workerId, 
+      status, 
+      notes,
+      newStage
+    }: { 
+      workerId: string; 
+      status: ApprovalStatus; 
+      notes?: string;
+      newStage?: string;
+    }) => {
+      const updateData: any = {
+        approval_status: status,
+        review_notes: notes || null,
+        reviewed_by: user?.id,
+        reviewed_at: new Date().toISOString(),
+      };
+      
+      // If approving, optionally advance stage
+      if (status === 'approved' && newStage) {
+        updateData.current_stage = newStage;
+      }
+      
+      const { data, error } = await supabase
+        .from('agency_workers')
+        .update(updateData)
+        .eq('id', workerId)
+        .select(`
+          *,
+          job:jobs(id, title, client_company, country, status),
+          agency:agency_profiles(id, user_id, company_name, country)
+        `)
+        .single();
+      
+      if (error) throw error;
+      
+      // Create notification for agency (placeholder for future email integration)
+      if (data && (data as any).agency?.user_id) {
+        const agencyUserId = (data as any).agency.user_id;
+        const workerName = data.full_name;
+        const jobTitle = (data as any).job?.title || 'Unknown Job';
+        
+        let title: string;
+        let message: string;
+        
+        switch (status) {
+          case 'approved':
+            title = 'Worker Approved';
+            message = `${workerName} has been approved for ${jobTitle}. They will now proceed through the recruitment process.`;
+            break;
+          case 'rejected':
+            title = 'Worker Rejected';
+            message = `${workerName} has been rejected for ${jobTitle}.${notes ? ` Reason: ${notes}` : ''}`;
+            break;
+          case 'needs_documents':
+            title = 'Documents Required';
+            message = `Additional documents are required for ${workerName}'s application to ${jobTitle}.${notes ? ` Details: ${notes}` : ''}`;
+            break;
+          default:
+            title = 'Application Status Updated';
+            message = `The status of ${workerName}'s application has been updated.`;
+        }
+        
+        await supabase.from('notifications').insert({
+          user_id: agencyUserId,
+          title,
+          message,
+          type: status === 'approved' ? 'success' : status === 'rejected' ? 'error' : 'warning',
+          related_entity_type: 'agency_worker',
+          related_entity_id: workerId,
+        });
+      }
+      
+      return data as AgencyWorker;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['agency-workers'] });
+      queryClient.invalidateQueries({ queryKey: ['agency-worker'] });
+      queryClient.invalidateQueries({ queryKey: ['all-agency-workers'] });
+      
+      const statusLabels: Record<ApprovalStatus, string> = {
+        approved: 'approved',
+        rejected: 'rejected',
+        needs_documents: 'marked as needing documents',
+        pending_review: 'returned to pending review',
+      };
+      
+      toast({
+        title: 'Review completed',
+        description: `Worker has been ${statusLabels[variables.status]}.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to review worker',
+        description: error.message,
+      });
+    },
+  });
+}
+
+// Hook to check if worker has all required documents for their stage
+export function useDocumentCompleteness(workerId: string | undefined, currentStage: string) {
+  const { data: documents } = useWorkerDocuments(workerId);
+  
+  const uploadedDocTypes = documents?.map(d => d.doc_type) || [];
+  
+  // Check initial required docs
+  const missingInitialDocs = INITIAL_REQUIRED_DOCS.filter(
+    docType => !uploadedDocTypes.includes(docType)
+  );
+  
+  const hasAllInitialDocs = missingInitialDocs.length === 0;
+  
+  return {
+    hasAllInitialDocs,
+    missingInitialDocs,
+    uploadedDocTypes,
+    documentCount: documents?.length || 0,
+  };
+}
+
+// Hook to get notifications
+export function useNotifications() {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['notifications', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) throw error;
+      return data as Notification[];
+    },
+    enabled: !!user,
+  });
+}
+
+// Hook to mark notification as read
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+// Hook to get unread notification count
+export function useUnreadNotificationCount() {
+  const { data: notifications } = useNotifications();
+  return notifications?.filter(n => !n.is_read).length || 0;
 }
 
 // Hook to upload worker document

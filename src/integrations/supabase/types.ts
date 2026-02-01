@@ -124,6 +124,7 @@ export type Database = {
       agency_workers: {
         Row: {
           agency_id: string
+          approval_status: Database["public"]["Enums"]["approval_status"]
           current_country: string | null
           current_stage: Database["public"]["Enums"]["recruitment_stage"]
           date_of_birth: string | null
@@ -136,12 +137,16 @@ export type Database = {
           notes: string | null
           phone: string | null
           rejection_reason: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           skills: string | null
           submitted_at: string
           updated_at: string
         }
         Insert: {
           agency_id: string
+          approval_status?: Database["public"]["Enums"]["approval_status"]
           current_country?: string | null
           current_stage?: Database["public"]["Enums"]["recruitment_stage"]
           date_of_birth?: string | null
@@ -154,12 +159,16 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           skills?: string | null
           submitted_at?: string
           updated_at?: string
         }
         Update: {
           agency_id?: string
+          approval_status?: Database["public"]["Enums"]["approval_status"]
           current_country?: string | null
           current_stage?: Database["public"]["Enums"]["recruitment_stage"]
           date_of_birth?: string | null
@@ -172,6 +181,9 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           rejection_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           skills?: string | null
           submitted_at?: string
           updated_at?: string
@@ -395,6 +407,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -511,6 +559,11 @@ export type Database = {
         | "visa_document"
         | "other"
       app_role: "admin" | "recruiter" | "agency"
+      approval_status:
+        | "pending_review"
+        | "approved"
+        | "rejected"
+        | "needs_documents"
       doc_type: "resume" | "passport" | "visa" | "contract" | "other"
       job_status: "open" | "closed" | "filled"
       recruitment_stage:
@@ -676,6 +729,12 @@ export const Constants = {
         "other",
       ],
       app_role: ["admin", "recruiter", "agency"],
+      approval_status: [
+        "pending_review",
+        "approved",
+        "rejected",
+        "needs_documents",
+      ],
       doc_type: ["resume", "passport", "visa", "contract", "other"],
       job_status: ["open", "closed", "filled"],
       recruitment_stage: [

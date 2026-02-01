@@ -1,23 +1,33 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAgencyWorker, useAgencyProfile } from '@/hooks/useAgency';
+import { useAgencyWorker, useAgencyProfile, useWorkerDocuments } from '@/hooks/useAgency';
 import { WorkerDocumentUpload } from '@/components/agency/WorkerDocumentUpload';
+import { WorkerReviewDialog } from '@/components/agency/WorkerReviewDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Briefcase, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Briefcase, Loader2, ClipboardCheck, CheckCircle, FileWarning } from 'lucide-react';
 import { getStageLabel, getStageColor } from '@/types/database';
+import { getApprovalStatusColor, getApprovalStatusLabel, INITIAL_REQUIRED_DOCS, getDocTypeLabel } from '@/types/agency';
 import { format } from 'date-fns';
 
 export default function AgencyWorkerDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { role } = useAuth();
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
   
   const { data: profile } = useAgencyProfile();
   const { data: worker, isLoading } = useAgencyWorker(id);
+  const { data: documents } = useWorkerDocuments(id);
 
   const isAgencyView = role === 'agency';
+  
+  // Check document completeness
+  const uploadedDocTypes = documents?.map(d => d.doc_type) || [];
+  const missingDocs = INITIAL_REQUIRED_DOCS.filter(doc => !uploadedDocTypes.includes(doc));
+  const hasAllRequiredDocs = missingDocs.length === 0;
 
   if (isLoading) {
     return (
@@ -58,11 +68,14 @@ export default function AgencyWorkerDetail() {
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-2xl flex items-center gap-3">
+              <div className="space-y-2">
+                <CardTitle className="text-2xl flex items-center gap-3 flex-wrap">
                   {worker.full_name}
                   <Badge className={getStageColor(worker.current_stage)}>
                     {getStageLabel(worker.current_stage)}
+                  </Badge>
+                  <Badge className={getApprovalStatusColor(worker.approval_status)}>
+                    {getApprovalStatusLabel(worker.approval_status)}
                   </Badge>
                 </CardTitle>
                 <CardDescription className="mt-1">
@@ -73,9 +86,55 @@ export default function AgencyWorkerDetail() {
                   )}
                 </CardDescription>
               </div>
+              {!isAgencyView && (
+                <Button onClick={() => setShowReviewDialog(true)}>
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  Review
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
+            {/* Document Status Banner */}
+            <div className={`rounded-lg p-4 mb-4 ${hasAllRequiredDocs ? 'bg-green-50 border border-green-200' : 'bg-orange-50 border border-orange-200'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {hasAllRequiredDocs ? (
+                    <>
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="font-medium text-green-800">All required documents uploaded</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileWarning className="h-5 w-5 text-orange-600" />
+                      <span className="font-medium text-orange-800">Missing required documents</span>
+                    </>
+                  )}
+                </div>
+                <Badge variant="outline">
+                  {documents?.length || 0} document(s)
+                </Badge>
+              </div>
+              {!hasAllRequiredDocs && (
+                <div className="mt-2 text-sm text-orange-700">
+                  Missing: {missingDocs.map(d => getDocTypeLabel(d)).join(', ')}
+                </div>
+              )}
+            </div>
+
+            {/* Review Notes */}
+            {worker.review_notes && (
+              <div className="rounded-lg border p-4 mb-4 bg-muted/50">
+                <p className="text-sm font-medium mb-1">Review Notes</p>
+                <p className="text-sm text-muted-foreground">{worker.review_notes}</p>
+                {worker.reviewed_at && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Reviewed on {format(new Date(worker.reviewed_at), 'MMM d, yyyy')}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-muted-foreground" />
@@ -154,6 +213,15 @@ export default function AgencyWorkerDetail() {
           isAgencyView={isAgencyView}
         />
       </div>
+      
+      {/* Review Dialog */}
+      {!isAgencyView && worker && (
+        <WorkerReviewDialog
+          worker={worker}
+          open={showReviewDialog}
+          onOpenChange={setShowReviewDialog}
+        />
+      )}
     </div>
   );
 }
