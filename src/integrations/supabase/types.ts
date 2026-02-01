@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: Database["public"]["Enums"]["activity_action"]
+          actor_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          job_id: string | null
+          metadata: Json | null
+          new_value: Json | null
+          old_value: Json | null
+          project_id: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["activity_action"]
+          actor_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          job_id?: string | null
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["activity_action"]
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          job_id?: string | null
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_job_invitations: {
         Row: {
           agency_id: string
@@ -244,6 +301,54 @@ export type Database = {
           },
         ]
       }
+      auto_escalation_rules: {
+        Row: {
+          condition_field: string
+          condition_value: string | null
+          created_at: string
+          created_by: string | null
+          days_threshold: number
+          description: string | null
+          entity_type: string
+          escalate_to_role: Database["public"]["Enums"]["app_role"]
+          id: string
+          is_active: boolean
+          name: string
+          priority: string
+          updated_at: string
+        }
+        Insert: {
+          condition_field: string
+          condition_value?: string | null
+          created_at?: string
+          created_by?: string | null
+          days_threshold?: number
+          description?: string | null
+          entity_type: string
+          escalate_to_role: Database["public"]["Enums"]["app_role"]
+          id?: string
+          is_active?: boolean
+          name: string
+          priority?: string
+          updated_at?: string
+        }
+        Update: {
+          condition_field?: string
+          condition_value?: string | null
+          created_at?: string
+          created_by?: string | null
+          days_threshold?: number
+          description?: string | null
+          entity_type?: string
+          escalate_to_role?: Database["public"]["Enums"]["app_role"]
+          id?: string
+          is_active?: boolean
+          name?: string
+          priority?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       candidate_job_links: {
         Row: {
           candidate_id: string
@@ -383,6 +488,132 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escalations: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          auto_escalation_reason: string | null
+          candidate_id: string | null
+          created_at: string
+          description: string
+          escalated_by: string | null
+          escalated_to_role: Database["public"]["Enums"]["app_role"] | null
+          escalated_to_user_id: string | null
+          id: string
+          is_auto_escalated: boolean
+          job_id: string | null
+          priority: string
+          project_id: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["escalation_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          auto_escalation_reason?: string | null
+          candidate_id?: string | null
+          created_at?: string
+          description: string
+          escalated_by?: string | null
+          escalated_to_role?: Database["public"]["Enums"]["app_role"] | null
+          escalated_to_user_id?: string | null
+          id?: string
+          is_auto_escalated?: boolean
+          job_id?: string | null
+          priority?: string
+          project_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["escalation_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          auto_escalation_reason?: string | null
+          candidate_id?: string | null
+          created_at?: string
+          description?: string
+          escalated_by?: string | null
+          escalated_to_role?: Database["public"]["Enums"]["app_role"] | null
+          escalated_to_user_id?: string | null
+          id?: string
+          is_auto_escalated?: boolean
+          job_id?: string | null
+          priority?: string
+          project_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["escalation_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalations_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalations_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_assignments: {
+        Row: {
+          assigned_by: string | null
+          assigned_role: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id: string | null
+          created_at: string
+          id: string
+          job_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id?: string | null
+          created_at?: string
+          id?: string
+          job_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_assignments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
         ]
@@ -534,6 +765,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      project_assignments: {
+        Row: {
+          assigned_by: string | null
+          assigned_role: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id: string | null
+          created_at: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id?: string | null
+          created_at?: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
