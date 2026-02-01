@@ -4,7 +4,7 @@ import { OrganizationOverview } from '@/components/account/OrganizationOverview'
 import { TeamsDashboard } from '@/components/account/TeamsDashboard';
 import { UserManagementCard } from '@/components/settings/UserManagementCard';
 import { AgencyListCard } from '@/components/account/AgencyListCard';
-import { AgencyWorkersCard } from '@/components/account/AgencyWorkersCard';
+import { AgencyUsersCard } from '@/components/account/AgencyUsersCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Building2, Network, Users, Handshake } from 'lucide-react';
 
@@ -78,7 +78,7 @@ const OrganizationStructure = () => {
 
           <TabsContent value="agencies" className="space-y-6">
             <AgencyListCard />
-            <AgencyWorkersCard />
+            <AgencyUsersCard />
           </TabsContent>
         </Tabs>
       </div>
