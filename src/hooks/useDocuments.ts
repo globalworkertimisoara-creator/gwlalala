@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Document, CreateDocumentInput, DocType } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import { useDocumentExtraction, ExtractedData } from '@/hooks/useDocumentExtraction';
 
 export function useDocuments(candidateId: string | undefined) {
   return useQuery({
@@ -79,6 +80,90 @@ export function useUploadDocument() {
       });
     },
   });
+}
+
+// Enhanced upload hook with OCR extraction
+export function useUploadDocumentWithOCR() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { extractData, isExtracting } = useDocumentExtraction();
+
+  const mutation = useMutation({
+    mutationFn: async ({ 
+      candidateId, 
+      file, 
+      docType 
+    }: { 
+      candidateId: string; 
+      file: File; 
+      docType: DocType;
+    }): Promise<{ document: Document; extractedData: ExtractedData | null }> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Upload file to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${candidateId}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('candidate-documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Create document record
+      const { data, error } = await supabase
+        .from('documents')
+        .insert({
+          candidate_id: candidateId,
+          file_name: file.name,
+          storage_path: fileName,
+          doc_type: docType,
+          uploaded_by: user?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Check if extractable document type
+      const isExtractable = file.type.includes('image') || 
+                            file.type === 'application/pdf' ||
+                            file.name.endsWith('.pdf');
+      
+      let extractedData: ExtractedData | null = null;
+      if (isExtractable) {
+        extractedData = await extractData(fileName, docType, 'candidate-documents');
+      }
+
+      return { document: data as Document, extractedData };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['documents', result.document.candidate_id] });
+      if (result.extractedData) {
+        toast({
+          title: 'Document uploaded & data extracted',
+          description: 'The document has been uploaded and data has been extracted.',
+        });
+      } else {
+        toast({
+          title: 'Document uploaded',
+          description: 'The document has been uploaded successfully.',
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to upload document',
+        description: error.message,
+      });
+    },
+  });
+
+  return {
+    ...mutation,
+    isExtracting,
+  };
 }
 
 export function useDeleteDocument() {

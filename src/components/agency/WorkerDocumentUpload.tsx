@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -18,7 +19,8 @@ import {
   Download,
   Loader2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { 
   useWorkerDocuments, 
@@ -26,6 +28,7 @@ import {
   useDeleteWorkerDocument,
   useWorkerDocumentUrl 
 } from '@/hooks/useAgency';
+import { useDocumentExtraction, ExtractedData } from '@/hooks/useDocumentExtraction';
 import { 
   AGENCY_DOC_TYPES, 
   INITIAL_REQUIRED_DOCS,
@@ -39,25 +42,51 @@ interface WorkerDocumentUploadProps {
   workerId: string;
   currentStage: RecruitmentStage;
   isAgencyView?: boolean;
+  onDataExtracted?: (data: ExtractedData) => void;
 }
 
-export function WorkerDocumentUpload({ workerId, currentStage, isAgencyView = true }: WorkerDocumentUploadProps) {
+export function WorkerDocumentUpload({ 
+  workerId, 
+  currentStage, 
+  isAgencyView = true,
+  onDataExtracted 
+}: WorkerDocumentUploadProps) {
   const [selectedDocType, setSelectedDocType] = useState<AgencyDocType>('cv');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: documents, isLoading } = useWorkerDocuments(workerId);
   const uploadDocument = useUploadWorkerDocument();
   const deleteDocument = useDeleteWorkerDocument();
+  const { extractData, isExtracting } = useDocumentExtraction();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    await uploadDocument.mutateAsync({
+    // Upload the document first
+    const uploadedDoc = await uploadDocument.mutateAsync({
       workerId,
       file,
       docType: selectedDocType,
     });
+
+    // Check if this is an extractable document type (images, PDFs)
+    const isExtractable = file.type.includes('image') || 
+                          file.type === 'application/pdf' ||
+                          file.name.endsWith('.pdf');
+
+    // Trigger OCR/IDP extraction for applicable documents
+    if (isExtractable && uploadedDoc) {
+      const extracted = await extractData(
+        uploadedDoc.storage_path,
+        selectedDocType,
+        'agency-documents'
+      );
+      
+      if (extracted && onDataExtracted) {
+        onDataExtracted(extracted);
+      }
+    }
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -78,12 +107,6 @@ export function WorkerDocumentUpload({ workerId, currentStage, isAgencyView = tr
     return AGENCY_DOC_TYPES.find(d => d.value === docType)?.accept || '*/*';
   };
 
-  const getDocTypeIcon = (docType: AgencyDocType) => {
-    if (docType.includes('video')) return Video;
-    if (docType === 'photo') return Image;
-    return FileText;
-  };
-
   // Check which required docs are uploaded
   const uploadedDocTypes = new Set(documents?.map(d => d.doc_type) || []);
   const missingRequiredDocs = INITIAL_REQUIRED_DOCS.filter(dt => !uploadedDocTypes.has(dt));
@@ -98,16 +121,24 @@ export function WorkerDocumentUpload({ workerId, currentStage, isAgencyView = tr
     );
   }
 
+  const isUploading = uploadDocument.isPending || isExtracting;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
           Documents
+          {onDataExtracted && (
+            <Badge variant="secondary" className="ml-2 gap-1">
+              <Sparkles className="h-3 w-3" />
+              OCR Enabled
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>
           {isAgencyView 
-            ? 'Upload required documents for this worker'
+            ? 'Upload required documents for this worker. Data will be automatically extracted.'
             : 'Documents submitted by the agency'}
         </CardDescription>
       </CardHeader>
@@ -144,40 +175,53 @@ export function WorkerDocumentUpload({ workerId, currentStage, isAgencyView = tr
 
         {/* Upload section (for agencies) */}
         {isAgencyView && (
-          <div className="flex gap-3">
-            <Select value={selectedDocType} onValueChange={(v) => setSelectedDocType(v as AgencyDocType)}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {AGENCY_DOC_TYPES.map((docType) => (
-                  <SelectItem key={docType.value} value={docType.value}>
-                    {docType.label}
-                    {INITIAL_REQUIRED_DOCS.includes(docType.value) && !uploadedDocTypes.has(docType.value) && (
-                      <span className="text-warning ml-1">*</span>
-                    )}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={getDocTypeAccept(selectedDocType)}
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <Button 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadDocument.isPending}
-            >
-              {uploadDocument.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="mr-2 h-4 w-4" />
-              )}
-              Upload
-            </Button>
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <Select value={selectedDocType} onValueChange={(v) => setSelectedDocType(v as AgencyDocType)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGENCY_DOC_TYPES.map((docType) => (
+                    <SelectItem key={docType.value} value={docType.value}>
+                      {docType.label}
+                      {INITIAL_REQUIRED_DOCS.includes(docType.value) && !uploadedDocTypes.has(docType.value) && (
+                        <span className="text-warning ml-1">*</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={getDocTypeAccept(selectedDocType)}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="mr-2 h-4 w-4" />
+                )}
+                Upload
+              </Button>
+            </div>
+            
+            {/* Extraction progress indicator */}
+            {isExtracting && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Extracting data from document...</p>
+                  <p className="text-xs text-muted-foreground">AI is reading the document to auto-fill fields</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
