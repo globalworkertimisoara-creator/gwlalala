@@ -21,7 +21,7 @@ export type RecruitmentStage =
 
 export type JobStatus = 'open' | 'closed' | 'filled';
 
-export type DocType = 'resume' | 'passport' | 'visa' | 'contract' | 'other';
+export type DocType = 'resume' | 'passport' | 'visa' | 'contract' | 'residence_permit' | 'other';
 
 export type SubmissionStatus = 'submitted' | 'interviewing' | 'offered' | 'placed' | 'rejected';
 
@@ -101,6 +101,12 @@ export interface Candidate {
   added_by: string | null;
   created_at: string;
   updated_at: string;
+  // Passport fields
+  passport_number: string | null;
+  passport_expiry: string | null;
+  passport_issue_date: string | null;
+  passport_issued_by: string | null;
+  parents_names: string | null;
 }
 
 export interface CandidateJobLink {
@@ -157,6 +163,12 @@ export interface CreateCandidateInput {
   linkedin?: string;
   current_stage?: RecruitmentStage;
   expected_start_date?: string;
+  // Passport fields
+  passport_number?: string;
+  passport_expiry?: string;
+  passport_issue_date?: string;
+  passport_issued_by?: string;
+  parents_names?: string;
 }
 
 export interface UpdateCandidateInput extends Partial<CreateCandidateInput> {

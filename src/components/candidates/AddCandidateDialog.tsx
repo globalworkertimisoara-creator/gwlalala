@@ -49,6 +49,7 @@ const DOC_TYPES: { value: DocType; label: string }[] = [
   { value: 'resume', label: 'Resume/CV' },
   { value: 'passport', label: 'Passport' },
   { value: 'visa', label: 'Visa Document' },
+  { value: 'residence_permit', label: 'Residence Permit' },
   { value: 'contract', label: 'Contract' },
   { value: 'other', label: 'Other' },
 ];
@@ -69,6 +70,12 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     linkedin: '',
     current_stage: 'sourced' as RecruitmentStage,
     expected_start_date: '',
+    // Passport fields
+    passport_number: '',
+    passport_expiry: '',
+    passport_issue_date: '',
+    passport_issued_by: '',
+    parents_names: '',
   });
 
   // Document state
@@ -88,6 +95,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       linkedin: '',
       current_stage: 'sourced',
       expected_start_date: '',
+      passport_number: '',
+      passport_expiry: '',
+      passport_issue_date: '',
+      passport_issued_by: '',
+      parents_names: '',
     });
     setPendingDocuments([]);
     setExtractedFields(new Set());
@@ -133,6 +145,27 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       if (data.linkedin && !prev.linkedin) {
         updated.linkedin = data.linkedin;
         newExtracted.add('linkedin');
+      }
+      // Passport fields
+      if (data.passport_number && !prev.passport_number) {
+        updated.passport_number = data.passport_number;
+        newExtracted.add('passport_number');
+      }
+      if (data.passport_expiry && !prev.passport_expiry) {
+        updated.passport_expiry = data.passport_expiry;
+        newExtracted.add('passport_expiry');
+      }
+      if (data.passport_issue_date && !prev.passport_issue_date) {
+        updated.passport_issue_date = data.passport_issue_date;
+        newExtracted.add('passport_issue_date');
+      }
+      if (data.passport_issued_by && !prev.passport_issued_by) {
+        updated.passport_issued_by = data.passport_issued_by;
+        newExtracted.add('passport_issued_by');
+      }
+      if (data.parents_names && !prev.parents_names) {
+        updated.parents_names = data.parents_names;
+        newExtracted.add('parents_names');
       }
 
       return updated;
@@ -261,6 +294,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
         linkedin: formData.linkedin || undefined,
         current_stage: formData.current_stage,
         expected_start_date: formData.expected_start_date || undefined,
+        passport_number: formData.passport_number || undefined,
+        passport_expiry: formData.passport_expiry || undefined,
+        passport_issue_date: formData.passport_issue_date || undefined,
+        passport_issued_by: formData.passport_issued_by || undefined,
+        parents_names: formData.parents_names || undefined,
       });
 
       // Move documents to candidate folder and create records
@@ -527,6 +565,93 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
                 type="date"
                 value={formData.expected_start_date}
                 onChange={(e) => handleChange('expected_start_date', e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Passport Section */}
+          <div className="border rounded-lg p-4 space-y-4">
+            <p className="text-sm font-medium text-foreground">Passport & Identity Information</p>
+            
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="passport_number" className="flex items-center gap-1">
+                  Passport Number
+                  {isFieldExtracted('passport_number') && (
+                    <Sparkles className="h-3 w-3 text-primary" />
+                  )}
+                </Label>
+                <Input
+                  id="passport_number"
+                  value={formData.passport_number}
+                  onChange={(e) => handleChange('passport_number', e.target.value)}
+                  placeholder="e.g., AB1234567"
+                  className={isFieldExtracted('passport_number') ? 'border-primary/50 bg-primary/5' : ''}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="passport_issued_by" className="flex items-center gap-1">
+                  Issued By
+                  {isFieldExtracted('passport_issued_by') && (
+                    <Sparkles className="h-3 w-3 text-primary" />
+                  )}
+                </Label>
+                <Input
+                  id="passport_issued_by"
+                  value={formData.passport_issued_by}
+                  onChange={(e) => handleChange('passport_issued_by', e.target.value)}
+                  placeholder="e.g., Government of Romania"
+                  className={isFieldExtracted('passport_issued_by') ? 'border-primary/50 bg-primary/5' : ''}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="passport_issue_date" className="flex items-center gap-1">
+                  Issue Date
+                  {isFieldExtracted('passport_issue_date') && (
+                    <Sparkles className="h-3 w-3 text-primary" />
+                  )}
+                </Label>
+                <Input
+                  id="passport_issue_date"
+                  type="date"
+                  value={formData.passport_issue_date}
+                  onChange={(e) => handleChange('passport_issue_date', e.target.value)}
+                  className={isFieldExtracted('passport_issue_date') ? 'border-primary/50 bg-primary/5' : ''}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="passport_expiry" className="flex items-center gap-1">
+                  Expiry Date
+                  {isFieldExtracted('passport_expiry') && (
+                    <Sparkles className="h-3 w-3 text-primary" />
+                  )}
+                </Label>
+                <Input
+                  id="passport_expiry"
+                  type="date"
+                  value={formData.passport_expiry}
+                  onChange={(e) => handleChange('passport_expiry', e.target.value)}
+                  className={isFieldExtracted('passport_expiry') ? 'border-primary/50 bg-primary/5' : ''}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parents_names" className="flex items-center gap-1">
+                Parents Names
+                {isFieldExtracted('parents_names') && (
+                  <Sparkles className="h-3 w-3 text-primary" />
+                )}
+              </Label>
+              <Input
+                id="parents_names"
+                value={formData.parents_names}
+                onChange={(e) => handleChange('parents_names', e.target.value)}
+                placeholder="Father: John Doe, Mother: Jane Doe"
+                className={isFieldExtracted('parents_names') ? 'border-primary/50 bg-primary/5' : ''}
               />
             </div>
           </div>

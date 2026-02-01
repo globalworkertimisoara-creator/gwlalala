@@ -10,10 +10,13 @@ export interface ExtractedData {
   date_of_birth?: string;
   nationality?: string;
   current_country?: string;
+  parents_names?: string;
   
   // Passport specific
   passport_number?: string;
   passport_expiry?: string;
+  passport_issue_date?: string;
+  passport_issued_by?: string;
   
   // CV/Resume specific
   skills?: string;
@@ -24,13 +27,16 @@ export interface ExtractedData {
   medical_status?: string;
   medical_date?: string;
   
-  // Visa
+  // Visa / Residence permit
   visa_type?: string;
   visa_expiry?: string;
+  residence_permit_number?: string;
+  residence_permit_expiry?: string;
   
   // General
   document_type?: string;
   confidence?: number;
+  original_language?: string;
 }
 
 interface ExtractionResult {

@@ -50,6 +50,7 @@ const DOC_TYPE_LABELS: Record<DocType, string> = {
   passport: 'Passport',
   visa: 'Visa',
   contract: 'Contract',
+  residence_permit: 'Residence Permit',
   other: 'Other',
 };
 
@@ -58,6 +59,7 @@ const DOC_TYPE_COLORS: Record<DocType, string> = {
   passport: 'bg-green-100 text-green-800',
   visa: 'bg-purple-100 text-purple-800',
   contract: 'bg-amber-100 text-amber-800',
+  residence_permit: 'bg-teal-100 text-teal-800',
   other: 'bg-gray-100 text-gray-800',
 };
 
