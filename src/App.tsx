@@ -11,7 +11,7 @@ import Candidates from "./pages/Candidates";
 import Jobs from "./pages/Jobs";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
-import MyAccount from "./pages/MyAccount";
+import OrganizationStructure from "./pages/OrganizationStructure";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import CandidateDetail from "./pages/CandidateDetail";
@@ -68,9 +68,9 @@ const App = () => (
                 <Profile />
               </ProtectedRoute>
             } />
-            <Route path="/my-account" element={
+            <Route path="/organization" element={
               <ProtectedRoute>
-                <MyAccount />
+                <OrganizationStructure />
               </ProtectedRoute>
             } />
             <Route path="/jobs/:id" element={
