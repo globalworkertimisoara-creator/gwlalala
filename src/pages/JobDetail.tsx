@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { JobStatus, getStageLabel, getStageColor } from '@/types/database';
+import { InviteAgenciesCard } from '@/components/jobs/InviteAgenciesCard';
 import { cn } from '@/lib/utils';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -305,6 +306,9 @@ export default function JobDetail() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Invite Agencies */}
+            <InviteAgenciesCard jobId={id!} />
 
             {/* Link Candidate */}
             <Card>
