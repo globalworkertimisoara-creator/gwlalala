@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { CandidateTable } from '@/components/candidates/CandidateTable';
-import { useCandidates, useCreateCandidate } from '@/hooks/useCandidates';
+import { AddCandidateDialog } from '@/components/candidates/AddCandidateDialog';
+import { useCandidates } from '@/hooks/useCandidates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -13,12 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Plus, Search, Download, Loader2 } from 'lucide-react';
 import { RecruitmentStage, STAGES, Candidate } from '@/types/database';
 
@@ -32,25 +26,7 @@ const Candidates = () => {
   });
 
   const navigate = useNavigate();
-  const createCandidate = useCreateCandidate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const handleCreateCandidate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-
-    await createCandidate.mutateAsync({
-      full_name: formData.get('full_name') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string || undefined,
-      nationality: formData.get('nationality') as string || undefined,
-      current_country: formData.get('current_country') as string || undefined,
-      linkedin: formData.get('linkedin') as string || undefined,
-      current_stage: formData.get('current_stage') as RecruitmentStage || 'sourced',
-    });
-
-    setIsDialogOpen(false);
-  };
 
   const handleExportCSV = () => {
     if (!candidates || candidates.length === 0) return;
@@ -152,69 +128,7 @@ const Candidates = () => {
       </div>
 
       {/* Add Candidate Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add New Candidate</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateCandidate} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="c-full_name">Full Name *</Label>
-                <Input id="c-full_name" name="full_name" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="c-email">Email *</Label>
-                <Input id="c-email" name="email" type="email" required />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="c-phone">Phone</Label>
-                <Input id="c-phone" name="phone" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="c-nationality">Nationality</Label>
-                <Input id="c-nationality" name="nationality" placeholder="e.g., Romanian" />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="c-current_country">Current Country</Label>
-                <Input id="c-current_country" name="current_country" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="c-current_stage">Stage</Label>
-                <Select name="current_stage" defaultValue="sourced">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STAGES.map(stage => (
-                      <SelectItem key={stage.value} value={stage.value}>
-                        {stage.label.split(' / ')[0]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="c-linkedin">LinkedIn URL</Label>
-              <Input id="c-linkedin" name="linkedin" type="url" placeholder="https://linkedin.com/in/..." />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createCandidate.isPending}>
-                {createCandidate.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Add Candidate
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <AddCandidateDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
     </AppLayout>
   );
 };
