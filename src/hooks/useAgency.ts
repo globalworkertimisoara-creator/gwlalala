@@ -266,7 +266,7 @@ export function useUpdateAgencyWorker() {
 // Hook for staff to approve/reject workers
 export function useReviewWorker() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   
   return useMutation({
@@ -293,6 +293,12 @@ export function useReviewWorker() {
         updateData.current_stage = newStage;
       }
       
+      // Select limited agency info for non-admin staff (only need user_id for notification)
+      // We still need user_id to send notifications, but that's internal system use
+      const agencySelect = isAdmin 
+        ? 'agency:agency_profiles(id, user_id, company_name, country)'
+        : 'agency:agency_profiles(id, user_id, company_name, country)';
+      
       const { data, error } = await supabase
         .from('agency_workers')
         .update(updateData)
@@ -300,7 +306,7 @@ export function useReviewWorker() {
         .select(`
           *,
           job:jobs(id, title, client_company, country, status),
-          agency:agency_profiles(id, user_id, company_name, country)
+          ${agencySelect}
         `)
         .single();
       
@@ -586,21 +592,28 @@ export function useWorkerDocumentUrl(storagePath: string | undefined) {
 }
 
 // Hook for staff to get all agency workers (for review)
+// Non-admin staff only get limited agency info (company_name, country) - no contact details
 export function useAllAgencyWorkers(filters?: { stage?: string; jobId?: string }) {
-  const { role } = useAuth();
+  const { role, isAdmin } = useAuth();
   
   // All internal staff roles can view agency workers
   const isInternalStaff = role === 'admin' || role === 'recruiter' || role === 'operations_manager' || role === 'documentation_staff';
   
   return useQuery({
-    queryKey: ['all-agency-workers', filters],
+    queryKey: ['all-agency-workers', filters, isAdmin],
     queryFn: async () => {
+      // For admin users, include full agency profile info
+      // For other staff, only include limited agency info (id, company_name, country)
+      const agencySelect = isAdmin 
+        ? 'agency:agency_profiles(id, company_name, country, email, phone, contact_person, address)'
+        : 'agency:agency_profiles(id, company_name, country)';
+      
       let query = supabase
         .from('agency_workers')
         .select(`
           *,
           job:jobs(id, title, client_company, country, status),
-          agency:agency_profiles(id, company_name, country)
+          ${agencySelect}
         `)
         .order('submitted_at', { ascending: false });
       

@@ -648,6 +648,14 @@ export type Database = {
     }
     Functions: {
       get_agency_profile_id: { Args: { _user_id: string }; Returns: string }
+      get_agency_profiles_limited: {
+        Args: never
+        Returns: {
+          company_name: string
+          country: string
+          id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
