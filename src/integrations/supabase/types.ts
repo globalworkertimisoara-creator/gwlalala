@@ -14,6 +14,185 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_profiles: {
+        Row: {
+          address: string | null
+          certifications: string | null
+          company_name: string
+          contact_person: string
+          countries_recruiting_from: string | null
+          country: string
+          created_at: string
+          email: string
+          has_testing_facilities: boolean | null
+          id: string
+          industries_focus: string | null
+          office_locations: string | null
+          phone: string | null
+          recruitment_license: string | null
+          specializations: string | null
+          testing_facilities_locations: string | null
+          updated_at: string
+          user_id: string
+          worker_capacity: number | null
+          years_in_business: number | null
+        }
+        Insert: {
+          address?: string | null
+          certifications?: string | null
+          company_name: string
+          contact_person: string
+          countries_recruiting_from?: string | null
+          country: string
+          created_at?: string
+          email: string
+          has_testing_facilities?: boolean | null
+          id?: string
+          industries_focus?: string | null
+          office_locations?: string | null
+          phone?: string | null
+          recruitment_license?: string | null
+          specializations?: string | null
+          testing_facilities_locations?: string | null
+          updated_at?: string
+          user_id: string
+          worker_capacity?: number | null
+          years_in_business?: number | null
+        }
+        Update: {
+          address?: string | null
+          certifications?: string | null
+          company_name?: string
+          contact_person?: string
+          countries_recruiting_from?: string | null
+          country?: string
+          created_at?: string
+          email?: string
+          has_testing_facilities?: boolean | null
+          id?: string
+          industries_focus?: string | null
+          office_locations?: string | null
+          phone?: string | null
+          recruitment_license?: string | null
+          specializations?: string | null
+          testing_facilities_locations?: string | null
+          updated_at?: string
+          user_id?: string
+          worker_capacity?: number | null
+          years_in_business?: number | null
+        }
+        Relationships: []
+      }
+      agency_worker_documents: {
+        Row: {
+          doc_type: Database["public"]["Enums"]["agency_doc_type"]
+          file_name: string
+          file_size: number | null
+          id: string
+          storage_path: string
+          uploaded_at: string
+          worker_id: string
+        }
+        Insert: {
+          doc_type: Database["public"]["Enums"]["agency_doc_type"]
+          file_name: string
+          file_size?: number | null
+          id?: string
+          storage_path: string
+          uploaded_at?: string
+          worker_id: string
+        }
+        Update: {
+          doc_type?: Database["public"]["Enums"]["agency_doc_type"]
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          storage_path?: string
+          uploaded_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_worker_documents_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "agency_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_workers: {
+        Row: {
+          agency_id: string
+          current_country: string | null
+          current_stage: Database["public"]["Enums"]["recruitment_stage"]
+          date_of_birth: string | null
+          email: string
+          experience_years: number | null
+          full_name: string
+          id: string
+          job_id: string
+          nationality: string
+          notes: string | null
+          phone: string | null
+          rejection_reason: string | null
+          skills: string | null
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          current_country?: string | null
+          current_stage?: Database["public"]["Enums"]["recruitment_stage"]
+          date_of_birth?: string | null
+          email: string
+          experience_years?: number | null
+          full_name: string
+          id?: string
+          job_id: string
+          nationality: string
+          notes?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          skills?: string | null
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          current_country?: string | null
+          current_stage?: Database["public"]["Enums"]["recruitment_stage"]
+          date_of_birth?: string | null
+          email?: string
+          experience_years?: number | null
+          full_name?: string
+          id?: string
+          job_id?: string
+          nationality?: string
+          notes?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          skills?: string | null
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_workers_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_job_links: {
         Row: {
           candidate_id: string
@@ -307,6 +486,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_agency_profile_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -314,9 +494,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_agency: { Args: { _user_id: string }; Returns: boolean }
       is_authenticated: { Args: never; Returns: boolean }
     }
     Enums: {
+      agency_doc_type:
+        | "cv"
+        | "passport"
+        | "photo"
+        | "working_video"
+        | "presentation_video"
+        | "trade_certificate"
+        | "medical_clearance"
+        | "training_doc"
+        | "plane_ticket"
+        | "visa_document"
+        | "other"
       app_role: "admin" | "recruiter" | "agency"
       doc_type: "resume" | "passport" | "visa" | "contract" | "other"
       job_status: "open" | "closed" | "filled"
@@ -469,6 +662,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agency_doc_type: [
+        "cv",
+        "passport",
+        "photo",
+        "working_video",
+        "presentation_video",
+        "trade_certificate",
+        "medical_clearance",
+        "training_doc",
+        "plane_ticket",
+        "visa_document",
+        "other",
+      ],
       app_role: ["admin", "recruiter", "agency"],
       doc_type: ["resume", "passport", "visa", "contract", "other"],
       job_status: ["open", "closed", "filled"],
