@@ -1,12 +1,14 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useCandidate, useUpdateCandidateStage } from '@/hooks/useCandidates';
+import { useCandidate, useUpdateCandidateStage, useUpdateCandidate } from '@/hooks/useCandidates';
 import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes';
-import { useDocuments, useUploadDocument, useDeleteDocument } from '@/hooks/useDocuments';
+import { useDocuments } from '@/hooks/useDocuments';
 import { useStageHistory } from '@/hooks/useStageHistory';
+import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
+import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,7 +35,11 @@ import {
   Clock,
   Upload,
   MessageSquare,
+  Sparkles,
+  Save,
+  X,
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -84,6 +90,7 @@ function getInitials(fullName: string): string {
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Data hooks
   const { data: candidate, isLoading: candidateLoading } = useCandidate(id);
@@ -93,17 +100,16 @@ export default function CandidateDetail() {
 
   // Mutation hooks
   const updateStage = useUpdateCandidateStage();
+  const updateCandidate = useUpdateCandidate();
   const createNote = useCreateNote();
   const deleteNote = useDeleteNote();
-  const uploadDoc = useUploadDocument();
-  const deleteDoc = useDeleteDocument();
 
   // Local state
   const [noteContent, setNoteContent] = useState('');
   const [selectedStage, setSelectedStage] = useState<string>('');
   const [stageNote, setStageNote] = useState('');
-  const [uploadDocType, setUploadDocType] = useState<DocType>('other');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [isApplyingData, setIsApplyingData] = useState(false);
 
   // ─── Loading / Not Found ───────────────────────────────────────────────────
 
@@ -165,16 +171,64 @@ export default function CandidateDetail() {
     setStageNote('');
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !id) return;
-    await uploadDoc.mutateAsync({ candidateId: id, file, docType: uploadDocType });
-    e.target.value = '';
+  const handleDataExtracted = (data: ExtractedData) => {
+    setExtractedData(data);
   };
 
-  const handleDeleteDoc = async (docId: string, storagePath: string) => {
-    if (!id) return;
-    await deleteDoc.mutateAsync({ id: docId, storagePath, candidateId: id });
+  const applyExtractedData = async () => {
+    if (!extractedData || !candidate || !id) return;
+    
+    setIsApplyingData(true);
+    try {
+      const updates: Record<string, any> = {};
+      
+      // Map extracted data to candidate fields (only fill empty fields)
+      if (extractedData.full_name && !candidate.full_name) {
+        updates.full_name = extractedData.full_name;
+      }
+      if (extractedData.email && !candidate.email) {
+        updates.email = extractedData.email;
+      }
+      if (extractedData.phone && !candidate.phone) {
+        updates.phone = extractedData.phone;
+      }
+      if (extractedData.nationality && !candidate.nationality) {
+        updates.nationality = extractedData.nationality;
+      }
+      if (extractedData.current_country && !candidate.current_country) {
+        updates.current_country = extractedData.current_country;
+      }
+      if (extractedData.linkedin && !candidate.linkedin) {
+        updates.linkedin = extractedData.linkedin;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        await updateCandidate.mutateAsync({ id, ...updates });
+        toast({
+          title: 'Data applied',
+          description: 'Extracted information has been saved to the candidate profile.',
+        });
+      } else {
+        toast({
+          title: 'No new data to apply',
+          description: 'All extracted fields already have values.',
+        });
+      }
+      
+      setExtractedData(null);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to apply data',
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setIsApplyingData(false);
+    }
+  };
+
+  const dismissExtractedData = () => {
+    setExtractedData(null);
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -188,6 +242,89 @@ export default function CandidateDetail() {
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
+
+        {/* Extracted Data Banner */}
+        {extractedData && (
+          <Card className="border-primary/50 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Data Extracted from Document
+              </CardTitle>
+              <CardDescription>
+                Review the extracted information and apply it to the candidate profile
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 text-sm mb-4">
+                {extractedData.full_name && (
+                  <div>
+                    <span className="text-muted-foreground">Name:</span>{' '}
+                    <span className="font-medium">{extractedData.full_name}</span>
+                  </div>
+                )}
+                {extractedData.email && (
+                  <div>
+                    <span className="text-muted-foreground">Email:</span>{' '}
+                    <span className="font-medium">{extractedData.email}</span>
+                  </div>
+                )}
+                {extractedData.phone && (
+                  <div>
+                    <span className="text-muted-foreground">Phone:</span>{' '}
+                    <span className="font-medium">{extractedData.phone}</span>
+                  </div>
+                )}
+                {extractedData.nationality && (
+                  <div>
+                    <span className="text-muted-foreground">Nationality:</span>{' '}
+                    <span className="font-medium">{extractedData.nationality}</span>
+                  </div>
+                )}
+                {extractedData.current_country && (
+                  <div>
+                    <span className="text-muted-foreground">Location:</span>{' '}
+                    <span className="font-medium">{extractedData.current_country}</span>
+                  </div>
+                )}
+                {extractedData.linkedin && (
+                  <div>
+                    <span className="text-muted-foreground">LinkedIn:</span>{' '}
+                    <span className="font-medium">{extractedData.linkedin}</span>
+                  </div>
+                )}
+                {extractedData.confidence && (
+                  <div>
+                    <span className="text-muted-foreground">Confidence:</span>{' '}
+                    <span className="font-medium">{extractedData.confidence}%</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={applyExtractedData}
+                  disabled={isApplyingData}
+                  className="gap-2"
+                >
+                  {isApplyingData ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Apply to Profile
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={dismissExtractedData}
+                  className="gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Dismiss
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* ── Header Card ──────────────────────────────────────────────────── */}
         <Card>
@@ -457,97 +594,11 @@ export default function CandidateDetail() {
 
           {/* ── Documents ────────────────────────────────────────────────── */}
           <TabsContent value="documents" className="space-y-4 mt-4">
-            {/* Upload Row */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row gap-3 items-end">
-                  <div className="flex-1 space-y-1.5">
-                    <Label>Document Type</Label>
-                    <Select value={uploadDocType} onValueChange={(v) => setUploadDocType(v as DocType)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(DOC_TYPE_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>{label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      className="sr-only"
-                      onChange={handleFileUpload}
-                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                    />
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadDoc.isPending}
-                    >
-                      {uploadDoc.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Upload className="h-4 w-4" />
-                      )}
-                      {uploadDoc.isPending ? 'Uploading…' : 'Upload Document'}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* List */}
-            {docsLoading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : documents && documents.length > 0 ? (
-              <div className="space-y-2">
-                {documents.map((doc) => (
-                  <Card key={doc.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                            <FileText className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{doc.file_name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <Badge variant="secondary" className={cn('text-xs', DOC_TYPE_COLORS[doc.doc_type])}>
-                                {DOC_TYPE_LABELS[doc.doc_type]}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(doc.uploaded_at), 'MMM d, yyyy')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                          onClick={() => handleDeleteDoc(doc.id, doc.storage_path)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-10 text-center">
-                  <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                  <p className="text-muted-foreground font-medium">No documents yet</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">Upload a resume, passport, or other file above.</p>
-                </CardContent>
-              </Card>
+            {id && (
+              <CandidateDocumentUpload 
+                candidateId={id}
+                onDataExtracted={handleDataExtracted}
+              />
             )}
           </TabsContent>
 

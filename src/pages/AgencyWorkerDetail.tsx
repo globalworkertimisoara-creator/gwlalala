@@ -1,26 +1,50 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAgencyWorker, useAgencyProfile, useWorkerDocuments } from '@/hooks/useAgency';
+import { useAgencyWorker, useAgencyProfile, useWorkerDocuments, useUpdateAgencyWorker } from '@/hooks/useAgency';
 import { WorkerDocumentUpload } from '@/components/agency/WorkerDocumentUpload';
 import { WorkerReviewDialog } from '@/components/agency/WorkerReviewDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Briefcase, Loader2, ClipboardCheck, CheckCircle, FileWarning } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { 
+  ArrowLeft, 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Calendar, 
+  Briefcase, 
+  Loader2, 
+  ClipboardCheck, 
+  CheckCircle, 
+  FileWarning,
+  Sparkles,
+  Save,
+  X
+} from 'lucide-react';
 import { getStageLabel, getStageColor } from '@/types/database';
 import { getApprovalStatusColor, getApprovalStatusLabel, INITIAL_REQUIRED_DOCS, getDocTypeLabel } from '@/types/agency';
+import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AgencyWorkerDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { role } = useAuth();
+  const { toast } = useToast();
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [isApplyingData, setIsApplyingData] = useState(false);
   
   const { data: profile } = useAgencyProfile();
   const { data: worker, isLoading } = useAgencyWorker(id);
   const { data: documents } = useWorkerDocuments(id);
+  const updateWorker = useUpdateAgencyWorker();
 
   const isAgencyView = role === 'agency';
   
@@ -28,6 +52,94 @@ export default function AgencyWorkerDetail() {
   const uploadedDocTypes = documents?.map(d => d.doc_type) || [];
   const missingDocs = INITIAL_REQUIRED_DOCS.filter(doc => !uploadedDocTypes.includes(doc));
   const hasAllRequiredDocs = missingDocs.length === 0;
+
+  const handleDataExtracted = (data: ExtractedData) => {
+    setExtractedData(data);
+  };
+
+  const applyExtractedData = async () => {
+    if (!extractedData || !worker) return;
+    
+    setIsApplyingData(true);
+    try {
+      const updates: Record<string, any> = {};
+      
+      // Map extracted data to worker fields
+      if (extractedData.full_name && !worker.full_name) {
+        updates.full_name = extractedData.full_name;
+      }
+      if (extractedData.email && !worker.email) {
+        updates.email = extractedData.email;
+      }
+      if (extractedData.phone && !worker.phone) {
+        updates.phone = extractedData.phone;
+      }
+      if (extractedData.nationality && !worker.nationality) {
+        updates.nationality = extractedData.nationality;
+      }
+      if (extractedData.current_country && !worker.current_country) {
+        updates.current_country = extractedData.current_country;
+      }
+      if (extractedData.date_of_birth && !worker.date_of_birth) {
+        updates.date_of_birth = extractedData.date_of_birth;
+      }
+      if (extractedData.skills && !worker.skills) {
+        updates.skills = extractedData.skills;
+      }
+      if (extractedData.experience_years && !worker.experience_years) {
+        updates.experience_years = extractedData.experience_years;
+      }
+      
+      // Merge with existing notes if any passport/visa info
+      const additionalNotes: string[] = [];
+      if (extractedData.passport_number) {
+        additionalNotes.push(`Passport: ${extractedData.passport_number}`);
+      }
+      if (extractedData.passport_expiry) {
+        additionalNotes.push(`Passport Expiry: ${extractedData.passport_expiry}`);
+      }
+      if (extractedData.visa_type) {
+        additionalNotes.push(`Visa Type: ${extractedData.visa_type}`);
+      }
+      if (extractedData.visa_expiry) {
+        additionalNotes.push(`Visa Expiry: ${extractedData.visa_expiry}`);
+      }
+      
+      if (additionalNotes.length > 0) {
+        const existingNotes = worker.notes || '';
+        updates.notes = existingNotes 
+          ? `${existingNotes}\n\n[Extracted from documents]\n${additionalNotes.join('\n')}`
+          : `[Extracted from documents]\n${additionalNotes.join('\n')}`;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        await updateWorker.mutateAsync({ id: worker.id, ...updates });
+        toast({
+          title: 'Data applied',
+          description: 'Extracted information has been saved to the worker profile.',
+        });
+      } else {
+        toast({
+          title: 'No new data to apply',
+          description: 'All extracted fields already have values.',
+        });
+      }
+      
+      setExtractedData(null);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to apply data',
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setIsApplyingData(false);
+    }
+  };
+
+  const dismissExtractedData = () => {
+    setExtractedData(null);
+  };
 
   if (isLoading) {
     return (
@@ -63,6 +175,101 @@ export default function AgencyWorkerDetail() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to {isAgencyView ? 'Dashboard' : 'Workers'}
         </Button>
+
+        {/* Extracted Data Banner */}
+        {extractedData && (
+          <Card className="mb-6 border-primary/50 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Data Extracted from Document
+              </CardTitle>
+              <CardDescription>
+                Review the extracted information and apply it to the worker profile
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 text-sm mb-4">
+                {extractedData.full_name && (
+                  <div>
+                    <span className="text-muted-foreground">Name:</span>{' '}
+                    <span className="font-medium">{extractedData.full_name}</span>
+                  </div>
+                )}
+                {extractedData.email && (
+                  <div>
+                    <span className="text-muted-foreground">Email:</span>{' '}
+                    <span className="font-medium">{extractedData.email}</span>
+                  </div>
+                )}
+                {extractedData.phone && (
+                  <div>
+                    <span className="text-muted-foreground">Phone:</span>{' '}
+                    <span className="font-medium">{extractedData.phone}</span>
+                  </div>
+                )}
+                {extractedData.nationality && (
+                  <div>
+                    <span className="text-muted-foreground">Nationality:</span>{' '}
+                    <span className="font-medium">{extractedData.nationality}</span>
+                  </div>
+                )}
+                {extractedData.date_of_birth && (
+                  <div>
+                    <span className="text-muted-foreground">DOB:</span>{' '}
+                    <span className="font-medium">{extractedData.date_of_birth}</span>
+                  </div>
+                )}
+                {extractedData.passport_number && (
+                  <div>
+                    <span className="text-muted-foreground">Passport:</span>{' '}
+                    <span className="font-medium">{extractedData.passport_number}</span>
+                  </div>
+                )}
+                {extractedData.skills && (
+                  <div className="md:col-span-2">
+                    <span className="text-muted-foreground">Skills:</span>{' '}
+                    <span className="font-medium">{extractedData.skills}</span>
+                  </div>
+                )}
+                {extractedData.experience_years && (
+                  <div>
+                    <span className="text-muted-foreground">Experience:</span>{' '}
+                    <span className="font-medium">{extractedData.experience_years} years</span>
+                  </div>
+                )}
+                {extractedData.confidence && (
+                  <div>
+                    <span className="text-muted-foreground">Confidence:</span>{' '}
+                    <span className="font-medium">{extractedData.confidence}%</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={applyExtractedData}
+                  disabled={isApplyingData}
+                  className="gap-2"
+                >
+                  {isApplyingData ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Apply to Profile
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={dismissExtractedData}
+                  className="gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Dismiss
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Worker Header */}
         <Card className="mb-6">
@@ -197,6 +404,13 @@ export default function AgencyWorkerDetail() {
               </div>
             )}
 
+            {worker.notes && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground mb-2">Notes</p>
+                <p className="whitespace-pre-wrap">{worker.notes}</p>
+              </div>
+            )}
+
             {worker.rejection_reason && (
               <div className="mt-4 pt-4 border-t">
                 <p className="text-sm text-destructive font-medium mb-1">Rejection Reason</p>
@@ -211,6 +425,7 @@ export default function AgencyWorkerDetail() {
           workerId={worker.id}
           currentStage={worker.current_stage}
           isAgencyView={isAgencyView}
+          onDataExtracted={handleDataExtracted}
         />
       </div>
       
