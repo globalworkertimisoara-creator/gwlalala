@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { escapePostgRESTFilter } from '@/lib/searchUtils';
 import { 
   Candidate, 
   CreateCandidateInput, 
@@ -25,8 +26,9 @@ export function useCandidates(filters?: {
       }
 
       if (filters?.search) {
+        const escapedSearch = escapePostgRESTFilter(filters.search);
         query = query.or(
-          `full_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,nationality.ilike.%${filters.search}%`
+          `full_name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%,nationality.ilike.%${escapedSearch}%`
         );
       }
 
