@@ -91,7 +91,7 @@ export function disconnectGoogleDrive(): void {
  * with a `code` query parameter.  Call `handleOAuthCallback` with that code.
  */
 export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
-  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
+  if (!GOOGLE_CLIENT_ID) {
     throw new Error(
       'Google Client ID is not configured.\nUpdate src/config/googleConfig.ts with your OAuth Client ID.'
     );
