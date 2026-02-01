@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Job, Candidate, CreateJobInput, UpdateJobInput, JobStatus, LinkCandidateToJobInput } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import { escapePostgRESTFilter } from '@/lib/searchUtils';
 
 export function useJobs(filters?: {
   status?: JobStatus;
@@ -20,8 +21,9 @@ export function useJobs(filters?: {
       }
 
       if (filters?.search) {
+        const escapedSearch = escapePostgRESTFilter(filters.search);
         query = query.or(
-          `title.ilike.%${filters.search}%,client_company.ilike.%${filters.search}%,country.ilike.%${filters.search}%`
+          `title.ilike.%${escapedSearch}%,client_company.ilike.%${escapedSearch}%,country.ilike.%${escapedSearch}%`
         );
       }
 
