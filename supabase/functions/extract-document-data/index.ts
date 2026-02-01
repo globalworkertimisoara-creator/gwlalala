@@ -157,7 +157,12 @@ serve(async (req) => {
 
     const basePrompt = extractionPrompts[doc_type] || extractionPrompts.other;
     
-    const systemPrompt = `You are a document data extraction AI. Analyze the provided document image and extract structured information.
+    const systemPrompt = `You are a multilingual document data extraction AI with OCR capabilities. Analyze the provided document image and extract structured information.
+
+LANGUAGE SUPPORT:
+- You can read documents in ANY language (Arabic, Chinese, Hindi, Spanish, French, German, Russian, Japanese, Korean, Thai, Vietnamese, etc.)
+- Always translate extracted data to English for consistency
+- If a name is in non-Latin script, provide both the original and transliterated/translated version
 
 IMPORTANT RULES:
 1. Only extract information that is CLEARLY visible in the document
@@ -165,20 +170,21 @@ IMPORTANT RULES:
 3. Use null for fields that cannot be determined
 4. For dates, use YYYY-MM-DD format
 5. For phone numbers, include country code if visible
-6. For skills, provide as comma-separated string
+6. For skills, provide as comma-separated string in English
 7. Estimate experience_years as a number based on work history dates
+8. Translate all extracted text to English while preserving accuracy
 
 Return ONLY a JSON object with these possible fields:
 {
-  "full_name": "string or null",
+  "full_name": "string or null (in English/Latin script)",
   "email": "string or null", 
   "phone": "string or null",
   "date_of_birth": "YYYY-MM-DD or null",
-  "nationality": "string or null",
-  "current_country": "string or null",
+  "nationality": "string or null (in English)",
+  "current_country": "string or null (in English)",
   "passport_number": "string or null",
   "passport_expiry": "YYYY-MM-DD or null",
-  "skills": "comma-separated string or null",
+  "skills": "comma-separated string in English or null",
   "experience_years": "number or null",
   "linkedin": "URL string or null",
   "medical_status": "string or null",
@@ -186,7 +192,8 @@ Return ONLY a JSON object with these possible fields:
   "visa_type": "string or null",
   "visa_expiry": "YYYY-MM-DD or null",
   "document_type": "detected type",
-  "confidence": "0-100 percentage"
+  "confidence": "0-100 percentage",
+  "original_language": "detected language of the document"
 }`;
 
     // Call Lovable AI with the document image
