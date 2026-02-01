@@ -849,6 +849,30 @@ export type Database = {
         }
         Relationships: []
       }
+      registration_codes: {
+        Row: {
+          code_type: string
+          code_value: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          code_type: string
+          code_value: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          code_type?: string
+          code_value?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       stage_history: {
         Row: {
           candidate_id: string
@@ -944,6 +968,10 @@ export type Database = {
         Returns: boolean
       }
       is_authenticated: { Args: never; Returns: boolean }
+      verify_registration_code: {
+        Args: { _code_type: string; _code_value: string }
+        Returns: boolean
+      }
     }
     Enums: {
       activity_action:
