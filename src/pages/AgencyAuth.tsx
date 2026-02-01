@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,18 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Globe, ArrowLeft } from 'lucide-react';
+import { Loader2, Building2, ArrowLeft } from 'lucide-react';
 
-export default function Auth() {
+export default function AgencyAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
-
-  const from = location.state?.from?.pathname || '/';
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,9 +37,7 @@ export default function Auth() {
         description: error.message,
       });
     } else {
-      // If "Remember me" is not checked, store session in sessionStorage instead
       if (!rememberMe) {
-        // Session will be cleared when browser is closed
         sessionStorage.setItem('supabase-session-temporary', 'true');
       } else {
         sessionStorage.removeItem('supabase-session-temporary');
@@ -54,7 +47,7 @@ export default function Auth() {
         title: 'Welcome back!',
         description: 'You have successfully signed in.',
       });
-      navigate(from, { replace: true });
+      navigate('/agency', { replace: true });
     }
 
     setIsLoading(false);
@@ -67,9 +60,22 @@ export default function Auth() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
-    const fullName = formData.get('fullName') as string;
+    const companyName = formData.get('companyName') as string;
+    const contactPerson = formData.get('contactPerson') as string;
 
-    const { error } = await signUp(email, password, fullName);
+    // Sign up user with agency role metadata
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/agency`,
+        data: {
+          full_name: contactPerson,
+          is_agency: true,
+          company_name: companyName,
+        },
+      },
+    });
 
     if (error) {
       toast({
@@ -78,6 +84,14 @@ export default function Auth() {
         description: error.message,
       });
     } else {
+      // After signup, manually insert agency role
+      if (data.user) {
+        await supabase.from('user_roles').insert({
+          user_id: data.user.id,
+          role: 'agency',
+        });
+      }
+      
       toast({
         title: 'Check your email',
         description: 'We sent you a confirmation link. Please verify your email to continue.',
@@ -122,7 +136,7 @@ export default function Auth() {
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
               <div className="flex items-center gap-2 text-primary">
-                <Globe className="h-10 w-10" />
+                <Building2 className="h-10 w-10" />
               </div>
             </div>
             <div>
@@ -140,7 +154,7 @@ export default function Auth() {
                   id="reset-email"
                   name="email"
                   type="email"
-                  placeholder="you@company.com"
+                  placeholder="agency@company.com"
                   required
                   disabled={isLoading}
                 />
@@ -177,13 +191,13 @@ export default function Auth() {
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <div className="flex items-center gap-2 text-primary">
-              <Globe className="h-10 w-10" />
+              <Building2 className="h-10 w-10" />
             </div>
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">GlobalWorker</CardTitle>
+            <CardTitle className="text-2xl font-bold">Agency Portal</CardTitle>
             <CardDescription className="text-muted-foreground mt-1">
-              Recruitment Tracker
+              Submit workers for open positions
             </CardDescription>
           </div>
         </CardHeader>
@@ -191,7 +205,7 @@ export default function Auth() {
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="signup">Register</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin">
@@ -202,7 +216,7 @@ export default function Auth() {
                     id="signin-email"
                     name="email"
                     type="email"
-                    placeholder="you@company.com"
+                    placeholder="agency@company.com"
                     required
                     disabled={isLoading}
                   />
@@ -257,10 +271,21 @@ export default function Auth() {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Label htmlFor="signup-company">Company Name</Label>
                   <Input
-                    id="signup-name"
-                    name="fullName"
+                    id="signup-company"
+                    name="companyName"
+                    type="text"
+                    placeholder="Your Agency Name"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-contact">Contact Person</Label>
+                  <Input
+                    id="signup-contact"
+                    name="contactPerson"
                     type="text"
                     placeholder="John Doe"
                     required
@@ -273,7 +298,7 @@ export default function Auth() {
                     id="signup-email"
                     name="email"
                     type="email"
-                    placeholder="you@company.com"
+                    placeholder="agency@company.com"
                     required
                     disabled={isLoading}
                   />
@@ -294,22 +319,22 @@ export default function Auth() {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
+                      Registering...
                     </>
                   ) : (
-                    'Create Account'
+                    'Register Agency'
                   )}
                 </Button>
               </form>
               <p className="text-xs text-muted-foreground text-center mt-4">
-                First user to sign up becomes admin. Subsequent users are recruiters.
+                After registration, you'll complete your agency profile to start submitting workers.
               </p>
             </TabsContent>
           </Tabs>
           
           <div className="mt-6 pt-4 border-t text-center">
-            <Link to="/agency-auth" className="text-sm text-muted-foreground hover:text-primary">
-              Agency portal →
+            <Link to="/auth" className="text-sm text-muted-foreground hover:text-primary">
+              Staff login →
             </Link>
           </div>
         </CardContent>

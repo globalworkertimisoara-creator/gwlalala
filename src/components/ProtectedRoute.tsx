@@ -5,10 +5,11 @@ import { Loader2 } from 'lucide-react';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  requireAgency?: boolean;
 }
 
-export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin } = useAuth();
+export function ProtectedRoute({ children, requireAdmin = false, requireAgency = false }: ProtectedRouteProps) {
+  const { user, loading, isAdmin, isAgency, role } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -24,6 +25,16 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
   if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // Agency users should only access agency routes
+  if (isAgency && !requireAgency && !location.pathname.startsWith('/agency')) {
+    return <Navigate to="/agency" replace />;
+  }
+
+  // Non-agency users shouldn't access agency routes
+  if (requireAgency && !isAgency) {
+    return <Navigate to="/" replace />;
   }
 
   if (requireAdmin && !isAdmin) {

@@ -15,6 +15,10 @@ import ResetPassword from "./pages/ResetPassword";
 import CandidateDetail from "./pages/CandidateDetail";
 import JobDetail from "./pages/JobDetail";
 import NotFound from "./pages/NotFound";
+import AgencyDashboard from "./pages/AgencyDashboard";
+import AgencyWorkerDetail from "./pages/AgencyWorkerDetail";
+import AgencyWorkers from "./pages/AgencyWorkers";
+import AgencyAuth from "./pages/AgencyAuth";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +31,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/agency-auth" element={<AgencyAuth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={
               <ProtectedRoute>
@@ -61,6 +66,28 @@ const App = () => (
             <Route path="/candidates/:id" element={
               <ProtectedRoute>
                 <CandidateDetail />
+              </ProtectedRoute>
+            } />
+            {/* Agency Routes */}
+            <Route path="/agency" element={
+              <ProtectedRoute requireAgency>
+                <AgencyDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/agency/workers/:id" element={
+              <ProtectedRoute requireAgency>
+                <AgencyWorkerDetail />
+              </ProtectedRoute>
+            } />
+            {/* Staff view of agency workers */}
+            <Route path="/agency-workers" element={
+              <ProtectedRoute>
+                <AgencyWorkers />
+              </ProtectedRoute>
+            } />
+            <Route path="/agency-workers/:id" element={
+              <ProtectedRoute>
+                <AgencyWorkerDetail />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
