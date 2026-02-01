@@ -21,5 +21,6 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ["react", "react-dom"],
+    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/core'],
   },
 }));
