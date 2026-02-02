@@ -42,6 +42,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 const navItems = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
@@ -98,16 +99,19 @@ export function AppSidebar() {
       onMouseLeave={handleMouseLeave}
     >
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-primary">
-            <Globe className="h-5 w-5 text-sidebar-primary-foreground" />
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">GlobalWorker</span>
-              <span className="text-xs text-sidebar-muted">Recruitment</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-primary">
+              <Globe className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
-          )}
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-sidebar-foreground">GlobalWorker</span>
+                <span className="text-xs text-sidebar-muted">Recruitment</span>
+              </div>
+            )}
+          </div>
+          {!isCollapsed && <NotificationCenter />}
         </div>
       </SidebarHeader>
 
