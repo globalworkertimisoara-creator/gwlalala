@@ -709,8 +709,10 @@ export type Database = {
           id: string
           is_read: boolean
           message: string
+          project_id: string | null
           related_entity_id: string | null
           related_entity_type: string | null
+          team_id: string | null
           title: string
           type: string
           user_id: string
@@ -720,8 +722,10 @@ export type Database = {
           id?: string
           is_read?: boolean
           message: string
+          project_id?: string | null
           related_entity_id?: string | null
           related_entity_type?: string | null
+          team_id?: string | null
           title: string
           type?: string
           user_id: string
@@ -731,13 +735,30 @@ export type Database = {
           id?: string
           is_read?: boolean
           message?: string
+          project_id?: string | null
           related_entity_id?: string | null
           related_entity_type?: string | null
+          team_id?: string | null
           title?: string
           type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1003,6 +1024,10 @@ export type Database = {
       }
       can_view_escalation: {
         Args: { _escalation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_notification: {
+        Args: { _notification_id: string; _user_id: string }
         Returns: boolean
       }
       get_agency_profile_id: { Args: { _user_id: string }; Returns: string }
