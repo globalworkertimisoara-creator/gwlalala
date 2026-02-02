@@ -1001,6 +1001,10 @@ export type Database = {
         Args: { _candidate_id: string; _user_id: string }
         Returns: boolean
       }
+      can_view_escalation: {
+        Args: { _escalation_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_agency_profile_id: { Args: { _user_id: string }; Returns: string }
       get_agency_profiles_limited: {
         Args: never
