@@ -41,6 +41,9 @@ export function useNotifications() {
       return (data || []) as unknown as Notification[];
     },
     enabled: !!user,
+    refetchInterval: 30000, // Poll every 30 seconds
+    refetchOnWindowFocus: true, // Refetch when user focuses the tab
+    refetchIntervalInBackground: false, // Don't poll when tab is hidden
   });
 }
 
@@ -61,6 +64,9 @@ export function useUnreadNotificationCount() {
       return count || 0;
     },
     enabled: !!user,
+    refetchInterval: 30000, // Poll every 30 seconds
+    refetchOnWindowFocus: true, // Refetch when user focuses the tab
+    refetchIntervalInBackground: false, // Don't poll when tab is hidden
   });
 }
 
