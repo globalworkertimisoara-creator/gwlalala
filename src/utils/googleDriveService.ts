@@ -1,21 +1,15 @@
 /**
  * src/utils/googleDriveService.ts
  *
- * Google Drive API v3 client.
- * Uses OAuth2 with PKCE — no backend server needed.
- *
- * Token lifecycle:
- *   • PKCE flow → no client secret on the frontend.
- *   • Access token lasts ~1 hour.  If a refresh token is returned
- *     it is used automatically; otherwise the user re-authenticates.
- *   • Tokens are persisted in sessionStorage (cleared on tab close).
+ * Google Drive API v3 client with server-side token exchange.
+ * Uses Supabase Edge Function to keep client_secret secure.
  */
 
 import { GOOGLE_CLIENT_ID } from '../config/googleConfig';
+import { supabase } from '@/integrations/supabase/client';
 
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
-const OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,7 +38,6 @@ interface Tokens {
 // ─── Token store ──────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'gdrive_tokens';
-const VERIFIER_KEY = 'gdrive_pkce_verifier';
 const FOLDER_KEY = 'gdrive_folder_id';
 
 let tokens: Tokens | null = null;
@@ -77,10 +70,9 @@ export function getDriveFolderId(): string | null {
 export function disconnectGoogleDrive(): void {
   tokens = null;
   sessionStorage.removeItem(STORAGE_KEY);
-  sessionStorage.removeItem(VERIFIER_KEY);
 }
 
-// ─── OAuth PKCE flow ──────────────────────────────────────────────────────────
+// ─── OAuth flow ───────────────────────────────────────────────────────────────
 
 export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
   if (!GOOGLE_CLIENT_ID) {
@@ -89,10 +81,6 @@ export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
     );
   }
 
-  const verifier = generateVerifier();
-  const challenge = await generateChallenge(verifier);
-  sessionStorage.setItem(VERIFIER_KEY, verifier);
-
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
@@ -100,38 +88,24 @@ export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
     scope: 'https://www.googleapis.com/auth/drive.file',
     access_type: 'offline',
     prompt: 'consent',
-    code_challenge: challenge,
-    code_challenge_method: 'S256',
   });
 
   window.location.href = `${OAUTH_AUTH_URL}?${params}`;
 }
 
 export async function handleOAuthCallback(code: string, redirectUri: string): Promise<void> {
-  const verifier = sessionStorage.getItem(VERIFIER_KEY);
-
-  if (!GOOGLE_CLIENT_ID || !verifier) {
-    throw new Error('OAuth flow broken — missing client ID or PKCE verifier.');
+  if (!GOOGLE_CLIENT_ID) {
+    throw new Error('OAuth flow broken — missing client ID.');
   }
 
-  const res = await fetch(OAUTH_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code,
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code',
-      code_verifier: verifier,
-    }).toString(),
+  // Call Supabase Edge Function to exchange code for tokens
+  const { data, error } = await supabase.functions.invoke('google-oauth', {
+    body: { code, redirectUri },
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(`Google auth failed: ${err.error_description || err.error}`);
+  if (error || !data) {
+    throw new Error(data?.error || error?.message || 'Token exchange failed');
   }
-
-  const data = await res.json();
 
   tokens = {
     accessToken: data.access_token,
@@ -140,7 +114,6 @@ export async function handleOAuthCallback(code: string, redirectUri: string): Pr
   };
 
   saveTokens();
-  sessionStorage.removeItem(VERIFIER_KEY);
 }
 
 // ─── Token refresh ────────────────────────────────────────────────────────────
@@ -150,19 +123,15 @@ async function refreshAccessToken(): Promise<string> {
     throw new Error('Session expired. Please reconnect Google Drive.');
   }
 
-  const res = await fetch(OAUTH_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      refresh_token: tokens.refreshToken,
-      client_id: GOOGLE_CLIENT_ID,
-      grant_type: 'refresh_token',
-    }).toString(),
+  // Refresh tokens also go through Edge Function for security
+  const { data, error } = await supabase.functions.invoke('google-oauth-refresh', {
+    body: { refreshToken: tokens.refreshToken },
   });
 
-  if (!res.ok) throw new Error('Failed to refresh token. Please reconnect Google Drive.');
+  if (error || !data) {
+    throw new Error('Failed to refresh token. Please reconnect Google Drive.');
+  }
 
-  const data = await res.json();
   tokens!.accessToken = data.access_token;
   tokens!.expiresAt = Date.now() + (data.expires_in ?? 3600) * 1000;
   saveTokens();
@@ -297,27 +266,4 @@ export async function listFilesInFolder(folderId: string): Promise<DriveFile[]> 
   if (!res.ok) throw new Error('Failed to list files.');
   const data = await res.json();
   return data.files ?? [];
-}
-
-// ─── PKCE helpers ─────────────────────────────────────────────────────────────
-
-function generateVerifier(): string {
-  const arr = new Uint8Array(32);
-  crypto.getRandomValues(arr);
-  return base64urlEncode(arr);
-}
-
-async function generateChallenge(verifier: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
-  return base64urlEncode(new Uint8Array(digest));
-}
-
-function base64urlEncode(buffer: Uint8Array): string {
-  // Convert to base64
-  const base64 = btoa(String.fromCharCode(...buffer));
-  // Convert to base64url (RFC 4648)
-  return base64
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
 }
