@@ -23,7 +23,7 @@ export interface DriveFile {
   id: string;
   name: string;
   mimeType: string;
-  size: string; // Drive returns size as string
+  size: string;
   webViewLink?: string;
   webContentLink?: string;
   createdTime?: string;
@@ -38,10 +38,10 @@ export interface UploadProgress {
 interface Tokens {
   accessToken: string;
   refreshToken?: string;
-  expiresAt: number; // epoch ms
+  expiresAt: number;
 }
 
-// ─── In-memory + sessionStorage token store ──────────────────────────────────
+// ─── Token store ──────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'gdrive_tokens';
 const VERIFIER_KEY = 'gdrive_pkce_verifier';
@@ -61,13 +61,11 @@ function saveTokens(): void {
 
 // ─── Public helpers ───────────────────────────────────────────────────────────
 
-/** Whether we currently have a non-expired access token */
 export function isGoogleDriveConnected(): boolean {
   loadTokens();
   return !!tokens && tokens.expiresAt > Date.now();
 }
 
-/** Save / retrieve the target folder ID */
 export function setDriveFolderId(id: string): void {
   localStorage.setItem(FOLDER_KEY, id);
 }
@@ -76,7 +74,6 @@ export function getDriveFolderId(): string | null {
   return localStorage.getItem(FOLDER_KEY);
 }
 
-/** Clear tokens — effectively "disconnect" */
 export function disconnectGoogleDrive(): void {
   tokens = null;
   sessionStorage.removeItem(STORAGE_KEY);
@@ -85,15 +82,10 @@ export function disconnectGoogleDrive(): void {
 
 // ─── OAuth PKCE flow ──────────────────────────────────────────────────────────
 
-/**
- * Redirects the browser to Google's consent screen.
- * After the user grants access, Google redirects back to `redirectUri`
- * with a `code` query parameter.  Call `handleOAuthCallback` with that code.
- */
 export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
   if (!GOOGLE_CLIENT_ID) {
     throw new Error(
-      'Google Client ID is not configured.\nUpdate src/config/googleConfig.ts with your OAuth Client ID.'
+      'Google Client ID is not set. Open src/config/googleConfig.ts and paste your Client ID.'
     );
   }
 
@@ -115,10 +107,6 @@ export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
   window.location.href = `${OAUTH_AUTH_URL}?${params}`;
 }
 
-/**
- * Exchanges the authorization `code` (from the redirect URL) for tokens.
- * Call this once after the OAuth redirect lands back in your app.
- */
 export async function handleOAuthCallback(code: string, redirectUri: string): Promise<void> {
   const verifier = sessionStorage.getItem(VERIFIER_KEY);
 
@@ -155,7 +143,7 @@ export async function handleOAuthCallback(code: string, redirectUri: string): Pr
   sessionStorage.removeItem(VERIFIER_KEY);
 }
 
-// ─── Internal: token refresh & retrieval ──────────────────────────────────────
+// ─── Token refresh ────────────────────────────────────────────────────────────
 
 async function refreshAccessToken(): Promise<string> {
   if (!tokens?.refreshToken) {
@@ -190,14 +178,6 @@ async function getAccessToken(): Promise<string> {
 
 // ─── Upload ───────────────────────────────────────────────────────────────────
 
-/**
- * Uploads a file to Google Drive.
- *   • < 5 MB  → single multipart request  (fast, simple)
- *   • ≥ 5 MB  → resumable chunked upload  (progress reported, survives interrupts)
- *
- * @param folderId  - Optional.  Overrides the saved folder ID.
- * @param onProgress - Called during large uploads with percentage.
- */
 export async function uploadToDrive(
   file: File,
   folderId?: string | null,
@@ -246,7 +226,6 @@ async function resumableUpload(
   };
   if (folderId) metadata.parents = [folderId];
 
-  // 1. Initiate — get session URI
   const initRes = await fetch(`${DRIVE_API}/files?uploadType=resumable`, {
     method: 'POST',
     headers: {
@@ -261,7 +240,6 @@ async function resumableUpload(
   if (!initRes.ok) throw new Error('Failed to start resumable upload.');
   const sessionUri = initRes.headers.get('location')!;
 
-  // 2. Upload in 2 MB chunks
   const CHUNK = 2 * 1024 * 1024;
   let uploaded = 0;
 
@@ -292,13 +270,9 @@ async function resumableUpload(
   throw new Error('Resumable upload ended without a completion response.');
 }
 
-/**
- * Makes a Drive file publicly viewable and returns its direct URL.
- */
 export async function getPublicUrl(fileId: string): Promise<string> {
   const token = await getAccessToken();
 
-  // Grant public read
   await fetch(`${DRIVE_API}/files/${fileId}/permissions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -312,9 +286,6 @@ export async function getPublicUrl(fileId: string): Promise<string> {
   return data.webContentLink || data.webViewLink;
 }
 
-/**
- * Lists files inside a Drive folder.
- */
 export async function listFilesInFolder(folderId: string): Promise<DriveFile[]> {
   const token = await getAccessToken();
   const q = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
@@ -331,12 +302,22 @@ export async function listFilesInFolder(folderId: string): Promise<DriveFile[]> 
 // ─── PKCE helpers ─────────────────────────────────────────────────────────────
 
 function generateVerifier(): string {
-  const arr = new Uint8Array(48);
+  const arr = new Uint8Array(32);
   crypto.getRandomValues(arr);
-  return btoa(String.fromCharCode(...arr)).replace(/[+/=]/g, '');
+  return base64urlEncode(arr);
 }
 
 async function generateChallenge(verifier: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
-  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/[+/=]/g, '');
+  return base64urlEncode(new Uint8Array(digest));
+}
+
+function base64urlEncode(buffer: Uint8Array): string {
+  // Convert to base64
+  const base64 = btoa(String.fromCharCode(...buffer));
+  // Convert to base64url (RFC 4648)
+  return base64
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }
