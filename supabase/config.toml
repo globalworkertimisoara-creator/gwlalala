@@ -2,3 +2,9 @@ project_id = "yhuoexfivagwuaudjqan"
 
 [functions.extract-document-data]
 verify_jwt = true
+
+[functions.google-oauth]
+verify_jwt = false
+
+[functions.google-oauth-refresh]
+verify_jwt = false
