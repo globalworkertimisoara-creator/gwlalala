@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { CandidateTable } from '@/components/candidates/CandidateTable';
 import { AddCandidateDialog } from '@/components/candidates/AddCandidateDialog';
 import { useCandidates } from '@/hooks/useCandidates';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,6 +20,7 @@ import { RecruitmentStage, STAGES, Candidate } from '@/types/database';
 const Candidates = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('all');
+  const { can } = usePermissions();
 
   const { data: candidates, isLoading } = useCandidates({
     stage: stageFilter === 'all' ? undefined : (stageFilter as RecruitmentStage),
@@ -72,14 +74,18 @@ const Candidates = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={handleExportCSV}>
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Add Candidate
-            </Button>
+            {can('exportCandidates') && (
+              <Button variant="outline" className="gap-2" onClick={handleExportCSV}>
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+            )}
+            {can('createCandidates') && (
+              <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Add Candidate
+              </Button>
+            )}
           </div>
         </div>
 

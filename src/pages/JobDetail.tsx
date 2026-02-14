@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useJob, useUpdateJob, useJobCandidates, useLinkCandidateToJob } from '@/hooks/useJobs';
 import { useCandidates } from '@/hooks/useCandidates';
 import { useProjects, useLinkJobToProject } from '@/hooks/useProjects';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ function getInitials(fullName: string): string {
 export default function JobDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { can } = usePermissions();
 
   const { data: job, isLoading: jobLoading } = useJob(id);
   const { data: jobCandidateLinks, isLoading: linkedLoading } = useJobCandidates(id);
@@ -218,6 +220,7 @@ export default function JobDetail() {
           {/* Left: Status change + Link candidate */}
           <div className="space-y-4">
             {/* Change Status */}
+            {can('editJobs') && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Change Status</CardTitle>
@@ -252,6 +255,7 @@ export default function JobDetail() {
                 </Button>
               </CardContent>
             </Card>
+            )}
 
             {/* Link to Project */}
             <Card>
@@ -311,6 +315,7 @@ export default function JobDetail() {
             <InviteAgenciesCard jobId={id!} />
 
             {/* Link Candidate */}
+            {can('linkCandidatesToJobs') && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Link Candidate</CardTitle>
@@ -360,6 +365,7 @@ export default function JobDetail() {
                 )}
               </CardContent>
             </Card>
+            )}
           </div>
 
           {/* Right: Linked candidates list */}

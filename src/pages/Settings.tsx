@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import GoogleDriveSetup from '@/components/settings/GoogleDriveSetup';
 import { RegistrationCodesCard } from '@/components/settings/RegistrationCodesCard';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const Settings = () => {
-  const { isAdmin } = useAuth();
+  const { can } = usePermissions();
   
   return (
     <AppLayout>
@@ -23,7 +23,7 @@ const Settings = () => {
         </div>
 
         {/* Registration Codes - Admin Only */}
-        {isAdmin && (
+        {can('createRegistrationCodes') && (
           <>
             <RegistrationCodesCard />
             <Separator />
