@@ -8,6 +8,17 @@ import { useStageHistory } from '@/hooks/useStageHistory';
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
 import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
+import WorkflowTimeline from '@/components/workflow/WorkflowTimeline';
+import DocumentChecklist from '@/components/workflow/DocumentChecklist';
+import {
+  useWorkflow,
+  useCreateWorkflow,
+  useDocumentTemplates,
+  useWorkflowDocuments,
+  useUploadDocument,
+  useReviewDocument,
+} from '@/hooks/useWorkflow';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -428,8 +439,9 @@ export default function CandidateDetail() {
 
         {/* ── Tabbed Content ───────────────────────────────────────────────── */}
         <Tabs defaultValue="overview">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="workflow">Workflow</TabsTrigger>
             <TabsTrigger value="notes">
               Notes{notes && notes.length > 0 && <span className="ml-1.5 text-xs opacity-60">({notes.length})</span>}
             </TabsTrigger>
@@ -525,6 +537,11 @@ export default function CandidateDetail() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* ── Workflow ──────────────────────────────────────────────────── */}
+          <TabsContent value="workflow" className="space-y-4 mt-4">
+            {id && <CandidateWorkflowSection candidateId={id} />}
           </TabsContent>
 
           {/* ── Notes ────────────────────────────────────────────────────── */}
@@ -664,5 +681,227 @@ export default function CandidateDetail() {
         </Tabs>
       </div>
     </AppLayout>
+  );
+}
+
+// ─── Workflow Sub-Component ──────────────────────────────────────────────────
+
+import { useQuery } from '@tanstack/react-query';
+
+type WorkflowPhase = 'recruitment' | 'documentation' | 'visa' | 'arrival' | 'residence_permit';
+type WorkflowType = 'full_immigration' | 'no_visa';
+
+function CandidateWorkflowSection({ candidateId }: { candidateId: string }) {
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const { toast } = useToast();
+
+  // Fetch projects linked to this candidate through jobs
+  const { data: linkedProjects, isLoading: projectsLoading } = useQuery({
+    queryKey: ['candidate-projects', candidateId],
+    queryFn: async () => {
+      const { data: links, error: linksErr } = await supabase
+        .from('candidate_job_links')
+        .select('job_id')
+        .eq('candidate_id', candidateId);
+      if (linksErr) throw linksErr;
+      if (!links || links.length === 0) return [];
+
+      const jobIds = links.map((l: any) => l.job_id);
+      const { data: jobs, error: jobsErr } = await supabase
+        .from('jobs')
+        .select('project_id, title, projects(id, name)')
+        .in('id', jobIds)
+        .not('project_id', 'is', null);
+      if (jobsErr) throw jobsErr;
+
+      const seen = new Set<string>();
+      return (jobs || [])
+        .filter((j: any) => j.projects && !seen.has(j.projects.id) && seen.add(j.projects.id))
+        .map((j: any) => ({ id: j.projects.id, name: j.projects.name }));
+    },
+  });
+
+  const activeProjectId = selectedProjectId || linkedProjects?.[0]?.id || '';
+
+  const { data: workflow, isLoading: workflowLoading } = useWorkflow(candidateId, activeProjectId);
+  const createWorkflow = useCreateWorkflow();
+
+  const currentPhase = (workflow?.current_phase as WorkflowPhase) || 'recruitment';
+
+  const { data: templates } = useDocumentTemplates(currentPhase);
+  const { data: workflowDocs } = useWorkflowDocuments(workflow?.id || '', currentPhase);
+  const uploadDocument = useUploadDocument();
+  const reviewDocument = useReviewDocument();
+
+  const handleCreateWorkflow = async (workflowType: WorkflowType) => {
+    if (!activeProjectId) return;
+    await createWorkflow.mutateAsync({
+      candidateId,
+      projectId: activeProjectId,
+      workflowType,
+    });
+  };
+
+  const handleUpload = async (templateId: string, file: File) => {
+    if (!workflow) return;
+    const template = templates?.find((t: any) => t.id === templateId);
+    if (!template) return;
+
+    const filePath = `workflow/${workflow.id}/${currentPhase}/${Date.now()}_${file.name}`;
+    const { error: uploadErr } = await supabase.storage
+      .from('candidate-documents')
+      .upload(filePath, file);
+    if (uploadErr) {
+      toast({ title: 'Upload failed', description: uploadErr.message, variant: 'destructive' });
+      return;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('candidate-documents')
+      .getPublicUrl(filePath);
+
+    await uploadDocument.mutateAsync({
+      workflowId: workflow.id,
+      templateId,
+      documentName: template.document_name,
+      phase: currentPhase,
+      fileUrl: urlData.publicUrl || filePath,
+      fileSize: file.size,
+      mimeType: file.type,
+    });
+  };
+
+  const handleReview = async (documentId: string, status: 'approved' | 'rejected', notes: string) => {
+    await reviewDocument.mutateAsync({ documentId, status, notes });
+  };
+
+  if (projectsLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!linkedProjects || linkedProjects.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-10 text-center">
+          <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
+          <p className="text-muted-foreground font-medium">No projects linked</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Link this candidate to a job within a project to start a workflow.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {linkedProjects.length > 1 && (
+        <div className="space-y-2">
+          <Label>Project</Label>
+          <Select value={activeProjectId} onValueChange={setSelectedProjectId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select project…" />
+            </SelectTrigger>
+            <SelectContent>
+              {linkedProjects.map((p: any) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {workflowLoading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      ) : !workflow ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Start Workflow</CardTitle>
+            <CardDescription>
+              Choose a workflow type for this candidate in project "{linkedProjects.find((p: any) => p.id === activeProjectId)?.name}"
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-3">
+            <Button
+              onClick={() => handleCreateWorkflow('full_immigration')}
+              disabled={createWorkflow.isPending}
+            >
+              {createWorkflow.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Full Immigration (5 phases)
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleCreateWorkflow('no_visa')}
+              disabled={createWorkflow.isPending}
+            >
+              No Visa Required (4 phases)
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Workflow Progress</CardTitle>
+              <CardDescription>
+                {linkedProjects.find((p: any) => p.id === activeProjectId)?.name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WorkflowTimeline
+                currentPhase={currentPhase}
+                workflowType={(workflow.workflow_type as WorkflowType) || 'full_immigration'}
+                completedPhases={{
+                  recruitment: workflow.recruitment_completed_at || undefined,
+                  documentation: workflow.documentation_completed_at || undefined,
+                  visa: workflow.visa_completed_at || undefined,
+                  arrival: workflow.arrival_completed_at || undefined,
+                  residence_permit: workflow.residence_permit_completed_at || undefined,
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          {templates && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base capitalize">
+                  {currentPhase.replace('_', ' ')} — Document Checklist
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DocumentChecklist
+                  phase={currentPhase}
+                  templates={(templates || []).map((t: any) => ({
+                    id: t.id,
+                    documentName: t.document_name,
+                    description: t.description,
+                    isRequired: t.is_required,
+                  }))}
+                  documents={(workflowDocs || []).map((d: any) => ({
+                    id: d.id,
+                    documentName: d.document_name,
+                    fileUrl: d.file_url,
+                    status: d.status,
+                    uploadedAt: d.uploaded_at,
+                    reviewNotes: d.review_notes,
+                  }))}
+                  canUpload={true}
+                  canReview={true}
+                  onUpload={handleUpload}
+                  onReview={handleReview}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
   );
 }
