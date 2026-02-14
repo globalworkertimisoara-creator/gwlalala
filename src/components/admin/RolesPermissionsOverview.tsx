@@ -172,20 +172,21 @@ export default function RolesPermissionsOverview({ filter = 'all' }: Props) {
               })}
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[240px]">Action</TableHead>
-                  {roles.map((role) => {
-                    const config = ROLE_CONFIG[role] || { label: getRoleName(role) };
-                    return (
-                      <TableHead key={role} className="text-center">
-                        {config.label}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              </TableHeader>
+            <div className="max-h-[600px] overflow-auto border rounded-md">
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
+                  <TableRow>
+                    <TableHead className="w-[240px]">Action</TableHead>
+                    {roles.map((role) => {
+                      const config = ROLE_CONFIG[role] || { label: getRoleName(role) };
+                      return (
+                        <TableHead key={role} className="text-center">
+                          {config.label}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {PERMISSION_ROWS.map((row) => {
                   const showSection = row.section !== lastSection;
@@ -228,6 +229,7 @@ export default function RolesPermissionsOverview({ filter = 'all' }: Props) {
                 })}
               </TableBody>
             </Table>
+            </div>
           </>
         )}
       </CardContent>
