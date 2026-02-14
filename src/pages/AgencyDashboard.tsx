@@ -11,6 +11,7 @@ import { AgencyProfileForm } from '@/components/agency/AgencyProfileForm';
 import { SubmitWorkerDialog } from '@/components/agency/SubmitWorkerDialog';
 import TeamManagement from '@/components/agency/TeamManagement';
 import { AgencyJobsList } from '@/components/agency/AgencyJobsList';
+import { AgencyProjectsView } from '@/components/agency/AgencyProjectsView';
 import { AgencyBillingView } from '@/components/agency/AgencyBillingView';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +40,7 @@ import {
   Receipt,
   ArrowLeft,
   Eye,
+  FolderOpen,
 } from 'lucide-react';
 import { getStageLabel, getStageColor } from '@/types/database';
 import { CreateAgencyProfileInput } from '@/types/agency';
@@ -269,6 +271,10 @@ export default function AgencyDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="projects">
+              <FolderOpen className="h-4 w-4 mr-2" />
+              Projects
+            </TabsTrigger>
             <TabsTrigger value="jobs">
               <Briefcase className="h-4 w-4 mr-2" />
               Available Jobs
@@ -429,6 +435,11 @@ export default function AgencyDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Projects Tab */}
+          <TabsContent value="projects">
+            <AgencyProjectsView agencyId={activeProfile.id} />
           </TabsContent>
 
           {/* Jobs Tab */}
