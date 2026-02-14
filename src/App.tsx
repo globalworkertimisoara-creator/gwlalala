@@ -27,6 +27,7 @@ import AgencyJobs from "./pages/AgencyJobs";
 import Upload from "./pages/Upload";
 import ProjectWorkflowPhase from "./pages/ProjectWorkflowPhase";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import Billing from "./pages/Billing";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,12 @@ const App = () => (
                 <ProjectWorkflowPhase />
               </ProtectedRoute>
             } />
+            {/* Billing */}
+            <Route path="/billing" element={
+              <ProtectedRoute>
+                <Billing />
+              </ProtectedRoute>
+            } />
             {/* Agency Routes */}
             <Route path="/agency" element={
               <ProtectedRoute requireAgency>
@@ -111,6 +118,11 @@ const App = () => (
             <Route path="/agency/workers/:id" element={
               <ProtectedRoute requireAgency>
                 <AgencyWorkerDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/agency/billing" element={
+              <ProtectedRoute requireAgency>
+                <Billing />
               </ProtectedRoute>
             } />
             <Route path="/agency/jobs" element={
