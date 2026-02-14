@@ -30,7 +30,8 @@ import {
   Loader2,
   UserPlus,
   FileText,
-  LogOut
+  LogOut,
+  Receipt,
 } from 'lucide-react';
 import { getStageLabel, getStageColor } from '@/types/database';
 import { CreateAgencyProfileInput } from '@/types/agency';
@@ -150,6 +151,12 @@ export default function AgencyDashboard() {
               <TabsTrigger value="team">
                 <Users className="h-4 w-4 mr-2" />
                 Team
+              </TabsTrigger>
+            )}
+            {isOwner && (
+              <TabsTrigger value="billing" onClick={() => navigate('/agency/billing')}>
+                <Receipt className="h-4 w-4 mr-2" />
+                Billing
               </TabsTrigger>
             )}
           </TabsList>
