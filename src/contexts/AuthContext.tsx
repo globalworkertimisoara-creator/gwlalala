@@ -7,11 +7,13 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
+  realRole: AppRole | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, registrationCode: string, isAgency?: boolean) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  isRealAdmin: boolean;
   isAgency: boolean;
   isInternalStaff: boolean;
   isOperationsManager: boolean;
@@ -20,6 +22,8 @@ interface AuthContextType {
   isSalesManager: boolean;
   isProjectManager: boolean;
   canManageAssignments: boolean;
+  roleOverride: AppRole | null;
+  setRoleOverride: (role: AppRole | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,18 +31,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [role, setRole] = useState<AppRole | null>(null);
+  const [realRole, setRealRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleOverride, setRoleOverride] = useState<AppRole | null>(null);
 
   useEffect(() => {
-    // Set up auth state listener BEFORE getting session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role - use setTimeout to avoid deadlock with RLS
           setTimeout(async () => {
             const { data: roleData } = await supabase
               .from('user_roles')
@@ -46,17 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .eq('user_id', session.user.id)
               .single();
             
-            setRole(roleData?.role as AppRole ?? null);
+            setRealRole(roleData?.role as AppRole ?? null);
           }, 0);
         } else {
-          setRole(null);
+          setRealRole(null);
+          setRoleOverride(null);
         }
         
         setLoading(false);
       }
     );
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -68,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('user_id', session.user.id)
           .single()
           .then(({ data: roleData }) => {
-            setRole(roleData?.role as AppRole ?? null);
+            setRealRole(roleData?.role as AppRole ?? null);
             setLoading(false);
           });
       } else {
@@ -109,8 +112,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
-    setRole(null);
+    setRealRole(null);
+    setRoleOverride(null);
   };
+
+  // Only real admins can use role override
+  const isRealAdmin = realRole === 'admin';
+  
+  // The effective role: use override only if user is real admin
+  const role = (isRealAdmin && roleOverride) ? roleOverride : realRole;
 
   const isAdmin = role === 'admin';
   const isSalesManager = role === 'sales_manager';
@@ -120,11 +130,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     session,
     role,
+    realRole,
     loading,
     signIn,
     signUp,
     signOut,
     isAdmin,
+    isRealAdmin,
     isAgency: role === 'agency',
     isInternalStaff: role ? isInternalRole(role) : false,
     isOperationsManager: role === 'operations_manager',
@@ -133,6 +145,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isSalesManager,
     isProjectManager,
     canManageAssignments: isAdmin || isSalesManager || isProjectManager,
+    roleOverride: isRealAdmin ? roleOverride : null,
+    setRoleOverride: (r: AppRole | null) => {
+      if (isRealAdmin) setRoleOverride(r);
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

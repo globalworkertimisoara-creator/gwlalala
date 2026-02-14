@@ -15,6 +15,7 @@ import {
   Building2,
   FolderKanban,
   Receipt,
+  Eye,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -41,11 +42,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import type { RolePermissions } from '@/config/permissions';
+import { ROLES, type AppRole } from '@/types/database';
 
 interface NavItem {
   title: string;
@@ -69,7 +74,7 @@ const navItems: NavItem[] = [
 
 export function AppSidebar() {
   const { state, toggleSidebar, setOpen } = useSidebar();
-  const { user, role, signOut } = useAuth();
+  const { user, role, signOut, isRealAdmin, roleOverride, setRoleOverride } = useAuth();
   const { can } = usePermissions();
   const navigate = useNavigate();
   const isCollapsed = state === 'collapsed';
@@ -222,13 +227,39 @@ export function AppSidebar() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            {role === 'admin' && (
+            {isRealAdmin && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/agency')} className="text-amber-600 focus:text-amber-700">
                   <Building2 className="mr-2 h-4 w-4" />
                   View as Agency Owner
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="text-amber-600 focus:text-amber-700">
+                    <Eye className="mr-2 h-4 w-4" />
+                    View as Role
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {roleOverride && (
+                      <>
+                        <DropdownMenuItem onClick={() => setRoleOverride(null)} className="text-destructive focus:text-destructive">
+                          Reset to Admin
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    {ROLES.filter(r => r.value !== 'admin' && r.value !== 'agency').map(r => (
+                      <DropdownMenuItem
+                        key={r.value}
+                        onClick={() => setRoleOverride(r.value)}
+                        className={roleOverride === r.value ? 'bg-accent font-medium' : ''}
+                      >
+                        {r.label}
+                        {roleOverride === r.value && <span className="ml-auto text-xs">✓</span>}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
               </>
             )}
             <DropdownMenuSeparator />
