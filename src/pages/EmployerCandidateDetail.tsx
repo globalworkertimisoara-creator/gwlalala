@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEmployerNotes, useCreateEmployerNote, useDeleteEmployerNote } from '@/hooks/useEmployerNotes';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   ArrowLeft, Loader2, Mail, Phone, MapPin, Users, CalendarDays, FileText,
+  MessageSquare, Download, Clock, Trash2, Send,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -18,6 +23,8 @@ const PHASE_LABELS: Record<string, string> = {
   residence_permit: 'Residence Permit',
 };
 
+const PHASE_ORDER = ['recruitment', 'documentation', 'visa', 'arrival', 'residence_permit'];
+
 function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
@@ -25,11 +32,12 @@ function getInitials(name: string) {
 export default function EmployerCandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [noteContent, setNoteContent] = useState('');
 
   const { data: workflowData, isLoading } = useQuery({
     queryKey: ['employer-candidate-detail', id],
     queryFn: async () => {
-      // Get candidate info
       const { data: candidate, error: cErr } = await supabase
         .from('candidates')
         .select('id, full_name, email, phone, nationality, current_country')
@@ -37,29 +45,71 @@ export default function EmployerCandidateDetail() {
         .single();
       if (cErr) throw cErr;
 
-      // Get workflows for this candidate
       const { data: workflows } = await supabase
         .from('candidate_workflow')
         .select('id, current_phase, workflow_type, project_id, projects(name)')
         .eq('candidate_id', id!);
 
-      // Get interviews for this candidate
       const { data: interviews } = await supabase
         .from('candidate_interviews')
         .select('id, interview_type, scheduled_date, status, interviewer_name')
         .eq('candidate_id', id!)
         .order('scheduled_date', { ascending: true });
 
-      // Get offers for this candidate
       const { data: offers } = await supabase
         .from('candidate_offers')
         .select('id, position_title, salary_amount, salary_currency, salary_period, status, start_date')
         .eq('candidate_id', id!);
 
-      return { candidate, workflows: workflows || [], interviews: interviews || [], offers: offers || [] };
+      const { data: documents } = await supabase
+        .from('documents')
+        .select('id, file_name, doc_type, uploaded_at, storage_path')
+        .eq('candidate_id', id!)
+        .order('uploaded_at', { ascending: false });
+
+      // Get company_id for notes
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+
+      return {
+        candidate,
+        workflows: workflows || [],
+        interviews: interviews || [],
+        offers: offers || [],
+        documents: documents || [],
+        companyId: profile?.company_id,
+      };
     },
     enabled: !!id,
   });
+
+  const { data: notes = [], isLoading: notesLoading } = useEmployerNotes(id);
+  const createNote = useCreateEmployerNote();
+  const deleteNote = useDeleteEmployerNote();
+
+  const handleAddNote = () => {
+    if (!noteContent.trim() || !id || !workflowData?.companyId) return;
+    createNote.mutate(
+      { candidate_id: id, content: noteContent.trim(), company_id: workflowData.companyId },
+      { onSuccess: () => setNoteContent('') }
+    );
+  };
+
+  const handleDownload = async (storagePath: string, fileName: string) => {
+    const { data, error } = await supabase.storage
+      .from('candidate-documents')
+      .download(storagePath);
+    if (error || !data) return;
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (isLoading) {
     return (
@@ -82,7 +132,7 @@ export default function EmployerCandidateDetail() {
     );
   }
 
-  const { workflows, interviews, offers } = workflowData!;
+  const { workflows, interviews, offers, documents } = workflowData!;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -126,22 +176,47 @@ export default function EmployerCandidateDetail() {
         </CardContent>
       </Card>
 
-      {/* Workflow Phase */}
+      {/* Workflow Timeline */}
       {workflows.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-base">Workflow Progress</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4" /> Workflow Progress
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {workflows.map((wf: any) => (
-              <div key={wf.id} className="flex items-center justify-between p-3 rounded-lg border">
-                <div>
-                  <p className="font-medium">{(wf.projects as any)?.name || 'Project'}</p>
-                  <p className="text-sm text-muted-foreground capitalize">{wf.workflow_type?.replace('_', ' ')}</p>
+          <CardContent>
+            {workflows.map((wf: any) => {
+              const currentIdx = PHASE_ORDER.indexOf(wf.current_phase);
+              return (
+                <div key={wf.id} className="mb-4 last:mb-0">
+                  <p className="font-medium mb-3">{(wf.projects as any)?.name || 'Project'}</p>
+                  <div className="flex items-center gap-1">
+                    {PHASE_ORDER.map((phase, idx) => {
+                      const isNoVisa = wf.workflow_type === 'no_visa' && phase === 'visa';
+                      if (isNoVisa) return null;
+                      const isCompleted = idx < currentIdx;
+                      const isCurrent = idx === currentIdx;
+                      return (
+                        <div key={phase} className="flex-1 flex flex-col items-center">
+                          <div
+                            className={`w-full h-2 rounded-full ${
+                              isCompleted
+                                ? 'bg-primary'
+                                : isCurrent
+                                ? 'bg-primary/50'
+                                : 'bg-muted'
+                            }`}
+                          />
+                          <span className={`text-xs mt-1 ${isCurrent ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
+                            {PHASE_LABELS[phase]}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <Badge variant="secondary">{PHASE_LABELS[wf.current_phase] || wf.current_phase}</Badge>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}
@@ -175,7 +250,7 @@ export default function EmployerCandidateDetail() {
 
       {/* Offers */}
       {offers.length > 0 && (
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4" /> Offers
@@ -199,6 +274,97 @@ export default function EmployerCandidateDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* Documents */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4" /> Documents
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {documents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {documents.map((doc: any) => (
+                <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="font-medium text-sm">{doc.file_name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {doc.doc_type?.replace('_', ' ')} • {format(new Date(doc.uploaded_at), 'MMM d, yyyy')}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownload(doc.storage_path, doc.file_name)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Employer Notes (separate from internal notes) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" /> Notes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2 mb-4">
+            <Textarea
+              placeholder="Add a note about this candidate..."
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              className="min-h-[80px]"
+            />
+            <Button
+              onClick={handleAddNote}
+              disabled={!noteContent.trim() || createNote.isPending}
+              size="icon"
+              className="shrink-0 self-end"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          {notesLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : notes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No notes yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {notes.map((note) => (
+                <div key={note.id} className="p-3 rounded-lg border">
+                  <div className="flex items-start justify-between">
+                    <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                    {note.created_by === user?.id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => deleteNote.mutate({ id: note.id, candidateId: candidate.id })}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {format(new Date(note.created_at), 'MMM d, yyyy HH:mm')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
