@@ -174,13 +174,13 @@ export default function RolesPermissionsOverview({ filter = 'all' }: Props) {
 
             <div className="max-h-[600px] overflow-auto border rounded-md">
               <Table>
-                <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
+                <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[240px]">Action</TableHead>
+                    <TableHead className="w-[240px] sticky top-0 z-10 bg-background">Action</TableHead>
                     {roles.map((role) => {
                       const config = ROLE_CONFIG[role] || { label: getRoleName(role) };
                       return (
-                        <TableHead key={role} className="text-center">
+                        <TableHead key={role} className="text-center sticky top-0 z-10 bg-background">
                           {config.label}
                         </TableHead>
                       );
