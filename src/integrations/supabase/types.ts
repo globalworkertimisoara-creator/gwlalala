@@ -1193,6 +1193,48 @@ export type Database = {
           },
         ]
       }
+      employer_notes: {
+        Row: {
+          candidate_id: string
+          company_id: string
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+        }
+        Insert: {
+          candidate_id: string
+          company_id: string
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+        }
+        Update: {
+          candidate_id?: string
+          company_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employer_notes_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employer_project_access: {
         Row: {
           can_approve_candidates: boolean | null
