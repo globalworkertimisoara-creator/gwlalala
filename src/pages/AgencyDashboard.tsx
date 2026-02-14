@@ -53,12 +53,24 @@ import {
 } from '@/hooks/useAgencyTeam';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { PERMISSIONS_BY_ROLE, type AgencyRole } from '@/config/permissions';
+
+const AGENCY_ROLES: { value: AgencyRole; label: string }[] = [
+  { value: 'agency_owner', label: 'Agency Owner' },
+  { value: 'agency_recruiter', label: 'Agency Recruiter' },
+  { value: 'agency_document_staff', label: 'Agency Doc Staff' },
+  { value: 'agency_viewer', label: 'Agency Viewer' },
+];
 
 export default function AgencyDashboard() {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin, isRealAdmin } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [adminPreviewAgencyId, setAdminPreviewAgencyId] = useState<string | null>(null);
+  const [agencyRolePreview, setAgencyRolePreview] = useState<AgencyRole>('agency_owner');
+
+  // Use isRealAdmin so this works even when viewing as internal role
+  const effectiveIsAdmin = isRealAdmin;
 
   // For admin preview: fetch all agencies
   const { data: allAgencies = [] } = useQuery({
@@ -67,7 +79,7 @@ export default function AgencyDashboard() {
       const { data } = await supabase.from('agency_profiles').select('id, company_name, country').order('company_name');
       return data || [];
     },
-    enabled: isAdmin,
+    enabled: effectiveIsAdmin,
   });
 
   // For admin preview: fetch selected agency's workers
@@ -81,14 +93,14 @@ export default function AgencyDashboard() {
         .single();
       return data;
     },
-    enabled: isAdmin && !!adminPreviewAgencyId,
+    enabled: effectiveIsAdmin && !!adminPreviewAgencyId,
   });
 
   const { data: profile, isLoading: profileLoading } = useAgencyProfile();
 
   // Use preview profile for admins, real profile for agencies
-  const activeProfile = isAdmin ? previewAgencyProfile : profile;
-  const activeAgencyId = isAdmin ? adminPreviewAgencyId : profile?.id;
+  const activeProfile = effectiveIsAdmin ? previewAgencyProfile : profile;
+  const activeAgencyId = effectiveIsAdmin ? adminPreviewAgencyId : profile?.id;
 
   const { data: workers, isLoading: workersLoading } = useAgencyWorkers(activeAgencyId || undefined);
   const createProfile = useCreateAgencyProfile();
@@ -123,13 +135,26 @@ export default function AgencyDashboard() {
     await cancelInvitation.mutateAsync(invitationId);
   };
 
-  // Check if current user is agency owner (admins in preview always see owner view)
-  const isOwner = isAdmin || teamMembers.some(
-    (m) => m.id === user?.id && m.agencyTeamRole === 'agency_owner'
-  ) || teamMembers.length === 0;
+  // For admin preview: use agencyRolePreview permissions; for real users: check team role
+  const previewPerms = effectiveIsAdmin ? PERMISSIONS_BY_ROLE[agencyRolePreview] : null;
+  const isOwner = effectiveIsAdmin
+    ? agencyRolePreview === 'agency_owner'
+    : teamMembers.some((m) => m.id === user?.id && m.agencyTeamRole === 'agency_owner') || teamMembers.length === 0;
+  
+  const canSubmitWorkers = effectiveIsAdmin
+    ? previewPerms?.createCandidates ?? false
+    : isOwner || teamMembers.some((m) => m.id === user?.id && (m.agencyTeamRole === 'agency_owner' || m.agencyTeamRole === 'agency_recruiter'));
+  
+  const canViewProjects = effectiveIsAdmin
+    ? previewPerms?.viewAllProjects ?? false
+    : true;
+    
+  const canUploadDocs = effectiveIsAdmin
+    ? previewPerms?.uploadDocuments ?? false
+    : true;
 
   // Admin preview: show agency picker if no agency selected
-  if (isAdmin && !adminPreviewAgencyId) {
+  if (effectiveIsAdmin && !adminPreviewAgencyId) {
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b bg-card">
@@ -178,7 +203,7 @@ export default function AgencyDashboard() {
     );
   }
 
-  if (profileLoading && !isAdmin) {
+  if (profileLoading && !effectiveIsAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -188,7 +213,7 @@ export default function AgencyDashboard() {
 
   // Show profile setup if no profile exists (only for actual agency users)
   if (!activeProfile) {
-    if (isAdmin) {
+    if (effectiveIsAdmin) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <Card className="max-w-md">
@@ -224,13 +249,25 @@ export default function AgencyDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Admin Preview Banner */}
-      {isAdmin && (
+      {effectiveIsAdmin && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-amber-800">
-            <Eye className="h-4 w-4" />
-            <span className="text-sm font-medium">
-              Admin Preview — Viewing as agency owner of <strong>{activeProfile.company_name}</strong>
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-amber-800">
+              <Eye className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Admin Preview — <strong>{activeProfile.company_name}</strong>
+              </span>
+            </div>
+            <Select value={agencyRolePreview} onValueChange={(v) => setAgencyRolePreview(v as AgencyRole)}>
+              <SelectTrigger className="w-[180px] h-7 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {AGENCY_ROLES.map(r => (
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-900" onClick={() => setAdminPreviewAgencyId(null)}>
@@ -256,7 +293,7 @@ export default function AgencyDashboard() {
               <p className="text-sm text-muted-foreground">{activeProfile.country}</p>
             </div>
           </div>
-          {!isAdmin && (
+          {!effectiveIsAdmin && (
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={signOut}>
                 <LogOut className="h-4 w-4 mr-2" />
@@ -271,10 +308,12 @@ export default function AgencyDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="projects">
-              <FolderOpen className="h-4 w-4 mr-2" />
-              Projects
-            </TabsTrigger>
+            {canViewProjects && (
+              <TabsTrigger value="projects">
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Projects
+              </TabsTrigger>
+            )}
             <TabsTrigger value="jobs">
               <Briefcase className="h-4 w-4 mr-2" />
               Available Jobs
@@ -335,16 +374,18 @@ export default function AgencyDashboard() {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <SubmitWorkerDialog 
-                agencyId={activeProfile.id} 
-                onSuccess={handleWorkerSubmitted}
-                trigger={
-                  <Button>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Submit New Worker
-                  </Button>
-                }
-              />
+              {canSubmitWorkers && (
+                <SubmitWorkerDialog 
+                  agencyId={activeProfile.id} 
+                  onSuccess={handleWorkerSubmitted}
+                  trigger={
+                    <Button>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Submit New Worker
+                    </Button>
+                  }
+                />
+              )}
               <Button variant="outline" onClick={() => setActiveTab('jobs')}>
                 <Briefcase className="mr-2 h-4 w-4" />
                 View Available Jobs
