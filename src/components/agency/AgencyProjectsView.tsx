@@ -6,11 +6,38 @@ import { Progress } from '@/components/ui/progress';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Loader2, FolderOpen, MapPin, Briefcase, Users } from 'lucide-react';
+import { Loader2, FolderOpen, MapPin, Briefcase, Users, FileText, Award, Plane, Home } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AgencyProjectsViewProps {
   agencyId: string;
 }
+
+const PHASE_LABELS: Record<string, string> = {
+  recruitment: 'Recruitment',
+  documentation: 'Documentation',
+  visa: 'Visa',
+  arrival: 'Arrival',
+  residence_permit: 'Residence Permit',
+};
+
+const PHASE_ICONS: Record<string, React.ElementType> = {
+  recruitment: FileText,
+  documentation: FileText,
+  visa: Award,
+  arrival: Plane,
+  residence_permit: Home,
+};
+
+const PHASE_COLORS: Record<string, string> = {
+  recruitment: 'bg-blue-100 text-blue-700',
+  documentation: 'bg-amber-100 text-amber-700',
+  visa: 'bg-purple-100 text-purple-700',
+  arrival: 'bg-teal-100 text-teal-700',
+  residence_permit: 'bg-green-100 text-green-700',
+};
+
+const PHASE_ORDER = ['recruitment', 'documentation', 'visa', 'arrival', 'residence_permit'];
 
 interface AgencyProjectData {
   id: string;
@@ -29,6 +56,9 @@ interface AgencyProjectData {
   total_filled: number;
   total_positions: number;
   agency_total_applicants: number;
+  // Workflow progress scoped to this agency's candidates
+  agencyPhaseCounts: Record<string, number>;
+  agencyWorkflowTotal: number;
 }
 
 export function AgencyProjectsView({ agencyId }: AgencyProjectsViewProps) {
@@ -80,13 +110,22 @@ export function AgencyProjectsView({ agencyId }: AgencyProjectsViewProps) {
         .in('job_id', allProjectJobIds);
       if (linksErr) throw linksErr;
 
-      // 7. Get this agency's workers for these jobs
+      // 7. Get this agency's workers for these jobs (with email for workflow matching)
       const { data: agencyWorkers, error: awErr } = await supabase
         .from('agency_workers')
-        .select('id, job_id')
+        .select('id, job_id, email')
         .eq('agency_id', agencyId)
         .in('job_id', allProjectJobIds);
       if (awErr) throw awErr;
+
+      // 8. Get candidate_workflow for these projects to find agency's candidates' phases
+      const { data: allWorkflows } = await supabase
+        .from('candidate_workflow')
+        .select('candidate_id, current_phase, project_id, candidates!candidate_workflow_candidate_id_fkey(email)')
+        .in('project_id', projectIds);
+
+      // Map agency worker emails to find their workflow phases per project
+      const agencyWorkerEmails = new Set((agencyWorkers || []).map(w => w.email?.toLowerCase()));
 
       // Build counts
       const filledByJob: Record<string, number> = {};
@@ -130,6 +169,15 @@ export function AgencyProjectsView({ agencyId }: AgencyProjectsViewProps) {
           };
         });
 
+        // Calculate agency-scoped workflow phase counts
+        const projectWorkflows = (allWorkflows || []).filter(
+          (w: any) => w.project_id === project.id && agencyWorkerEmails.has((w.candidates as any)?.email?.toLowerCase())
+        );
+        const agencyPhaseCounts: Record<string, number> = {};
+        projectWorkflows.forEach((w: any) => {
+          agencyPhaseCounts[w.current_phase] = (agencyPhaseCounts[w.current_phase] || 0) + 1;
+        });
+
         return {
           id: project.id,
           name: project.name,
@@ -141,6 +189,8 @@ export function AgencyProjectsView({ agencyId }: AgencyProjectsViewProps) {
           total_filled: totalFilled,
           total_positions: totalPositions,
           agency_total_applicants: agencyTotal,
+          agencyPhaseCounts,
+          agencyWorkflowTotal: projectWorkflows.length,
         };
       }).filter(p => p.jobs.length > 0);
     },
@@ -284,6 +334,43 @@ export function AgencyProjectsView({ agencyId }: AgencyProjectsViewProps) {
                 </TableBody>
               </Table>
             </CardContent>
+
+            {/* Agency-scoped Workflow Progress */}
+            {project.agencyWorkflowTotal > 0 && (
+              <CardContent className="pt-0">
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    Your Candidates' Workflow Progress ({project.agencyWorkflowTotal})
+                  </p>
+                  <div className="grid gap-2">
+                    {PHASE_ORDER.map(phase => {
+                      const Icon = PHASE_ICONS[phase];
+                      const count = project.agencyPhaseCounts[phase] || 0;
+                      const pct = Math.round((count / project.agencyWorkflowTotal) * 100);
+                      if (count === 0) return null;
+                      return (
+                        <div
+                          key={phase}
+                          className={cn(
+                            'flex items-center justify-between rounded-lg px-3 py-2',
+                            PHASE_COLORS[phase]
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            <span className="text-sm font-medium">{PHASE_LABELS[phase]}</span>
+                          </div>
+                          <Badge variant="secondary" className="bg-white/60 text-inherit text-xs">
+                            {count} ({pct}%)
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+            )}
           </Card>
         );
       })}
