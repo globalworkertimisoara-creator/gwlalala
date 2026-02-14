@@ -670,6 +670,78 @@ export type Database = {
           },
         ]
       }
+      candidate_interviews: {
+        Row: {
+          candidate_id: string
+          created_at: string | null
+          duration_minutes: number | null
+          feedback: string | null
+          id: string
+          interview_outcome: string | null
+          interview_type: string
+          interviewer_email: string | null
+          interviewer_name: string | null
+          location: string | null
+          project_id: string
+          scheduled_by: string | null
+          scheduled_date: string
+          status: string | null
+          updated_at: string | null
+          video_link: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          feedback?: string | null
+          id?: string
+          interview_outcome?: string | null
+          interview_type: string
+          interviewer_email?: string | null
+          interviewer_name?: string | null
+          location?: string | null
+          project_id: string
+          scheduled_by?: string | null
+          scheduled_date: string
+          status?: string | null
+          updated_at?: string | null
+          video_link?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          feedback?: string | null
+          id?: string
+          interview_outcome?: string | null
+          interview_type?: string
+          interviewer_email?: string | null
+          interviewer_name?: string | null
+          location?: string | null
+          project_id?: string
+          scheduled_by?: string | null
+          scheduled_date?: string
+          status?: string | null
+          updated_at?: string | null
+          video_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_interviews_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_interviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_job_links: {
         Row: {
           candidate_id: string
@@ -708,6 +780,87 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_offers: {
+        Row: {
+          benefits: string[] | null
+          benefits_description: string | null
+          candidate_id: string
+          candidate_response: string | null
+          candidate_response_at: string | null
+          contract_type: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          offer_expires_at: string | null
+          offer_letter_url: string | null
+          position_title: string
+          project_id: string
+          salary_amount: number | null
+          salary_currency: string | null
+          salary_period: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          benefits?: string[] | null
+          benefits_description?: string | null
+          candidate_id: string
+          candidate_response?: string | null
+          candidate_response_at?: string | null
+          contract_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          offer_expires_at?: string | null
+          offer_letter_url?: string | null
+          position_title: string
+          project_id: string
+          salary_amount?: number | null
+          salary_currency?: string | null
+          salary_period?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          benefits?: string[] | null
+          benefits_description?: string | null
+          candidate_id?: string
+          candidate_response?: string | null
+          candidate_response_at?: string | null
+          contract_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          offer_expires_at?: string | null
+          offer_letter_url?: string | null
+          position_title?: string
+          project_id?: string
+          salary_amount?: number | null
+          salary_currency?: string | null
+          salary_period?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_offers_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_offers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -835,6 +988,102 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          allow_multi_agency: boolean | null
+          billing_contact_email: string | null
+          billing_contact_name: string | null
+          company_name: string
+          company_size: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          founded_year: number | null
+          headquarters_address: string | null
+          headquarters_city: string | null
+          headquarters_country: string
+          hr_contact_email: string | null
+          hr_contact_name: string | null
+          id: string
+          industry: string | null
+          legal_name: string | null
+          linkedin_url: string | null
+          postal_code: string | null
+          primary_contact_email: string
+          primary_contact_name: string
+          primary_contact_phone: string | null
+          primary_contact_position: string | null
+          registration_number: string | null
+          require_background_checks: boolean | null
+          status: string | null
+          updated_at: string | null
+          verified: boolean | null
+          website: string | null
+        }
+        Insert: {
+          allow_multi_agency?: boolean | null
+          billing_contact_email?: string | null
+          billing_contact_name?: string | null
+          company_name: string
+          company_size?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          founded_year?: number | null
+          headquarters_address?: string | null
+          headquarters_city?: string | null
+          headquarters_country: string
+          hr_contact_email?: string | null
+          hr_contact_name?: string | null
+          id?: string
+          industry?: string | null
+          legal_name?: string | null
+          linkedin_url?: string | null
+          postal_code?: string | null
+          primary_contact_email: string
+          primary_contact_name: string
+          primary_contact_phone?: string | null
+          primary_contact_position?: string | null
+          registration_number?: string | null
+          require_background_checks?: boolean | null
+          status?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          website?: string | null
+        }
+        Update: {
+          allow_multi_agency?: boolean | null
+          billing_contact_email?: string | null
+          billing_contact_name?: string | null
+          company_name?: string
+          company_size?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          founded_year?: number | null
+          headquarters_address?: string | null
+          headquarters_city?: string | null
+          headquarters_country?: string
+          hr_contact_email?: string | null
+          hr_contact_name?: string | null
+          id?: string
+          industry?: string | null
+          legal_name?: string | null
+          linkedin_url?: string | null
+          postal_code?: string | null
+          primary_contact_email?: string
+          primary_contact_name?: string
+          primary_contact_phone?: string | null
+          primary_contact_position?: string | null
+          registration_number?: string | null
+          require_background_checks?: boolean | null
+          status?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       document_templates: {
         Row: {
           created_at: string
@@ -899,6 +1148,91 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employer_activity_log: {
+        Row: {
+          action: string
+          company_id: string
+          created_at: string | null
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          company_id: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          company_id?: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employer_activity_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employer_project_access: {
+        Row: {
+          can_approve_candidates: boolean | null
+          can_make_offers: boolean | null
+          can_schedule_interviews: boolean | null
+          can_view_candidates: boolean | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          can_approve_candidates?: boolean | null
+          can_make_offers?: boolean | null
+          can_schedule_interviews?: boolean | null
+          can_view_candidates?: boolean | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          can_approve_candidates?: boolean | null
+          can_make_offers?: boolean | null
+          can_schedule_interviews?: boolean | null
+          can_view_candidates?: boolean | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employer_project_access_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1177,7 +1511,11 @@ export type Database = {
             | Database["public"]["Enums"]["agency_team_role"]
             | null
           avatar_url: string | null
+          company_id: string | null
           created_at: string
+          employer_team_role:
+            | Database["public"]["Enums"]["employer_team_role"]
+            | null
           full_name: string | null
           id: string
           updated_at: string
@@ -1188,7 +1526,11 @@ export type Database = {
             | Database["public"]["Enums"]["agency_team_role"]
             | null
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
+          employer_team_role?:
+            | Database["public"]["Enums"]["employer_team_role"]
+            | null
           full_name?: string | null
           id?: string
           updated_at?: string
@@ -1199,13 +1541,25 @@ export type Database = {
             | Database["public"]["Enums"]["agency_team_role"]
             | null
           avatar_url?: string | null
+          company_id?: string | null
           created_at?: string
+          employer_team_role?:
+            | Database["public"]["Enums"]["employer_team_role"]
+            | null
           full_name?: string | null
           id?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_assignments: {
         Row: {
@@ -1244,6 +1598,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          company_id: string | null
           contract_signed_at: string | null
           countries_in_contract: string[]
           created_at: string
@@ -1259,6 +1614,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           contract_signed_at?: string | null
           countries_in_contract?: string[]
           created_at?: string
@@ -1274,6 +1630,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           contract_signed_at?: string | null
           countries_in_contract?: string[]
           created_at?: string
@@ -1288,7 +1645,15 @@ export type Database = {
           status?: Database["public"]["Enums"]["project_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registration_codes: {
         Row: {
@@ -1560,6 +1925,27 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["agency_team_role"]
       }
+      get_employer_candidates: {
+        Args: { p_project_id: string }
+        Returns: {
+          candidate_id: string
+          current_country: string
+          current_phase: string
+          email: string
+          full_name: string
+          nationality: string
+          phone: string
+        }[]
+      }
+      get_employer_company_id: { Args: { _user_id: string }; Returns: string }
+      get_employer_team_role_fn: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["employer_team_role"]
+      }
+      has_employer_project_access: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1578,6 +1964,8 @@ export type Database = {
         Returns: boolean
       }
       is_authenticated: { Args: never; Returns: boolean }
+      is_employer: { Args: { _user_id: string }; Returns: boolean }
+      is_employer_admin: { Args: { _user_id: string }; Returns: boolean }
       verify_registration_code: {
         Args: { _code_type: string; _code_value: string }
         Returns: boolean

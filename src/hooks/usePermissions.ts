@@ -14,6 +14,7 @@ import {
   getRoleName,
   isInternalStaff,
   isAgencyTeam,
+  isEmployerTeam,
 } from '@/config/permissions';
 import { useDbRolePermissions } from '@/hooks/useRolePermissions';
 
@@ -24,6 +25,7 @@ interface UsePermissionsReturn {
   can: (permission: keyof RolePermissions) => boolean;
   isInternal: boolean;
   isAgency: boolean;
+  isEmployer: boolean;
   loading: boolean;
 }
 
@@ -37,6 +39,7 @@ export function usePermissions(): UsePermissionsReturn {
     if (!role) return null;
     if (role in permissionsMap) return role as AllRoles;
     if (role === 'agency') return 'agency_owner';
+    if (role === 'employer') return 'employer_admin';
     return null;
   }, [role, permissionsMap]);
 
@@ -54,6 +57,7 @@ export function usePermissions(): UsePermissionsReturn {
     can,
     isInternal: effectiveRole ? isInternalStaff(effectiveRole) : false,
     isAgency: effectiveRole ? isAgencyTeam(effectiveRole) : authIsAgency,
+    isEmployer: effectiveRole ? isEmployerTeam(effectiveRole) : false,
     loading,
   };
 }

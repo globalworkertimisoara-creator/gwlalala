@@ -15,6 +15,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isRealAdmin: boolean;
   isAgency: boolean;
+  isEmployer: boolean;
   isInternalStaff: boolean;
   isOperationsManager: boolean;
   isDocumentationStaff: boolean;
@@ -138,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin,
     isRealAdmin,
     isAgency: role === 'agency',
+    isEmployer: role === 'employer',
     isInternalStaff: role ? isInternalRole(role) : false,
     isOperationsManager: role === 'operations_manager',
     isDocumentationStaff: role === 'documentation_staff',
