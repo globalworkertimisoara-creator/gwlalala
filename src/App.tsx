@@ -24,6 +24,7 @@ import AgencyWorkerDetail from "./pages/AgencyWorkerDetail";
 import AgencyWorkers from "./pages/AgencyWorkers";
 import AgencyAuth from "./pages/AgencyAuth";
 import AgencyJobs from "./pages/AgencyJobs";
+import Upload from "./pages/Upload";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,11 @@ const App = () => (
             <Route path="/agency/jobs" element={
               <ProtectedRoute requireAgency>
                 <AgencyJobs />
+              </ProtectedRoute>
+            } />
+            <Route path="/upload" element={
+              <ProtectedRoute>
+                <Upload />
               </ProtectedRoute>
             } />
             {/* Staff view of agency workers */}
