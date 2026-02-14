@@ -237,10 +237,6 @@ export function AppSidebar() {
             {isRealAdmin && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/agency')} className="text-amber-600 focus:text-amber-700">
-                  <Building2 className="mr-2 h-4 w-4" />
-                  View as Agency Owner
-                </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="text-amber-600 focus:text-amber-700">
                     <Eye className="mr-2 h-4 w-4" />
