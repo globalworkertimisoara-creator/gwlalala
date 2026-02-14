@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, User, Key, Trash2, AlertTriangle } from 'lucide-react';
+import RolesPermissionsOverview from '@/components/admin/RolesPermissionsOverview';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function Profile() {
-  const { user, role, signOut } = useAuth();
+  const { user, role, isAdmin, signOut } = useAuth();
   const { toast } = useToast();
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -263,6 +264,14 @@ export default function Profile() {
         </Card>
 
         <Separator />
+
+        {/* Roles & Permissions — Admin Only */}
+        {isAdmin && (
+          <>
+            <RolesPermissionsOverview />
+            <Separator />
+          </>
+        )}
 
         {/* Danger Zone */}
         <Card className="border-destructive/50">
