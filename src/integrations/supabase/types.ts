@@ -391,6 +391,66 @@ export type Database = {
           },
         ]
       }
+      candidate_workflow: {
+        Row: {
+          arrival_completed_at: string | null
+          candidate_id: string
+          created_at: string
+          current_phase: Database["public"]["Enums"]["workflow_phase"]
+          documentation_completed_at: string | null
+          id: string
+          project_id: string
+          recruitment_completed_at: string | null
+          residence_permit_completed_at: string | null
+          updated_at: string
+          visa_completed_at: string | null
+          workflow_type: Database["public"]["Enums"]["workflow_type"]
+        }
+        Insert: {
+          arrival_completed_at?: string | null
+          candidate_id: string
+          created_at?: string
+          current_phase?: Database["public"]["Enums"]["workflow_phase"]
+          documentation_completed_at?: string | null
+          id?: string
+          project_id: string
+          recruitment_completed_at?: string | null
+          residence_permit_completed_at?: string | null
+          updated_at?: string
+          visa_completed_at?: string | null
+          workflow_type?: Database["public"]["Enums"]["workflow_type"]
+        }
+        Update: {
+          arrival_completed_at?: string | null
+          candidate_id?: string
+          created_at?: string
+          current_phase?: Database["public"]["Enums"]["workflow_phase"]
+          documentation_completed_at?: string | null
+          id?: string
+          project_id?: string
+          recruitment_completed_at?: string | null
+          residence_permit_completed_at?: string | null
+          updated_at?: string
+          visa_completed_at?: string | null
+          workflow_type?: Database["public"]["Enums"]["workflow_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_workflow_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_workflow_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidates: {
         Row: {
           added_by: string | null
@@ -451,6 +511,36 @@ export type Database = {
           phone?: string | null
           rejection_reason?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      document_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_name: string
+          id: string
+          is_required: boolean | null
+          phase: Database["public"]["Enums"]["workflow_phase"]
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_name: string
+          id?: string
+          is_required?: boolean | null
+          phase: Database["public"]["Enums"]["workflow_phase"]
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_name?: string
+          id?: string
+          is_required?: boolean | null
+          phase?: Database["public"]["Enums"]["workflow_phase"]
+          sort_order?: number | null
         }
         Relationships: []
       }
@@ -1012,6 +1102,78 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_documents: {
+        Row: {
+          created_at: string
+          document_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          phase: Database["public"]["Enums"]["workflow_phase"]
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["document_status"] | null
+          template_id: string | null
+          updated_at: string
+          uploaded_at: string | null
+          uploaded_by: string | null
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          phase: Database["public"]["Enums"]["workflow_phase"]
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["document_status"] | null
+          template_id?: string | null
+          updated_at?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          phase?: Database["public"]["Enums"]["workflow_phase"]
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["document_status"] | null
+          template_id?: string | null
+          updated_at?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_documents_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_workflow"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1114,6 +1276,12 @@ export type Database = {
         | "contract"
         | "other"
         | "residence_permit"
+      document_status:
+        | "pending"
+        | "uploaded"
+        | "under_review"
+        | "approved"
+        | "rejected"
       escalation_status:
         | "open"
         | "acknowledged"
@@ -1144,6 +1312,13 @@ export type Database = {
         | "offered"
         | "placed"
         | "rejected"
+      workflow_phase:
+        | "recruitment"
+        | "documentation"
+        | "visa"
+        | "arrival"
+        | "residence_permit"
+      workflow_type: "full_immigration" | "no_visa"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1328,6 +1503,13 @@ export const Constants = {
         "other",
         "residence_permit",
       ],
+      document_status: [
+        "pending",
+        "uploaded",
+        "under_review",
+        "approved",
+        "rejected",
+      ],
       escalation_status: [
         "open",
         "acknowledged",
@@ -1361,6 +1543,14 @@ export const Constants = {
         "placed",
         "rejected",
       ],
+      workflow_phase: [
+        "recruitment",
+        "documentation",
+        "visa",
+        "arrival",
+        "residence_permit",
+      ],
+      workflow_type: ["full_immigration", "no_visa"],
     },
   },
 } as const
