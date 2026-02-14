@@ -52,6 +52,13 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 import type { RolePermissions } from '@/config/permissions';
 import { ROLES, type AppRole } from '@/types/database';
 
+const AGENCY_ROLE_OPTIONS = [
+  { value: 'agency_owner', label: 'Agency Owner' },
+  { value: 'agency_recruiter', label: 'Agency Recruiter' },
+  { value: 'agency_document_staff', label: 'Agency Document Staff' },
+  { value: 'agency_viewer', label: 'Agency Viewer' },
+] as const;
+
 interface NavItem {
   title: string;
   url: string;
@@ -237,7 +244,7 @@ export function AppSidebar() {
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="text-amber-600 focus:text-amber-700">
                     <Eye className="mr-2 h-4 w-4" />
-                    View as Role
+                    View as Internal Role
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     {roleOverride && (
@@ -260,6 +267,10 @@ export function AppSidebar() {
                     ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
+                <DropdownMenuItem onClick={() => navigate('/agency')} className="text-amber-600 focus:text-amber-700">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  View as Agency
+                </DropdownMenuItem>
               </>
             )}
             <DropdownMenuSeparator />
