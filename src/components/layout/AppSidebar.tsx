@@ -14,7 +14,6 @@ import {
   PanelLeftClose,
   Building2,
   FolderKanban,
-  Upload,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -51,7 +50,6 @@ const navItems = [
   { title: 'Pipeline', url: '/pipeline', icon: Kanban },
   { title: 'Candidates', url: '/candidates', icon: Users },
   { title: 'Jobs', url: '/jobs', icon: Briefcase },
-  { title: 'Upload', url: '/upload', icon: Upload },
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2 },
   { title: 'Organization', url: '/organization', icon: Building2 },
   { title: 'Settings', url: '/settings', icon: Settings },
