@@ -30,6 +30,7 @@ import {
 import { Plus, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useCreateProject } from '@/hooks/useProjects';
+import { usePermissions } from '@/hooks/usePermissions';
 import { ProjectStatus, PROJECT_STATUS_CONFIG } from '@/types/project';
 
 const formSchema = z.object({
@@ -49,6 +50,9 @@ export function CreateProjectDialog() {
   const [countries, setCountries] = useState<string[]>([]);
   const [countryInput, setCountryInput] = useState('');
   const createProject = useCreateProject();
+  const { can } = usePermissions();
+
+  if (!can('createProjects')) return null;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

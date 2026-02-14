@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useJobs, useCreateJob, useJobCandidateCount } from '@/hooks/useJobs';
+import { usePermissions } from '@/hooks/usePermissions';
 import { JobStatus } from '@/types/database';
 import { Plus, Search, Building2, MapPin, DollarSign, Loader2 } from 'lucide-react';
 import { useState } from 'react';
@@ -44,6 +45,7 @@ export default function Jobs() {
   const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { can } = usePermissions();
 
   const { data: jobs, isLoading } = useJobs({
     status: statusFilter === 'all' ? undefined : statusFilter,
@@ -79,6 +81,7 @@ export default function Jobs() {
               Manage job openings and linked candidates
             </p>
           </div>
+          {can('createJobs') && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -131,6 +134,7 @@ export default function Jobs() {
               </form>
             </DialogContent>
           </Dialog>
+          )}
         </div>
 
         {/* Filters */}

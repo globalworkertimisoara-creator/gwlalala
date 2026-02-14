@@ -42,22 +42,33 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import type { RolePermissions } from '@/config/permissions';
 
-const navItems = [
+interface NavItem {
+  title: string;
+  url: string;
+  icon: any;
+  /** If set, the item is only shown when the user has this permission */
+  requirePermission?: keyof RolePermissions;
+}
+
+const navItems: NavItem[] = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Projects', url: '/projects', icon: FolderKanban },
-  { title: 'Pipeline', url: '/pipeline', icon: Kanban },
-  { title: 'Candidates', url: '/candidates', icon: Users },
-  { title: 'Jobs', url: '/jobs', icon: Briefcase },
-  { title: 'Agency Workers', url: '/agency-workers', icon: Building2 },
-  { title: 'Organization', url: '/organization', icon: Building2 },
-  { title: 'Settings', url: '/settings', icon: Settings },
+  { title: 'Projects', url: '/projects', icon: FolderKanban, requirePermission: 'viewAllProjects' },
+  { title: 'Pipeline', url: '/pipeline', icon: Kanban, requirePermission: 'viewAllCandidates' },
+  { title: 'Candidates', url: '/candidates', icon: Users, requirePermission: 'viewAllCandidates' },
+  { title: 'Jobs', url: '/jobs', icon: Briefcase, requirePermission: 'viewAllJobs' },
+  { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
+  { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
+  { title: 'Settings', url: '/settings', icon: Settings, requirePermission: 'modifySettings' },
 ];
 
 export function AppSidebar() {
   const { state, toggleSidebar, setOpen } = useSidebar();
   const { user, role, signOut } = useAuth();
+  const { can } = usePermissions();
   const navigate = useNavigate();
   const isCollapsed = state === 'collapsed';
   
@@ -119,7 +130,9 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {navItems
+                .filter((item) => !item.requirePermission || can(item.requirePermission))
+                .map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 

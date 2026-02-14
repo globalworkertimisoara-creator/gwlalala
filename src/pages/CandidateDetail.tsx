@@ -51,6 +51,7 @@ import {
   X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { usePermissions } from '@/hooks/usePermissions';
 import { format, formatDistanceToNow, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -104,6 +105,7 @@ export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { can } = usePermissions();
 
   // Data hooks
   const { data: candidate, isLoading: candidateLoading } = useCandidate(id);
@@ -492,6 +494,7 @@ export default function CandidateDetail() {
               </Card>
 
               {/* Change Stage */}
+              {can('editCandidates') && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Change Stage</CardTitle>
@@ -536,6 +539,7 @@ export default function CandidateDetail() {
                   </Button>
                 </CardContent>
               </Card>
+              )}
             </div>
           </TabsContent>
 
@@ -547,6 +551,7 @@ export default function CandidateDetail() {
           {/* ── Notes ────────────────────────────────────────────────────── */}
           <TabsContent value="notes" className="space-y-4 mt-4">
             {/* Compose */}
+            {can('createNotes') && (
             <Card>
               <CardContent className="p-4 space-y-3">
                 <Textarea
@@ -571,6 +576,7 @@ export default function CandidateDetail() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* List */}
             {notesLoading ? (
@@ -584,6 +590,7 @@ export default function CandidateDetail() {
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start gap-3">
                         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                        {can('deleteAnyNotes') && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -592,6 +599,7 @@ export default function CandidateDetail() {
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
                         {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
@@ -613,6 +621,7 @@ export default function CandidateDetail() {
 
           {/* ── Documents ────────────────────────────────────────────────── */}
           <TabsContent value="documents" className="space-y-4 mt-4">
+            {can('uploadDocuments') && (
             <div className="flex justify-end">
               <Button
                 variant="outline"
@@ -624,6 +633,7 @@ export default function CandidateDetail() {
                 Upload to Drive
               </Button>
             </div>
+            )}
             {id && (
               <CandidateDocumentUpload 
                 candidateId={id}
