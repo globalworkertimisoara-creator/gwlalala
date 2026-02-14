@@ -1629,6 +1629,7 @@ export type Database = {
         | "documentation_lead"
         | "sales_manager"
         | "project_manager"
+        | "employer"
       approval_status:
         | "pending_review"
         | "approved"
@@ -1647,6 +1648,11 @@ export type Database = {
         | "under_review"
         | "approved"
         | "rejected"
+      employer_team_role:
+        | "employer_admin"
+        | "employer_hr"
+        | "employer_hiring_manager"
+        | "employer_viewer"
       escalation_status:
         | "open"
         | "acknowledged"
@@ -1859,6 +1865,7 @@ export const Constants = {
         "documentation_lead",
         "sales_manager",
         "project_manager",
+        "employer",
       ],
       approval_status: [
         "pending_review",
@@ -1880,6 +1887,12 @@ export const Constants = {
         "under_review",
         "approved",
         "rejected",
+      ],
+      employer_team_role: [
+        "employer_admin",
+        "employer_hr",
+        "employer_hiring_manager",
+        "employer_viewer",
       ],
       escalation_status: [
         "open",
