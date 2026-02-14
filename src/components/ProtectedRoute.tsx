@@ -32,8 +32,8 @@ export function ProtectedRoute({ children, requireAdmin = false, requireAgency =
     return <Navigate to="/agency" replace />;
   }
 
-  // Non-agency users shouldn't access agency routes
-  if (requireAgency && !isAgency) {
+  // Non-agency users shouldn't access agency routes — EXCEPT admins (for preview mode)
+  if (requireAgency && !isAgency && !isAdmin) {
     return <Navigate to="/" replace />;
   }
 

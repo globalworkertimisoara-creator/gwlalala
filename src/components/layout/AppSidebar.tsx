@@ -222,6 +222,15 @@ export function AppSidebar() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
+            {role === 'admin' && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/agency')} className="text-amber-600 focus:text-amber-700">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  View as Agency Owner
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
