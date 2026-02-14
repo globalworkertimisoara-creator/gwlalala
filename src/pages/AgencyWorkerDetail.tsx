@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAgencyWorker, useAgencyProfile, useWorkerDocuments, useUpdateAgencyWorker } from '@/hooks/useAgency';
+import { useCandidateActivityLog } from '@/hooks/useCandidateActivityLog';
+import { CandidateActivityLog } from '@/components/candidates/CandidateActivityLog';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { WorkerDocumentUpload } from '@/components/agency/WorkerDocumentUpload';
 import { WorkerReviewDialog } from '@/components/agency/WorkerReviewDialog';
 import { Button } from '@/components/ui/button';
@@ -45,6 +49,23 @@ export default function AgencyWorkerDetail() {
   const { data: worker, isLoading } = useAgencyWorker(id);
   const { data: documents } = useWorkerDocuments(id);
   const updateWorker = useUpdateAgencyWorker();
+
+  // Look up the candidate ID by matching worker email
+  const { data: candidateId } = useQuery({
+    queryKey: ['worker-candidate-id', worker?.email],
+    queryFn: async () => {
+      if (!worker?.email) return null;
+      const { data } = await supabase
+        .from('candidates')
+        .select('id')
+        .eq('email', worker.email)
+        .maybeSingle();
+      return data?.id || null;
+    },
+    enabled: !!worker?.email,
+  });
+
+  const { data: activityLog = [], isLoading: activityLoading } = useCandidateActivityLog(candidateId ?? undefined);
 
   const isAgencyView = role === 'agency';
   
@@ -427,6 +448,18 @@ export default function AgencyWorkerDetail() {
           isAgencyView={isAgencyView}
           onDataExtracted={handleDataExtracted}
         />
+
+        {/* Activity Log */}
+        {candidateId && (
+          <div className="mt-6">
+            <CandidateActivityLog
+              entries={activityLog}
+              isLoading={activityLoading}
+              showActorType={false}
+              title="Activity Log"
+            />
+          </div>
+        )}
       </div>
       
       {/* Review Dialog */}

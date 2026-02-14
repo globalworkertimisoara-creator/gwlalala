@@ -670,6 +670,70 @@ export type Database = {
           },
         ]
       }
+      candidate_activity_log: {
+        Row: {
+          actor_id: string
+          actor_type: string
+          agency_id: string | null
+          candidate_id: string
+          company_id: string | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          is_shared_event: boolean
+          summary: string
+        }
+        Insert: {
+          actor_id: string
+          actor_type: string
+          agency_id?: string | null
+          candidate_id: string
+          company_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          is_shared_event?: boolean
+          summary: string
+        }
+        Update: {
+          actor_id?: string
+          actor_type?: string
+          agency_id?: string | null
+          candidate_id?: string
+          company_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          is_shared_event?: boolean
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_activity_log_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_activity_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_interviews: {
         Row: {
           candidate_id: string
@@ -1982,6 +2046,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      agency_has_candidate_access: {
+        Args: { _candidate_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_access_billing: {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
@@ -1997,6 +2065,10 @@ export type Database = {
       }
       can_view_notification: {
         Args: { _notification_id: string; _user_id: string }
+        Returns: boolean
+      }
+      employer_has_candidate_access: {
+        Args: { _candidate_id: string; _user_id: string }
         Returns: boolean
       }
       get_agency_profile_id: { Args: { _user_id: string }; Returns: string }
