@@ -1,8 +1,8 @@
 /**
  * usePermissions hook
  *
- * Maps the current user's role (from AuthContext) to the permissions config
- * and exposes a simple `can(permission)` helper plus the full permissions object.
+ * Maps the current user's role (from AuthContext) to the permissions config.
+ * Reads from DB-backed role_permissions table with fallback to static config.
  */
 
 import { useMemo } from 'react';
@@ -15,42 +15,32 @@ import {
   isInternalStaff,
   isAgencyTeam,
 } from '@/config/permissions';
+import { useDbRolePermissions } from '@/hooks/useRolePermissions';
 
 interface UsePermissionsReturn {
-  /** The resolved role string, or null if not yet loaded */
   role: AllRoles | null;
-  /** Human-readable role name */
   roleName: string;
-  /** Full permissions object for the current role */
   permissions: RolePermissions | null;
-  /** Shortcut: check a single permission key */
   can: (permission: keyof RolePermissions) => boolean;
-  /** True when the role belongs to internal staff */
   isInternal: boolean;
-  /** True when the role belongs to an agency team */
   isAgency: boolean;
-  /** Loading state – true while auth context hasn't resolved yet */
   loading: boolean;
 }
 
 export function usePermissions(): UsePermissionsReturn {
   const { role, loading, isAgency: authIsAgency } = useAuth();
+  const { data: dbPermissions } = useDbRolePermissions();
 
-  // Determine the effective AllRoles key.
-  // For agency users we also need to consider agency_team_role from the profile,
-  // but the AuthContext currently exposes the app_role ('agency'). Agency sub-roles
-  // are stored in profiles.agency_team_role and surfaced through useAgencyTeam.
-  // For now, agency users without a specific team role default to 'agency_owner'.
+  const permissionsMap = dbPermissions || PERMISSIONS_BY_ROLE;
+
   const effectiveRole: AllRoles | null = useMemo(() => {
     if (!role) return null;
-    // The app_role enum values that map directly
-    if (role in PERMISSIONS_BY_ROLE) return role as AllRoles;
-    // 'agency' app_role maps to agency_owner as default
+    if (role in permissionsMap) return role as AllRoles;
     if (role === 'agency') return 'agency_owner';
     return null;
-  }, [role]);
+  }, [role, permissionsMap]);
 
-  const permissions = effectiveRole ? PERMISSIONS_BY_ROLE[effectiveRole] : null;
+  const permissions = effectiveRole ? permissionsMap[effectiveRole] : null;
 
   const can = useMemo(() => {
     if (!permissions) return () => false;
