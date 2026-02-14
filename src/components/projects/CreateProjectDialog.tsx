@@ -52,8 +52,6 @@ export function CreateProjectDialog() {
   const createProject = useCreateProject();
   const { can } = usePermissions();
 
-  if (!can('createProjects')) return null;
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,6 +64,8 @@ export function CreateProjectDialog() {
       notes: '',
     },
   });
+
+  if (!can('createProjects')) return null;
 
   const addCountry = () => {
     if (countryInput.trim() && !countries.includes(countryInput.trim())) {
