@@ -10,6 +10,8 @@ import {
 import { AgencyProfileForm } from '@/components/agency/AgencyProfileForm';
 import { SubmitWorkerDialog } from '@/components/agency/SubmitWorkerDialog';
 import TeamManagement from '@/components/agency/TeamManagement';
+import { AgencyJobsList } from '@/components/agency/AgencyJobsList';
+import { AgencyBillingView } from '@/components/agency/AgencyBillingView';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -267,6 +269,16 @@ export default function AgencyDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="jobs">
+              <Briefcase className="h-4 w-4 mr-2" />
+              Available Jobs
+            </TabsTrigger>
+            {isOwner && (
+              <TabsTrigger value="billing">
+                <Receipt className="h-4 w-4 mr-2" />
+                Billing
+              </TabsTrigger>
+            )}
             <TabsTrigger value="settings">
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -275,12 +287,6 @@ export default function AgencyDashboard() {
               <TabsTrigger value="team">
                 <Users className="h-4 w-4 mr-2" />
                 Team
-              </TabsTrigger>
-            )}
-            {isOwner && (
-              <TabsTrigger value="billing" onClick={() => navigate('/agency/billing')}>
-                <Receipt className="h-4 w-4 mr-2" />
-                Billing
               </TabsTrigger>
             )}
           </TabsList>
@@ -333,7 +339,7 @@ export default function AgencyDashboard() {
                   </Button>
                 }
               />
-              <Button variant="outline" onClick={() => navigate('/agency/jobs')}>
+              <Button variant="outline" onClick={() => setActiveTab('jobs')}>
                 <Briefcase className="mr-2 h-4 w-4" />
                 View Available Jobs
               </Button>
@@ -424,6 +430,18 @@ export default function AgencyDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Jobs Tab */}
+          <TabsContent value="jobs">
+            <AgencyJobsList agencyId={activeProfile.id} />
+          </TabsContent>
+
+          {/* Billing Tab */}
+          {isOwner && (
+            <TabsContent value="billing">
+              <AgencyBillingView agencyId={activeProfile.id} />
+            </TabsContent>
+          )}
 
           {/* Settings Tab */}
           <TabsContent value="settings">
