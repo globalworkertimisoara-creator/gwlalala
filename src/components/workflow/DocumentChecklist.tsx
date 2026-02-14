@@ -5,8 +5,9 @@
  * Allows agencies to upload and staff to review/approve.
  */
 
-import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle, XCircle, Clock, Eye, Download } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Upload, FileText, CheckCircle, XCircle, Clock, Eye, Loader2, FileVideo, File as FileIcon } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { isVideoFile, formatFileSize } from '@/utils/videoCompressor';
 
 type WorkflowPhase = 
   | 'recruitment' 
@@ -66,19 +68,31 @@ export default function DocumentChecklist({
   onUpload,
   onReview,
 }: DocumentChecklistProps) {
-  const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadingTemplate, setUploadingTemplate] = useState<string | null>(null);
+  const [uploadDialog, setUploadDialog] = useState<{ template: DocumentTemplate; open: boolean } | null>(null);
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [reviewDialog, setReviewDialog] = useState<{ doc: WorkflowDocument; open: boolean } | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [reviewAction, setReviewAction] = useState<'approved' | 'rejected' | null>(null);
 
-  const handleFileSelect = async (templateId: string, file: File) => {
-    setUploading(templateId);
+  const handleUploadFromDialog = async () => {
+    if (!uploadDialog || !droppedFile) return;
+    setUploading(true);
     try {
-      await onUpload(templateId, file);
+      await onUpload(uploadDialog.template.id, droppedFile);
+      setUploadDialog(null);
+      setDroppedFile(null);
     } finally {
-      setUploading(null);
+      setUploading(false);
     }
   };
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setDroppedFile(acceptedFiles[0]);
+    }
+  }, []);
 
   const handleReviewSubmit = async () => {
     if (!reviewDialog || !reviewAction) return;
@@ -128,12 +142,11 @@ export default function DocumentChecklist({
       <div className="space-y-2">
         {templates.map((template) => {
           const doc = getDocumentForTemplate(template.id);
-          const isUploading = uploading === template.id;
 
           return (
             <div
               key={template.id}
-              className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 hover:border-gray-300 transition-colors"
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 hover:border-muted-foreground/30 transition-colors"
             >
               {/* Status icon */}
               <div className="flex-shrink-0">
@@ -174,28 +187,17 @@ export default function DocumentChecklist({
 
                 {/* Upload/Replace */}
                 {canUpload && (
-                  <label>
-                    <input
-                      type="file"
-                      className="hidden"
-                      disabled={isUploading}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileSelect(template.id, file);
-                      }}
-                    />
-                    <Button
-                      variant={doc ? 'outline' : 'default'}
-                      size="sm"
-                      disabled={isUploading}
-                      asChild
-                    >
-                      <span>
-                        <Upload className="h-4 w-4 mr-1" />
-                        {isUploading ? 'Uploading...' : doc ? 'Replace' : 'Upload'}
-                      </span>
-                    </Button>
-                  </label>
+                  <Button
+                    variant={doc ? 'outline' : 'default'}
+                    size="sm"
+                    onClick={() => {
+                      setDroppedFile(null);
+                      setUploadDialog({ template, open: true });
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-1" />
+                    {doc ? 'Replace' : 'Upload'}
+                  </Button>
                 )}
 
                 {/* Review (for staff) */}
@@ -280,6 +282,108 @@ export default function DocumentChecklist({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Upload Dialog with Dropzone */}
+      {uploadDialog && (
+        <UploadDropzoneDialog
+          open={uploadDialog.open}
+          templateName={uploadDialog.template.documentName}
+          droppedFile={droppedFile}
+          uploading={uploading}
+          onDrop={onDrop}
+          onClose={() => { setUploadDialog(null); setDroppedFile(null); }}
+          onUpload={handleUploadFromDialog}
+        />
+      )}
     </div>
+  );
+}
+
+// ─── Upload Dropzone Dialog ───────────────────────────────────────────────────
+
+function UploadDropzoneDialog({
+  open,
+  templateName,
+  droppedFile,
+  uploading,
+  onDrop,
+  onClose,
+  onUpload,
+}: {
+  open: boolean;
+  templateName: string;
+  droppedFile: File | null;
+  uploading: boolean;
+  onDrop: (files: File[]) => void;
+  onClose: () => void;
+  onUpload: () => void;
+}) {
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    multiple: false,
+    disabled: uploading,
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Upload Document</DialogTitle>
+          <DialogDescription>{templateName}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div
+            {...getRootProps()}
+            className={cn(
+              'relative overflow-hidden rounded-xl border-2 border-dashed p-6 text-center transition-all cursor-pointer',
+              isDragActive
+                ? 'border-primary bg-primary/5'
+                : 'border-border bg-muted/30 hover:border-muted-foreground/40',
+              uploading && 'cursor-not-allowed opacity-60'
+            )}
+          >
+            <input {...getInputProps()} />
+            <Upload className={cn('mx-auto h-10 w-10 mb-3 transition-colors', isDragActive ? 'text-primary' : 'text-muted-foreground')} />
+            <p className="text-sm font-medium text-foreground mb-1">
+              {isDragActive ? 'Drop file here' : 'Drag and drop a file here'}
+            </p>
+            <p className="text-xs text-muted-foreground">or click to browse</p>
+          </div>
+
+          {droppedFile && (
+            <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+              {isVideoFile(droppedFile) ? (
+                <FileVideo className="h-5 w-5 text-primary flex-shrink-0" />
+              ) : (
+                <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{droppedFile.name}</p>
+                <p className="text-xs text-muted-foreground">{formatFileSize(droppedFile.size)}</p>
+              </div>
+            </div>
+          )}
+
+          <Button
+            className="w-full"
+            disabled={!droppedFile || uploading}
+            onClick={onUpload}
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Uploading…
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Document
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
