@@ -1314,6 +1314,27 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          permissions: Json
+          role: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          permissions?: Json
+          role: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          permissions?: Json
+          role?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       stage_history: {
         Row: {
           candidate_id: string
