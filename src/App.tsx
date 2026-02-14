@@ -116,7 +116,7 @@ const App = () => (
                 <AgencyJobs />
               </ProtectedRoute>
             } />
-            <Route path="/upload" element={
+            <Route path="/candidates/:id/upload" element={
               <ProtectedRoute>
                 <Upload />
               </ProtectedRoute>

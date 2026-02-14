@@ -613,6 +613,17 @@ export default function CandidateDetail() {
 
           {/* ── Documents ────────────────────────────────────────────────── */}
           <TabsContent value="documents" className="space-y-4 mt-4">
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => navigate(`/candidates/${id}/upload`)}
+              >
+                <Upload className="h-4 w-4" />
+                Upload to Drive
+              </Button>
+            </div>
             {id && (
               <CandidateDocumentUpload 
                 candidateId={id}
