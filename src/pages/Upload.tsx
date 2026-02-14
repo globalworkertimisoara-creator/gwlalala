@@ -9,9 +9,11 @@
 import React from 'react';
 import FileUploader from '@/components/upload/FileUploader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppLayout } from '@/components/layout/AppLayout';
 
 export default function Upload() {
   return (
+    <AppLayout>
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">File Upload</h1>
@@ -54,5 +56,6 @@ export default function Upload() {
         </ul>
       </div>
     </div>
+    </AppLayout>
   );
 }
