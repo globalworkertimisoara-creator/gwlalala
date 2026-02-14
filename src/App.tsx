@@ -29,6 +29,7 @@ import Upload from "./pages/Upload";
 import ProjectWorkflowPhase from "./pages/ProjectWorkflowPhase";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import Billing from "./pages/Billing";
+import EmployerDashboard from "./pages/EmployerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,12 @@ const App = () => (
             <Route path="/billing" element={
               <ProtectedRoute>
                 <Billing />
+              </ProtectedRoute>
+            } />
+            {/* Employer Routes */}
+            <Route path="/employer" element={
+              <ProtectedRoute requireEmployer>
+                <EmployerDashboard />
               </ProtectedRoute>
             } />
             {/* Agency Routes */}

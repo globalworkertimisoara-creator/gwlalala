@@ -6,10 +6,11 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
   requireAgency?: boolean;
+  requireEmployer?: boolean;
 }
 
-export function ProtectedRoute({ children, requireAdmin = false, requireAgency = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin, isRealAdmin, isAgency, role } = useAuth();
+export function ProtectedRoute({ children, requireAdmin = false, requireAgency = false, requireEmployer = false }: ProtectedRouteProps) {
+  const { user, loading, isAdmin, isRealAdmin, isAgency, isEmployer, role } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -32,8 +33,18 @@ export function ProtectedRoute({ children, requireAdmin = false, requireAgency =
     return <Navigate to="/agency" replace />;
   }
 
+  // Employer users should only access employer routes
+  if (isEmployer && !requireEmployer && !location.pathname.startsWith('/employer')) {
+    return <Navigate to="/employer" replace />;
+  }
+
   // Non-agency users shouldn't access agency routes — EXCEPT admins (for preview mode)
   if (requireAgency && !isAgency && !isRealAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Non-employer users shouldn't access employer routes — EXCEPT admins (for preview mode)
+  if (requireEmployer && !isEmployer && !isRealAdmin) {
     return <Navigate to="/" replace />;
   }
 
