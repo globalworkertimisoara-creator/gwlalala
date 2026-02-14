@@ -25,6 +25,7 @@ import AgencyWorkers from "./pages/AgencyWorkers";
 import AgencyAuth from "./pages/AgencyAuth";
 import AgencyJobs from "./pages/AgencyJobs";
 import Upload from "./pages/Upload";
+import ProjectWorkflowPhase from "./pages/ProjectWorkflowPhase";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,11 @@ const App = () => (
             <Route path="/projects/:id" element={
               <ProtectedRoute>
                 <ProjectDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/projects/:id/workflow/:phase" element={
+              <ProtectedRoute>
+                <ProjectWorkflowPhase />
               </ProtectedRoute>
             } />
             {/* Agency Routes */}
