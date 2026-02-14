@@ -26,6 +26,7 @@ import AgencyAuth from "./pages/AgencyAuth";
 import AgencyJobs from "./pages/AgencyJobs";
 import Upload from "./pages/Upload";
 import ProjectWorkflowPhase from "./pages/ProjectWorkflowPhase";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/agency-auth" element={<AgencyAuth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/invitation/accept" element={<AcceptInvitation />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Index />

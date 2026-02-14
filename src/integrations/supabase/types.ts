@@ -71,6 +71,53 @@ export type Database = {
           },
         ]
       }
+      agency_activity_log: {
+        Row: {
+          action: string
+          agency_id: string
+          created_at: string | null
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          user_id: string
+          user_name: string | null
+          user_role: Database["public"]["Enums"]["agency_team_role"] | null
+        }
+        Insert: {
+          action: string
+          agency_id: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id: string
+          user_name?: string | null
+          user_role?: Database["public"]["Enums"]["agency_team_role"] | null
+        }
+        Update: {
+          action?: string
+          agency_id?: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string
+          user_name?: string | null
+          user_role?: Database["public"]["Enums"]["agency_team_role"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_job_invitations: {
         Row: {
           agency_id: string
@@ -178,6 +225,56 @@ export type Database = {
           years_in_business?: number | null
         }
         Relationships: []
+      }
+      agency_team_invitations: {
+        Row: {
+          accepted_at: string | null
+          agency_id: string
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invited_at: string | null
+          invited_by: string
+          invited_role: Database["public"]["Enums"]["agency_team_role"]
+          status: string
+          token: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          agency_id: string
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invited_at?: string | null
+          invited_by: string
+          invited_role: Database["public"]["Enums"]["agency_team_role"]
+          status?: string
+          token?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          agency_id?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invited_at?: string | null
+          invited_by?: string
+          invited_role?: Database["public"]["Enums"]["agency_team_role"]
+          status?: string
+          token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_team_invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       agency_worker_documents: {
         Row: {
@@ -852,6 +949,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          agency_team_role:
+            | Database["public"]["Enums"]["agency_team_role"]
+            | null
           avatar_url: string | null
           created_at: string
           full_name: string | null
@@ -860,6 +960,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agency_team_role?:
+            | Database["public"]["Enums"]["agency_team_role"]
+            | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
@@ -868,6 +971,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agency_team_role?:
+            | Database["public"]["Enums"]["agency_team_role"]
+            | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
@@ -1201,6 +1307,10 @@ export type Database = {
           id: string
         }[]
       }
+      get_agency_team_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["agency_team_role"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1209,6 +1319,7 @@ export type Database = {
         Returns: boolean
       }
       is_agency: { Args: { _user_id: string }; Returns: boolean }
+      is_agency_owner: { Args: { _user_id: string }; Returns: boolean }
       is_assigned_to_job: {
         Args: { _job_id: string; _user_id: string }
         Returns: boolean
@@ -1255,6 +1366,11 @@ export type Database = {
         | "plane_ticket"
         | "visa_document"
         | "other"
+      agency_team_role:
+        | "agency_owner"
+        | "agency_recruiter"
+        | "agency_document_staff"
+        | "agency_viewer"
       app_role:
         | "admin"
         | "recruiter"
@@ -1478,6 +1594,12 @@ export const Constants = {
         "plane_ticket",
         "visa_document",
         "other",
+      ],
+      agency_team_role: [
+        "agency_owner",
+        "agency_recruiter",
+        "agency_document_staff",
+        "agency_viewer",
       ],
       app_role: [
         "admin",
