@@ -9,9 +9,11 @@ import {
 } from '@/hooks/useAgency';
 import { AgencyProfileForm } from '@/components/agency/AgencyProfileForm';
 import { SubmitWorkerDialog } from '@/components/agency/SubmitWorkerDialog';
+import TeamManagement from '@/components/agency/TeamManagement';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -33,16 +35,28 @@ import {
 import { getStageLabel, getStageColor } from '@/types/database';
 import { CreateAgencyProfileInput } from '@/types/agency';
 import { format } from 'date-fns';
+import {
+  useAgencyTeamMembers,
+  useAgencyTeamInvitations,
+  useSendAgencyInvitation,
+  useCancelAgencyInvitation,
+} from '@/hooks/useAgencyTeam';
 
 export default function AgencyDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const { data: profile, isLoading: profileLoading } = useAgencyProfile();
   const { data: workers, isLoading: workersLoading } = useAgencyWorkers(profile?.id);
   const createProfile = useCreateAgencyProfile();
   const updateProfile = useUpdateAgencyProfile();
+
+  // Team management hooks
+  const { data: teamMembers = [] } = useAgencyTeamMembers(profile?.id);
+  const { data: invitations = [] } = useAgencyTeamInvitations(profile?.id);
+  const sendInvitation = useSendAgencyInvitation();
+  const cancelInvitation = useCancelAgencyInvitation();
 
   const handleCreateProfile = async (data: CreateAgencyProfileInput) => {
     await createProfile.mutateAsync(data);
@@ -51,12 +65,26 @@ export default function AgencyDashboard() {
   const handleUpdateProfile = async (data: CreateAgencyProfileInput) => {
     if (!profile) return;
     await updateProfile.mutateAsync({ id: profile.id, ...data });
-    setShowProfileEdit(false);
+    setActiveTab('dashboard');
   };
 
   const handleWorkerSubmitted = (workerId: string) => {
     navigate(`/agency/workers/${workerId}`);
   };
+
+  const handleInvite = async (email: string, role: any) => {
+    if (!profile) return;
+    await sendInvitation.mutateAsync({ agencyId: profile.id, email, role });
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    await cancelInvitation.mutateAsync(invitationId);
+  };
+
+  // Check if current user is agency owner
+  const isOwner = teamMembers.some(
+    (m) => m.id === user?.id && m.agencyTeamRole === 'agency_owner'
+  ) || teamMembers.length === 0; // fallback: if no members loaded, assume owner
 
   if (profileLoading) {
     return (
@@ -74,28 +102,6 @@ export default function AgencyDashboard() {
           <AgencyProfileForm 
             onSubmit={handleCreateProfile}
             isLoading={createProfile.isPending}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // Show profile edit form
-  if (showProfileEdit) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4 lg:p-8">
-        <div className="max-w-4xl mx-auto">
-          <Button 
-            variant="ghost" 
-            onClick={() => setShowProfileEdit(false)}
-            className="mb-4"
-          >
-            ← Back to Dashboard
-          </Button>
-          <AgencyProfileForm 
-            existingProfile={profile}
-            onSubmit={handleUpdateProfile}
-            isLoading={updateProfile.isPending}
           />
         </div>
       </div>
@@ -124,10 +130,6 @@ export default function AgencyDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowProfileEdit(true)}>
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
@@ -136,143 +138,186 @@ export default function AgencyDashboard() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalWorkers}</div>
-              <p className="text-xs text-muted-foreground">Workers submitted</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{inProgressWorkers}</div>
-              <p className="text-xs text-muted-foreground">Being processed</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Placed</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{placedWorkers}</div>
-              <p className="text-xs text-muted-foreground">Successfully placed</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <SubmitWorkerDialog 
-            agencyId={profile.id} 
-            onSuccess={handleWorkerSubmitted}
-            trigger={
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Submit New Worker
-              </Button>
-            }
-          />
-          <Button variant="outline" onClick={() => navigate('/agency/jobs')}>
-            <Briefcase className="mr-2 h-4 w-4" />
-            View Available Jobs
-          </Button>
-        </div>
-
-        {/* Workers Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Submitted Workers</CardTitle>
-            <CardDescription>
-              View and manage your worker submissions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {workersLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : workers?.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No workers submitted yet</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Start by submitting a worker for an open position
-                </p>
-                <SubmitWorkerDialog 
-                  agencyId={profile.id} 
-                  onSuccess={handleWorkerSubmitted}
-                />
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Worker</TableHead>
-                    <TableHead>Job</TableHead>
-                    <TableHead>Nationality</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {workers?.map((worker) => (
-                    <TableRow key={worker.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{worker.full_name}</p>
-                          <p className="text-sm text-muted-foreground">{worker.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {worker.job ? (
-                          <div>
-                            <p className="font-medium">{worker.job.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {worker.job.client_company}
-                            </p>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{worker.nationality}</TableCell>
-                      <TableCell>
-                        <Badge className={getStageColor(worker.current_stage)}>
-                          {getStageLabel(worker.current_stage)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(worker.submitted_at), 'MMM d, yyyy')}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/agency/workers/${worker.id}`)}
-                        >
-                          <FileText className="h-4 w-4 mr-1" />
-                          Documents
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+      <main className="container mx-auto px-4 py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="settings">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </TabsTrigger>
+            {isOwner && (
+              <TabsTrigger value="team">
+                <Users className="h-4 w-4 mr-2" />
+                Team
+              </TabsTrigger>
             )}
-          </CardContent>
-        </Card>
+          </TabsList>
+
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard" className="space-y-8">
+            {/* Stats */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalWorkers}</div>
+                  <p className="text-xs text-muted-foreground">Workers submitted</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{inProgressWorkers}</div>
+                  <p className="text-xs text-muted-foreground">Being processed</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Placed</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{placedWorkers}</div>
+                  <p className="text-xs text-muted-foreground">Successfully placed</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <SubmitWorkerDialog 
+                agencyId={profile.id} 
+                onSuccess={handleWorkerSubmitted}
+                trigger={
+                  <Button>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Submit New Worker
+                  </Button>
+                }
+              />
+              <Button variant="outline" onClick={() => navigate('/agency/jobs')}>
+                <Briefcase className="mr-2 h-4 w-4" />
+                View Available Jobs
+              </Button>
+            </div>
+
+            {/* Workers Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Submitted Workers</CardTitle>
+                <CardDescription>
+                  View and manage your worker submissions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {workersLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : workers?.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No workers submitted yet</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Start by submitting a worker for an open position
+                    </p>
+                    <SubmitWorkerDialog 
+                      agencyId={profile.id} 
+                      onSuccess={handleWorkerSubmitted}
+                    />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Worker</TableHead>
+                        <TableHead>Job</TableHead>
+                        <TableHead>Nationality</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Submitted</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {workers?.map((worker) => (
+                        <TableRow key={worker.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{worker.full_name}</p>
+                              <p className="text-sm text-muted-foreground">{worker.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {worker.job ? (
+                              <div>
+                                <p className="font-medium">{worker.job.title}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {worker.job.client_company}
+                                </p>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>{worker.nationality}</TableCell>
+                          <TableCell>
+                            <Badge className={getStageColor(worker.current_stage)}>
+                              {getStageLabel(worker.current_stage)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {format(new Date(worker.submitted_at), 'MMM d, yyyy')}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(`/agency/workers/${worker.id}`)}
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Documents
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings">
+            <div className="max-w-4xl">
+              <AgencyProfileForm 
+                existingProfile={profile}
+                onSubmit={handleUpdateProfile}
+                isLoading={updateProfile.isPending}
+              />
+            </div>
+          </TabsContent>
+
+          {/* Team Tab */}
+          {isOwner && (
+            <TabsContent value="team">
+              <TeamManagement
+                teamMembers={teamMembers}
+                invitations={invitations}
+                onInvite={handleInvite}
+                onCancelInvitation={handleCancelInvitation}
+                isOwner={isOwner}
+              />
+            </TabsContent>
+          )}
+        </Tabs>
       </main>
     </div>
   );
