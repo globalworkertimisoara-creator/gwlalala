@@ -119,7 +119,16 @@ export default function RolesPermissionsOverview({ filter = 'all' }: Props) {
   const { data: dbPermissions, isLoading } = useDbRolePermissions();
   const togglePermission = useTogglePermission();
 
-  const permissionsMap = dbPermissions || PERMISSIONS_BY_ROLE;
+  // Merge DB overrides with defaults so new roles always have a fallback
+  const permissionsMap = useMemo(() => {
+    const base = { ...PERMISSIONS_BY_ROLE };
+    if (dbPermissions) {
+      for (const role of Object.keys(dbPermissions) as AllRoles[]) {
+        base[role] = dbPermissions[role];
+      }
+    }
+    return base;
+  }, [dbPermissions]);
 
   const roles = useMemo(() => {
     const all = Object.keys(PERMISSIONS_BY_ROLE) as AllRoles[];
