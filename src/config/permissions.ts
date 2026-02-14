@@ -5,7 +5,7 @@
  * This file defines what each user role can and cannot do in the system.
  */
 
-export type InternalRole = 'admin' | 'recruiter' | 'operations_manager' | 'documentation_staff';
+export type InternalRole = 'admin' | 'recruiter' | 'operations_manager' | 'documentation_staff' | 'documentation_lead' | 'sales_manager' | 'project_manager';
 
 export type AgencyRole = 'agency_owner' | 'agency_recruiter' | 'agency_document_staff' | 'agency_viewer';
 
@@ -470,6 +470,157 @@ const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
   managePaymentMethods: false,
 };
 
+// ─── Documentation Lead Permissions ───────────────────────────────────────────
+
+const DOCUMENTATION_LEAD_PERMISSIONS: RolePermissions = {
+  createUsers: false,
+  viewAllUsers: true,
+  modifyUserRoles: false,
+  viewAllCandidates: true,
+  createCandidates: false,
+  editCandidates: false,
+  deleteCandidates: false,
+  exportCandidates: true,
+  viewAllJobs: true,
+  createJobs: false,
+  editJobs: false,
+  deleteJobs: false,
+  linkCandidatesToJobs: false,
+  viewAllProjects: true,
+  createProjects: false,
+  editProjects: false,
+  deleteProjects: false,
+  viewAllDocuments: true,
+  uploadDocuments: true,
+  deleteDocuments: true,
+  viewAllWorkflows: true,
+  createWorkflows: true,
+  advanceWorkflowPhases: true,
+  reviewApproveDocuments: true,
+  viewAllAgencies: true,
+  approveRejectAgencies: false,
+  viewAgencyProfiles: true,
+  editAgencyDetails: false,
+  viewAgencyWorkers: true,
+  inviteTeamMembers: false,
+  removeTeamMembers: false,
+  changeTeamMemberRoles: false,
+  viewTeamActivityLog: false,
+  viewAllNotes: true,
+  createNotes: true,
+  editOwnNotes: true,
+  deleteAnyNotes: false,
+  accessAdminPanel: false,
+  viewSystemLogs: true,
+  modifySettings: false,
+  createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
+  viewInvoices: false,
+  managePaymentMethods: false,
+};
+
+// ─── Sales Manager Permissions ────────────────────────────────────────────────
+
+const SALES_MANAGER_PERMISSIONS: RolePermissions = {
+  createUsers: false,
+  viewAllUsers: true,
+  modifyUserRoles: false,
+  viewAllCandidates: true,
+  createCandidates: false,
+  editCandidates: false,
+  deleteCandidates: false,
+  exportCandidates: true,
+  viewAllJobs: true,
+  createJobs: true,
+  editJobs: true,
+  deleteJobs: false,
+  linkCandidatesToJobs: false,
+  viewAllProjects: true,
+  createProjects: true,
+  editProjects: true,
+  deleteProjects: false,
+  viewAllDocuments: true,
+  uploadDocuments: false,
+  deleteDocuments: false,
+  viewAllWorkflows: true,
+  createWorkflows: false,
+  advanceWorkflowPhases: false,
+  reviewApproveDocuments: false,
+  viewAllAgencies: true,
+  approveRejectAgencies: false,
+  viewAgencyProfiles: true,
+  editAgencyDetails: false,
+  viewAgencyWorkers: false,
+  inviteTeamMembers: false,
+  removeTeamMembers: false,
+  changeTeamMemberRoles: false,
+  viewTeamActivityLog: false,
+  viewAllNotes: true,
+  createNotes: true,
+  editOwnNotes: true,
+  deleteAnyNotes: false,
+  accessAdminPanel: false,
+  viewSystemLogs: false,
+  modifySettings: false,
+  createRegistrationCodes: false,
+  viewBilling: true,
+  manageBilling: false,
+  viewInvoices: true,
+  managePaymentMethods: false,
+};
+
+// ─── Project Manager Permissions ──────────────────────────────────────────────
+// Project Managers only see Dashboard and Projects assigned to them.
+
+const PROJECT_MANAGER_PERMISSIONS: RolePermissions = {
+  createUsers: false,
+  viewAllUsers: false,
+  modifyUserRoles: false,
+  viewAllCandidates: false,
+  createCandidates: false,
+  editCandidates: false,
+  deleteCandidates: false,
+  exportCandidates: false,
+  viewAllJobs: false,
+  createJobs: false,
+  editJobs: false,
+  deleteJobs: false,
+  linkCandidatesToJobs: false,
+  viewAllProjects: true,
+  createProjects: false,
+  editProjects: true,
+  deleteProjects: false,
+  viewAllDocuments: false,
+  uploadDocuments: false,
+  deleteDocuments: false,
+  viewAllWorkflows: false,
+  createWorkflows: false,
+  advanceWorkflowPhases: false,
+  reviewApproveDocuments: false,
+  viewAllAgencies: false,
+  approveRejectAgencies: false,
+  viewAgencyProfiles: false,
+  editAgencyDetails: false,
+  viewAgencyWorkers: false,
+  inviteTeamMembers: false,
+  removeTeamMembers: false,
+  changeTeamMemberRoles: false,
+  viewTeamActivityLog: false,
+  viewAllNotes: false,
+  createNotes: false,
+  editOwnNotes: false,
+  deleteAnyNotes: false,
+  accessAdminPanel: false,
+  viewSystemLogs: false,
+  modifySettings: false,
+  createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
+  viewInvoices: false,
+  managePaymentMethods: false,
+};
+
 // ─── Permissions Map ──────────────────────────────────────────────────────────
 
 export const PERMISSIONS_BY_ROLE: Record<AllRoles, RolePermissions> = {
@@ -477,6 +628,9 @@ export const PERMISSIONS_BY_ROLE: Record<AllRoles, RolePermissions> = {
   recruiter: RECRUITER_PERMISSIONS,
   operations_manager: OPERATIONS_MANAGER_PERMISSIONS,
   documentation_staff: DOCUMENTATION_STAFF_PERMISSIONS,
+  documentation_lead: DOCUMENTATION_LEAD_PERMISSIONS,
+  sales_manager: SALES_MANAGER_PERMISSIONS,
+  project_manager: PROJECT_MANAGER_PERMISSIONS,
   agency_owner: AGENCY_OWNER_PERMISSIONS,
   agency_recruiter: AGENCY_RECRUITER_PERMISSIONS,
   agency_document_staff: AGENCY_DOCUMENT_STAFF_PERMISSIONS,
@@ -521,6 +675,9 @@ export function getRoleName(role: AllRoles): string {
     recruiter: 'Recruiter',
     operations_manager: 'Operations Manager',
     documentation_staff: 'Documentation Staff',
+    documentation_lead: 'Documentation Lead',
+    sales_manager: 'Sales Manager',
+    project_manager: 'Project Manager',
     agency_owner: 'Agency Owner',
     agency_recruiter: 'Agency Recruiter',
     agency_document_staff: 'Agency Document Staff',
@@ -533,7 +690,7 @@ export function getRoleName(role: AllRoles): string {
  * Check if role is internal staff
  */
 export function isInternalStaff(role: AllRoles): boolean {
-  return ['admin', 'recruiter', 'operations_manager', 'documentation_staff'].includes(role);
+  return ['admin', 'recruiter', 'operations_manager', 'documentation_staff', 'documentation_lead', 'sales_manager', 'project_manager'].includes(role);
 }
 
 /**
