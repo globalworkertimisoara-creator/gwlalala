@@ -321,7 +321,7 @@ const AGENCY_OWNER_PERMISSIONS: RolePermissions = {
   modifySettings: false,
   createRegistrationCodes: false,
   viewBilling: true,
-  manageBilling: false,
+  manageBilling: true,
   viewInvoices: true,
   managePaymentMethods: true,
 };
