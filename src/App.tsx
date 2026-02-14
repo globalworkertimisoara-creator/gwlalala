@@ -29,6 +29,8 @@ import Upload from "./pages/Upload";
 import ProjectWorkflowPhase from "./pages/ProjectWorkflowPhase";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import Billing from "./pages/Billing";
+import EmployerCandidateDetail from "./pages/EmployerCandidateDetail";
+import EmployerProjectDetail from "./pages/EmployerProjectDetail";
 import EmployerDashboard from "./pages/EmployerDashboard";
 
 const queryClient = new QueryClient();
@@ -116,6 +118,16 @@ const App = () => (
             <Route path="/employer" element={
               <ProtectedRoute requireEmployer>
                 <EmployerDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/employer/candidates/:id" element={
+              <ProtectedRoute requireEmployer>
+                <EmployerCandidateDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/employer/projects/:id" element={
+              <ProtectedRoute requireEmployer>
+                <EmployerProjectDetail />
               </ProtectedRoute>
             } />
             {/* Agency Routes */}

@@ -310,7 +310,7 @@ export default function EmployerDashboard() {
                     </TableHeader>
                     <TableBody>
                       {projects.map((project) => (
-                        <TableRow key={project.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/projects/${project.id}`)}>
+                        <TableRow key={project.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/employer/projects/${project.id}`)}>
                           <TableCell className="font-medium">{project.name}</TableCell>
                           <TableCell>{project.location}</TableCell>
                           <TableCell>
@@ -357,7 +357,7 @@ export default function EmployerDashboard() {
                     </TableHeader>
                     <TableBody>
                       {candidates.map((cw: any) => (
-                        <TableRow key={cw.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/candidates/${cw.candidate_id}`)}>
+                        <TableRow key={cw.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/employer/candidates/${cw.candidate_id}`)}>
                           <TableCell className="font-medium">{cw.candidates?.full_name}</TableCell>
                           <TableCell className="text-muted-foreground">{cw.candidates?.email}</TableCell>
                           <TableCell>
