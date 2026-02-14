@@ -219,7 +219,11 @@ export default function EmployerProjectDetail() {
                   </TableHeader>
                   <TableBody>
                     {jobs.map((job: any) => (
-                      <TableRow key={job.id}>
+                      <TableRow 
+                        key={job.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/employer/jobs/${job.id}`)}
+                      >
                         <TableCell className="font-medium">{job.title}</TableCell>
                         <TableCell>{job.country}</TableCell>
                         <TableCell>

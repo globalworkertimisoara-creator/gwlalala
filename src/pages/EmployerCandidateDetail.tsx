@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployerNotes, useCreateEmployerNote, useDeleteEmployerNote } from '@/hooks/useEmployerNotes';
+import { useLogEmployerAction, useEmployerAuditLog } from '@/hooks/useEmployerAuditLog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   ArrowLeft, Loader2, Mail, Phone, MapPin, Users, CalendarDays, FileText,
-  MessageSquare, Download, Clock, Trash2, Send,
+  MessageSquare, Download, Clock, Trash2, Send, Activity,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -34,7 +35,7 @@ export default function EmployerCandidateDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [noteContent, setNoteContent] = useState('');
-
+  const hasLoggedView = useRef(false);
   const { data: workflowData, isLoading } = useQuery({
     queryKey: ['employer-candidate-detail', id],
     queryFn: async () => {
@@ -87,14 +88,37 @@ export default function EmployerCandidateDetail() {
   });
 
   const { data: notes = [], isLoading: notesLoading } = useEmployerNotes(id);
+  const { data: auditLog = [] } = useEmployerAuditLog(id);
   const createNote = useCreateEmployerNote();
   const deleteNote = useDeleteEmployerNote();
+  const logAction = useLogEmployerAction();
+
+  // Log profile view once
+  useEffect(() => {
+    if (id && workflowData?.companyId && !hasLoggedView.current) {
+      hasLoggedView.current = true;
+      logAction.mutate({
+        candidate_id: id,
+        company_id: workflowData.companyId,
+        action_type: 'profile_view',
+      });
+    }
+  }, [id, workflowData?.companyId]);
 
   const handleAddNote = () => {
     if (!noteContent.trim() || !id || !workflowData?.companyId) return;
     createNote.mutate(
       { candidate_id: id, content: noteContent.trim(), company_id: workflowData.companyId },
-      { onSuccess: () => setNoteContent('') }
+      {
+        onSuccess: () => {
+          setNoteContent('');
+          logAction.mutate({
+            candidate_id: id!,
+            company_id: workflowData!.companyId!,
+            action_type: 'note_added',
+          });
+        },
+      }
     );
   };
 
@@ -103,6 +127,17 @@ export default function EmployerCandidateDetail() {
       .from('candidate-documents')
       .download(storagePath);
     if (error || !data) return;
+
+    // Log download
+    if (id && workflowData?.companyId) {
+      logAction.mutate({
+        candidate_id: id,
+        company_id: workflowData.companyId,
+        action_type: 'document_download',
+        details: { file_name: fileName },
+      });
+    }
+
     const url = URL.createObjectURL(data);
     const a = document.createElement('a');
     a.href = url;
@@ -365,6 +400,45 @@ export default function EmployerCandidateDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Audit Log */}
+      {auditLog.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="h-4 w-4" /> Activity Log
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {auditLog.map((entry) => {
+                const actionLabels: Record<string, string> = {
+                  profile_view: 'Viewed profile',
+                  document_download: 'Downloaded document',
+                  note_added: 'Added a note',
+                  note_deleted: 'Deleted a note',
+                };
+                return (
+                  <div key={entry.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-primary/60" />
+                      <span className="text-sm">
+                        {actionLabels[entry.action_type] || entry.action_type}
+                        {entry.details?.file_name && (
+                          <span className="text-muted-foreground"> — {entry.details.file_name}</span>
+                        )}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
