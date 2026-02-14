@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployerNotes, useCreateEmployerNote, useDeleteEmployerNote } from '@/hooks/useEmployerNotes';
 import { useLogEmployerAction, useEmployerAuditLog } from '@/hooks/useEmployerAuditLog';
+import { useCandidateActivityLog, useLogCandidateActivity } from '@/hooks/useCandidateActivityLog';
+import { CandidateActivityLog } from '@/components/candidates/CandidateActivityLog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -89,9 +91,11 @@ export default function EmployerCandidateDetail() {
 
   const { data: notes = [], isLoading: notesLoading } = useEmployerNotes(id);
   const { data: auditLog = [] } = useEmployerAuditLog(id);
+  const { data: activityLog = [], isLoading: activityLoading } = useCandidateActivityLog(id);
   const createNote = useCreateEmployerNote();
   const deleteNote = useDeleteEmployerNote();
   const logAction = useLogEmployerAction();
+  const logCandidateActivity = useLogCandidateActivity();
 
   // Log profile view once
   useEffect(() => {
@@ -101,6 +105,12 @@ export default function EmployerCandidateDetail() {
         candidate_id: id,
         company_id: workflowData.companyId,
         action_type: 'profile_view',
+      });
+      logCandidateActivity.mutate({
+        candidate_id: id,
+        event_type: 'profile_view',
+        summary: 'Employer viewed candidate profile',
+        company_id: workflowData.companyId,
       });
     }
   }, [id, workflowData?.companyId]);
@@ -401,44 +411,15 @@ export default function EmployerCandidateDetail() {
         </CardContent>
       </Card>
 
-      {/* Audit Log */}
-      {auditLog.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4" /> Activity Log
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {auditLog.map((entry) => {
-                const actionLabels: Record<string, string> = {
-                  profile_view: 'Viewed profile',
-                  document_download: 'Downloaded document',
-                  note_added: 'Added a note',
-                  note_deleted: 'Deleted a note',
-                };
-                return (
-                  <div key={entry.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-primary/60" />
-                      <span className="text-sm">
-                        {actionLabels[entry.action_type] || entry.action_type}
-                        {entry.details?.file_name && (
-                          <span className="text-muted-foreground"> — {entry.details.file_name}</span>
-                        )}
-                      </span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Unified Activity Log */}
+      <div className="mt-6">
+        <CandidateActivityLog
+          entries={activityLog}
+          isLoading={activityLoading}
+          showActorType={false}
+          title="Activity Log"
+        />
+      </div>
     </div>
   );
 }

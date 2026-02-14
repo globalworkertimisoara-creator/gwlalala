@@ -5,6 +5,8 @@ import { useCandidate, useUpdateCandidateStage, useUpdateCandidate } from '@/hoo
 import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useStageHistory } from '@/hooks/useStageHistory';
+import { useCandidateActivityLog, useLogCandidateActivity } from '@/hooks/useCandidateActivityLog';
+import { CandidateActivityLog } from '@/components/candidates/CandidateActivityLog';
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
 import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
@@ -112,6 +114,8 @@ export default function CandidateDetail() {
   const { data: notes, isLoading: notesLoading } = useNotes(id);
   const { data: documents, isLoading: docsLoading } = useDocuments(id);
   const { data: stageHistory, isLoading: historyLoading } = useStageHistory(id);
+  const { data: activityLog = [], isLoading: activityLoading } = useCandidateActivityLog(id);
+  const logCandidateActivity = useLogCandidateActivity();
 
   // Mutation hooks
   const updateStage = useUpdateCandidateStage();
@@ -441,7 +445,7 @@ export default function CandidateDetail() {
 
         {/* ── Tabbed Content ───────────────────────────────────────────────── */}
         <Tabs defaultValue="overview">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="workflow">Workflow</TabsTrigger>
             <TabsTrigger value="notes">
@@ -451,6 +455,9 @@ export default function CandidateDetail() {
               Documents{documents && documents.length > 0 && <span className="ml-1.5 text-xs opacity-60">({documents.length})</span>}
             </TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="activity">
+              Activity{activityLog.length > 0 && <span className="ml-1.5 text-xs opacity-60">({activityLog.length})</span>}
+            </TabsTrigger>
           </TabsList>
 
           {/* ── Overview ─────────────────────────────────────────────────── */}
@@ -698,6 +705,16 @@ export default function CandidateDetail() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* ── Activity Log ─────────────────────────────────────────────── */}
+          <TabsContent value="activity" className="mt-4">
+            <CandidateActivityLog
+              entries={activityLog}
+              isLoading={activityLoading}
+              showActorType={true}
+              title="Full Activity Log"
+            />
           </TabsContent>
         </Tabs>
       </div>
