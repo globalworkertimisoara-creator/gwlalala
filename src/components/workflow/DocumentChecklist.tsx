@@ -70,19 +70,24 @@ export default function DocumentChecklist({
 }: DocumentChecklistProps) {
   const [uploadingTemplate, setUploadingTemplate] = useState<string | null>(null);
   const [uploadDialog, setUploadDialog] = useState<{ template: DocumentTemplate; open: boolean } | null>(null);
-  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [reviewDialog, setReviewDialog] = useState<{ doc: WorkflowDocument; open: boolean } | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [reviewAction, setReviewAction] = useState<'approved' | 'rejected' | null>(null);
 
   const handleUploadFromDialog = async () => {
-    if (!uploadDialog || !droppedFile) return;
+    if (!uploadDialog || droppedFiles.length === 0) return;
     setUploading(true);
     try {
-      await onUpload(uploadDialog.template.id, droppedFile);
+      for (let i = 0; i < droppedFiles.length; i++) {
+        setUploadProgress(`Uploading ${i + 1} of ${droppedFiles.length}…`);
+        await onUpload(uploadDialog.template.id, droppedFiles[i]);
+      }
       setUploadDialog(null);
-      setDroppedFile(null);
+      setDroppedFiles([]);
+      setUploadProgress('');
     } finally {
       setUploading(false);
     }
@@ -90,8 +95,12 @@ export default function DocumentChecklist({
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
-      setDroppedFile(acceptedFiles[0]);
+      setDroppedFiles((prev) => [...prev, ...acceptedFiles]);
     }
+  }, []);
+
+  const removeDroppedFile = useCallback((index: number) => {
+    setDroppedFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleReviewSubmit = async () => {
@@ -191,7 +200,7 @@ export default function DocumentChecklist({
                     variant={doc ? 'outline' : 'default'}
                     size="sm"
                     onClick={() => {
-                      setDroppedFile(null);
+                      setDroppedFiles([]);
                       setUploadDialog({ template, open: true });
                     }}
                   >
@@ -288,10 +297,12 @@ export default function DocumentChecklist({
         <UploadDropzoneDialog
           open={uploadDialog.open}
           templateName={uploadDialog.template.documentName}
-          droppedFile={droppedFile}
+          droppedFiles={droppedFiles}
           uploading={uploading}
+          uploadProgress={uploadProgress}
           onDrop={onDrop}
-          onClose={() => { setUploadDialog(null); setDroppedFile(null); }}
+          onRemoveFile={removeDroppedFile}
+          onClose={() => { setUploadDialog(null); setDroppedFiles([]); setUploadProgress(''); }}
           onUpload={handleUploadFromDialog}
         />
       )}
@@ -304,23 +315,27 @@ export default function DocumentChecklist({
 function UploadDropzoneDialog({
   open,
   templateName,
-  droppedFile,
+  droppedFiles,
   uploading,
+  uploadProgress,
   onDrop,
+  onRemoveFile,
   onClose,
   onUpload,
 }: {
   open: boolean;
   templateName: string;
-  droppedFile: File | null;
+  droppedFiles: File[];
   uploading: boolean;
+  uploadProgress: string;
   onDrop: (files: File[]) => void;
+  onRemoveFile: (index: number) => void;
   onClose: () => void;
   onUpload: () => void;
 }) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    multiple: false,
+    multiple: true,
     disabled: uploading,
   });
 
@@ -328,7 +343,7 @@ function UploadDropzoneDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Upload Document</DialogTitle>
+          <DialogTitle>Upload Documents</DialogTitle>
           <DialogDescription>{templateName}</DialogDescription>
         </DialogHeader>
 
@@ -346,39 +361,48 @@ function UploadDropzoneDialog({
             <input {...getInputProps()} />
             <Upload className={cn('mx-auto h-10 w-10 mb-3 transition-colors', isDragActive ? 'text-primary' : 'text-muted-foreground')} />
             <p className="text-sm font-medium text-foreground mb-1">
-              {isDragActive ? 'Drop file here' : 'Drag and drop a file here'}
+              {isDragActive ? 'Drop files here' : 'Drag and drop files here'}
             </p>
-            <p className="text-xs text-muted-foreground">or click to browse</p>
+            <p className="text-xs text-muted-foreground">or click to browse • multiple files supported</p>
           </div>
 
-          {droppedFile && (
-            <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-              {isVideoFile(droppedFile) ? (
-                <FileVideo className="h-5 w-5 text-primary flex-shrink-0" />
-              ) : (
-                <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{droppedFile.name}</p>
-                <p className="text-xs text-muted-foreground">{formatFileSize(droppedFile.size)}</p>
-              </div>
+          {droppedFiles.length > 0 && (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {droppedFiles.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+                  {isVideoFile(file) ? (
+                    <FileVideo className="h-5 w-5 text-primary flex-shrink-0" />
+                  ) : (
+                    <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                  </div>
+                  {!uploading && (
+                    <Button variant="ghost" size="sm" onClick={() => onRemoveFile(idx)}>
+                      <XCircle className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
           <Button
             className="w-full"
-            disabled={!droppedFile || uploading}
+            disabled={droppedFiles.length === 0 || uploading}
             onClick={onUpload}
           >
             {uploading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Uploading…
+                {uploadProgress}
               </>
             ) : (
               <>
                 <Upload className="h-4 w-4 mr-2" />
-                Upload Document
+                Upload {droppedFiles.length > 0 ? `${droppedFiles.length} file${droppedFiles.length > 1 ? 's' : ''}` : 'Documents'}
               </>
             )}
           </Button>
