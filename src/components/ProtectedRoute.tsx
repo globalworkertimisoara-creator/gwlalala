@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false, requireAgency = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin, isAgency, role } = useAuth();
+  const { user, loading, isAdmin, isRealAdmin, isAgency, role } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -33,7 +33,7 @@ export function ProtectedRoute({ children, requireAdmin = false, requireAgency =
   }
 
   // Non-agency users shouldn't access agency routes — EXCEPT admins (for preview mode)
-  if (requireAgency && !isAgency && !isAdmin) {
+  if (requireAgency && !isAgency && !isRealAdmin) {
     return <Navigate to="/" replace />;
   }
 

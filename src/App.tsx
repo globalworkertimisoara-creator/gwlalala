@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RoleOverrideBanner } from "@/components/layout/RoleOverrideBanner";
 import Index from "./pages/Index";
 import Pipeline from "./pages/Pipeline";
 import Candidates from "./pages/Candidates";
@@ -37,6 +38,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <RoleOverrideBanner />
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
