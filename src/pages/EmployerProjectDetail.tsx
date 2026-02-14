@@ -5,11 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
   ArrowLeft, Building2, MapPin, Users, Briefcase, Loader2, FolderOpen,
+  FileText, Award, Plane, Home,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getProjectStatusLabel } from '@/types/project';
@@ -21,6 +23,24 @@ const PHASE_LABELS: Record<string, string> = {
   arrival: 'Arrival',
   residence_permit: 'Residence Permit',
 };
+
+const PHASE_ICONS: Record<string, React.ElementType> = {
+  recruitment: FileText,
+  documentation: FileText,
+  visa: Award,
+  arrival: Plane,
+  residence_permit: Home,
+};
+
+const PHASE_COLORS: Record<string, string> = {
+  recruitment: 'bg-blue-100 text-blue-700',
+  documentation: 'bg-amber-100 text-amber-700',
+  visa: 'bg-purple-100 text-purple-700',
+  arrival: 'bg-teal-100 text-teal-700',
+  residence_permit: 'bg-green-100 text-green-700',
+};
+
+const PHASE_ORDER = ['recruitment', 'documentation', 'visa', 'arrival', 'residence_permit'];
 
 export default function EmployerProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -141,20 +161,57 @@ export default function EmployerProjectDetail() {
 
         {/* Phase overview + candidates */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Phase summary */}
+          {/* Workflow Progress */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Candidate Progress</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4" /> Workflow Progress
+              </CardTitle>
               <CardDescription>{workflows.length} candidate(s) in workflow</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-5 gap-2 mb-4">
-                {Object.entries(PHASE_LABELS).map(([key, label]) => (
-                  <div key={key} className="text-center p-2 rounded-lg border">
-                    <p className="text-2xl font-bold">{phaseCounts[key] || 0}</p>
-                    <p className="text-xs text-muted-foreground">{label}</p>
+            <CardContent className="space-y-5">
+              {/* Overall completion */}
+              {workflows.length > 0 && (() => {
+                const completed = workflows.filter((w: any) => w.current_phase === 'residence_permit').length;
+                const pct = Math.round((completed / workflows.length) * 100);
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Overall Completion</span>
+                      <span className="font-semibold">{completed}/{workflows.length} completed ({pct}%)</span>
+                    </div>
+                    <Progress value={pct} className="h-3" />
                   </div>
-                ))}
+                );
+              })()}
+
+              {/* Per-phase breakdown */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Current Phase Distribution</p>
+                <div className="grid gap-2">
+                  {PHASE_ORDER.map(phase => {
+                    const Icon = PHASE_ICONS[phase];
+                    const count = phaseCounts[phase] || 0;
+                    const pct = workflows.length > 0 ? Math.round((count / workflows.length) * 100) : 0;
+                    return (
+                      <div
+                        key={phase}
+                        className={cn(
+                          'flex items-center justify-between rounded-lg px-3 py-2.5',
+                          PHASE_COLORS[phase]
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className="h-4 w-4" />
+                          <span className="text-sm font-medium">{PHASE_LABELS[phase]}</span>
+                        </div>
+                        <Badge variant="secondary" className="bg-white/60 text-inherit">
+                          {count} ({pct}%)
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </CardContent>
           </Card>
