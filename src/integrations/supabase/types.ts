@@ -446,6 +446,230 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_change_log: {
+        Row: {
+          action: string
+          billing_payment_id: string | null
+          billing_record_id: string
+          changed_by: string
+          changed_by_name: string | null
+          changed_by_role: string | null
+          created_at: string
+          field_changed: string | null
+          id: string
+          new_value: string | null
+          note: string | null
+          old_value: string | null
+        }
+        Insert: {
+          action: string
+          billing_payment_id?: string | null
+          billing_record_id: string
+          changed_by: string
+          changed_by_name?: string | null
+          changed_by_role?: string | null
+          created_at?: string
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          action?: string
+          billing_payment_id?: string | null
+          billing_record_id?: string
+          changed_by?: string
+          changed_by_name?: string | null
+          changed_by_role?: string | null
+          created_at?: string
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_change_log_billing_payment_id_fkey"
+            columns: ["billing_payment_id"]
+            isOneToOne: false
+            referencedRelation: "billing_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_change_log_billing_record_id_fkey"
+            columns: ["billing_record_id"]
+            isOneToOne: false
+            referencedRelation: "billing_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_notes: {
+        Row: {
+          billing_record_id: string
+          content: string
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          created_by_role: string | null
+          id: string
+        }
+        Insert: {
+          billing_record_id: string
+          content: string
+          created_at?: string
+          created_by: string
+          created_by_name?: string | null
+          created_by_role?: string | null
+          id?: string
+        }
+        Update: {
+          billing_record_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          created_by_name?: string | null
+          created_by_role?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_notes_billing_record_id_fkey"
+            columns: ["billing_record_id"]
+            isOneToOne: false
+            referencedRelation: "billing_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_payments: {
+        Row: {
+          amount: number
+          billing_record_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          payment_date: string | null
+          payment_method: string | null
+          percentage: number
+          reference_number: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          billing_record_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          percentage: number
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_record_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          percentage?: number
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_payments_billing_record_id_fkey"
+            columns: ["billing_record_id"]
+            isOneToOne: false
+            referencedRelation: "billing_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_records: {
+        Row: {
+          agency_id: string
+          agreed_at: string | null
+          agreed_by_admin: string | null
+          agreed_by_agency: string | null
+          candidate_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          id: string
+          job_id: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          agreed_at?: string | null
+          agreed_by_admin?: string | null
+          agreed_by_agency?: string | null
+          candidate_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          job_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          agreed_at?: string | null
+          agreed_by_admin?: string | null
+          agreed_by_agency?: string | null
+          candidate_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          job_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_records_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_records_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_records_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_job_links: {
         Row: {
           candidate_id: string
@@ -1285,6 +1509,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_billing: {
+        Args: { _agency_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_manage_assignments: { Args: { _user_id: string }; Returns: boolean }
       can_view_candidate_history: {
         Args: { _candidate_id: string; _user_id: string }

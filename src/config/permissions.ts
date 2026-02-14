@@ -75,7 +75,9 @@ export interface RolePermissions {
   modifySettings: boolean;
   createRegistrationCodes: boolean;
 
-  // Billing (for agencies)
+  // Billing
+  viewBilling: boolean;
+  manageBilling: boolean;
   viewInvoices: boolean;
   managePaymentMethods: boolean;
 }
@@ -124,6 +126,8 @@ const ADMIN_PERMISSIONS: RolePermissions = {
   viewSystemLogs: true,
   modifySettings: true,
   createRegistrationCodes: true,
+  viewBilling: true,
+  manageBilling: true,
   viewInvoices: false,
   managePaymentMethods: false,
 };
@@ -170,6 +174,8 @@ const RECRUITER_PERMISSIONS: RolePermissions = {
   viewSystemLogs: false,
   modifySettings: false,
   createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
   viewInvoices: false,
   managePaymentMethods: false,
 };
@@ -216,6 +222,8 @@ const OPERATIONS_MANAGER_PERMISSIONS: RolePermissions = {
   viewSystemLogs: true,
   modifySettings: false,
   createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
   viewInvoices: false,
   managePaymentMethods: false,
 };
@@ -262,6 +270,8 @@ const DOCUMENTATION_STAFF_PERMISSIONS: RolePermissions = {
   viewSystemLogs: false,
   modifySettings: false,
   createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
   viewInvoices: false,
   managePaymentMethods: false,
 };
@@ -310,6 +320,8 @@ const AGENCY_OWNER_PERMISSIONS: RolePermissions = {
   viewSystemLogs: false,
   modifySettings: false,
   createRegistrationCodes: false,
+  viewBilling: true,
+  manageBilling: false,
   viewInvoices: true,
   managePaymentMethods: true,
 };
@@ -356,6 +368,8 @@ const AGENCY_RECRUITER_PERMISSIONS: RolePermissions = {
   viewSystemLogs: false,
   modifySettings: false,
   createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
   viewInvoices: false,
   managePaymentMethods: false,
 };
@@ -402,6 +416,8 @@ const AGENCY_DOCUMENT_STAFF_PERMISSIONS: RolePermissions = {
   viewSystemLogs: false,
   modifySettings: false,
   createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
   viewInvoices: false,
   managePaymentMethods: false,
 };
@@ -448,6 +464,8 @@ const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
   viewSystemLogs: false,
   modifySettings: false,
   createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
   viewInvoices: false,
   managePaymentMethods: false,
 };

@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   Building2,
   FolderKanban,
+  Receipt,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -61,6 +62,7 @@ const navItems: NavItem[] = [
   { title: 'Candidates', url: '/candidates', icon: Users, requirePermission: 'viewAllCandidates' },
   { title: 'Jobs', url: '/jobs', icon: Briefcase, requirePermission: 'viewAllJobs' },
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
+  { title: 'Billing', url: '/billing', icon: Receipt, requirePermission: 'viewBilling' },
   { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
   { title: 'Settings', url: '/settings', icon: Settings, requirePermission: 'modifySettings' },
 ];
