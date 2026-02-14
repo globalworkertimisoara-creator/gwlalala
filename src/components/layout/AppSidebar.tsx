@@ -267,6 +267,10 @@ export function AppSidebar() {
                   <Building2 className="mr-2 h-4 w-4" />
                   View as Agency
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/employer')} className="text-amber-600 focus:text-amber-700">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  View as Employer
+                </DropdownMenuItem>
               </>
             )}
             <DropdownMenuSeparator />
