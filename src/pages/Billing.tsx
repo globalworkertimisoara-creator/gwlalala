@@ -21,8 +21,9 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DollarSign, Plus, FileText, History, MessageSquare,
-  Loader2, AlertTriangle,
+  Loader2, AlertTriangle, Milestone,
 } from 'lucide-react';
+import { PaymentMilestones } from '@/components/billing/PaymentMilestones';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -177,7 +178,6 @@ function BillingDetail({ record, onUpdate }: { record: BillingRecord; onUpdate: 
   const { data: payments = [] } = useBillingPayments(record.id);
   const { data: changeLog = [] } = useBillingChangeLog(record.id);
   const { data: notes = [] } = useBillingNotes(record.id);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const totalPaid = payments
@@ -250,62 +250,13 @@ function BillingDetail({ record, onUpdate }: { record: BillingRecord; onUpdate: 
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="payments" className="space-y-3 mt-4">
-            {can('manageBilling') && (
-              <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    <Plus className="h-4 w-4 mr-1" /> Add Payment
-                  </Button>
-                </DialogTrigger>
-                <AddPaymentDialog
-                  billingRecordId={record.id}
-                  totalAmount={Number(record.total_amount)}
-                  currency={record.currency}
-                  onClose={() => setShowPaymentDialog(false)}
-                />
-              </Dialog>
-            )}
-            <ScrollArea className="h-[320px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>%</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Ref</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        No payments recorded
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    payments.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="text-xs">
-                          {p.payment_date ? format(new Date(p.payment_date), 'dd MMM yyyy') : '—'}
-                        </TableCell>
-                        <TableCell className="font-medium">{Number(p.amount).toLocaleString()}</TableCell>
-                        <TableCell>{Number(p.percentage)}%</TableCell>
-                        <TableCell className="text-xs">{p.payment_method || '—'}</TableCell>
-                        <TableCell className="text-xs truncate max-w-[100px]">{p.reference_number || '—'}</TableCell>
-                        <TableCell>
-                          <Badge className={`text-[10px] ${PAYMENT_STATUS_COLORS[p.status] || ''}`}>
-                            {p.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </ScrollArea>
+          <TabsContent value="payments" className="mt-4">
+            <PaymentMilestones
+              billingRecordId={record.id}
+              totalAmount={Number(record.total_amount)}
+              currency={record.currency}
+              payments={payments}
+            />
           </TabsContent>
 
           <TabsContent value="log" className="mt-4">
@@ -587,103 +538,3 @@ function EditBillingDialog({ record, onClose, onUpdated }: { record: BillingReco
   );
 }
 
-function AddPaymentDialog({ billingRecordId, totalAmount, currency, onClose }: {
-  billingRecordId: string; totalAmount: number; currency: string; onClose: () => void;
-}) {
-  const createPayment = useCreateBillingPayment();
-  const { toast } = useToast();
-  const [amount, setAmount] = useState('');
-  const [percentage, setPercentage] = useState('');
-  const [paymentDate, setPaymentDate] = useState('');
-  const [method, setMethod] = useState('');
-  const [reference, setReference] = useState('');
-  const [status, setStatus] = useState('pending');
-
-  // Auto-calc percentage when amount changes
-  const handleAmountChange = (val: string) => {
-    setAmount(val);
-    if (val && totalAmount > 0) {
-      setPercentage(((parseFloat(val) / totalAmount) * 100).toFixed(2));
-    }
-  };
-
-  const handlePercentageChange = (val: string) => {
-    setPercentage(val);
-    if (val && totalAmount > 0) {
-      setAmount(((parseFloat(val) / 100) * totalAmount).toFixed(2));
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!amount || !percentage) return;
-    try {
-      await createPayment.mutateAsync({
-        billing_record_id: billingRecordId,
-        amount: parseFloat(amount),
-        percentage: parseFloat(percentage),
-        payment_date: paymentDate || undefined,
-        payment_method: method || undefined,
-        reference_number: reference || undefined,
-        status,
-      });
-      toast({ title: 'Payment recorded' });
-      onClose();
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
-    }
-  };
-
-  return (
-    <DialogContent className="sm:max-w-md">
-      <DialogHeader>
-        <DialogTitle>Add Payment</DialogTitle>
-        <DialogDescription>Record a payment (total: {totalAmount.toLocaleString()} {currency})</DialogDescription>
-      </DialogHeader>
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Amount ({currency})</Label>
-            <Input type="number" step="0.01" value={amount} onChange={(e) => handleAmountChange(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>Percentage (%)</Label>
-            <Input type="number" step="0.01" value={percentage} onChange={(e) => handlePercentageChange(e.target.value)} />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Payment Date</Label>
-          <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Method</Label>
-            <Input value={method} onChange={(e) => setMethod(e.target.value)} placeholder="e.g. Wire Transfer" />
-          </div>
-          <div className="space-y-2">
-            <Label>Reference #</Label>
-            <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="REF-001" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
-              <SelectItem value="refunded">Refunded</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} disabled={createPayment.isPending || !amount}>
-          {createPayment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Add Payment
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  );
-}
