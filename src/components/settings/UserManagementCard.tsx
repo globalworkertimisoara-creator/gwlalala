@@ -66,6 +66,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   sales_manager: 'Sales Manager',
   project_manager: 'Project Manager',
   agency: 'Agency',
+  employer: 'Employer',
 };
 
 export function UserManagementCard() {

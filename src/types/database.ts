@@ -4,6 +4,7 @@ export type AppRole =
   | 'admin' 
   | 'recruiter' 
   | 'agency' 
+  | 'employer'
   | 'documentation_staff' 
   | 'operations_manager'
   | 'documentation_lead'
@@ -20,6 +21,7 @@ export const ROLES: { value: AppRole; label: string; description: string; isInte
   { value: 'recruiter', label: 'Recruiter', description: 'Recruitment operations', isInternal: true },
   { value: 'documentation_staff', label: 'Documentation Staff', description: 'Document processing and compliance', isInternal: true },
   { value: 'agency', label: 'Agency', description: 'External supplier portal', isInternal: false },
+  { value: 'employer', label: 'Employer', description: 'Client company portal', isInternal: false },
 ];
 
 export const getRoleLabel = (role: AppRole): string => {
