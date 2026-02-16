@@ -21,7 +21,7 @@ import {
 import { useJobs, useCreateJob, useJobCandidateCount } from '@/hooks/useJobs';
 import { usePermissions } from '@/hooks/usePermissions';
 import { JobStatus } from '@/types/database';
-import { Plus, Search, Building2, MapPin, DollarSign, Loader2 } from 'lucide-react';
+import { Plus, Search, Building2, MapPin, DollarSign, Loader2, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -181,6 +181,7 @@ export default function Jobs() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Job Title</TableHead>
+                      <TableHead>Project</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Country</TableHead>
                       <TableHead>Salary</TableHead>
@@ -192,6 +193,21 @@ export default function Jobs() {
                     {jobs.map((job) => (
                       <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/jobs/${job.id}`)}>
                         <TableCell className="font-medium">{job.title}</TableCell>
+                        <TableCell>
+                          {(job as any).projects ? (
+                            <div className="flex items-center gap-2">
+                              <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                              <span 
+                                className="text-primary hover:underline cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); navigate(`/projects/${(job as any).projects.id}`); }}
+                              >
+                                {(job as any).projects.name}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-muted-foreground" />

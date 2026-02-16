@@ -13,7 +13,7 @@ export function useJobs(filters?: {
     queryFn: async () => {
       let query = supabase
         .from('jobs')
-        .select('*')
+        .select('*, projects(id, name)')
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
