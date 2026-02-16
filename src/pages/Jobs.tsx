@@ -21,8 +21,8 @@ import {
 import { useJobs, useCreateJob, useJobCandidateCount } from '@/hooks/useJobs';
 import { usePermissions } from '@/hooks/usePermissions';
 import { JobStatus } from '@/types/database';
-import { Plus, Search, Building2, MapPin, DollarSign, Loader2, FolderOpen } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, Search, Building2, MapPin, DollarSign, Loader2, FolderOpen, ArrowUpDown, Calendar } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { format } from 'date-fns';
 
 const statusColors: Record<JobStatus, string> = {
   open: 'bg-green-100 text-green-800',
@@ -40,9 +41,12 @@ const statusColors: Record<JobStatus, string> = {
   filled: 'bg-blue-100 text-blue-800',
 };
 
+type SortOption = 'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'country_asc' | 'country_desc' | 'status_asc' | 'status_desc';
+
 export default function Jobs() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { can } = usePermissions();
@@ -53,6 +57,31 @@ export default function Jobs() {
   });
   const { data: candidateCounts } = useJobCandidateCount();
   const createJob = useCreateJob();
+
+  const sortedJobs = useMemo(() => {
+    if (!jobs) return [];
+    const sorted = [...jobs];
+    switch (sortBy) {
+      case 'newest':
+        return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case 'oldest':
+        return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case 'title_asc':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'title_desc':
+        return sorted.sort((a, b) => b.title.localeCompare(a.title));
+      case 'country_asc':
+        return sorted.sort((a, b) => a.country.localeCompare(b.country));
+      case 'country_desc':
+        return sorted.sort((a, b) => b.country.localeCompare(a.country));
+      case 'status_asc':
+        return sorted.sort((a, b) => a.status.localeCompare(b.status));
+      case 'status_desc':
+        return sorted.sort((a, b) => b.status.localeCompare(a.status));
+      default:
+        return sorted;
+    }
+  }, [jobs, sortBy]);
 
   const handleCreateJob = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -161,6 +190,24 @@ export default function Jobs() {
                   <SelectItem value="filled">Filled</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown className="h-4 w-4" />
+                    <SelectValue placeholder="Sort by" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Date: Newest First</SelectItem>
+                  <SelectItem value="oldest">Date: Oldest First</SelectItem>
+                  <SelectItem value="title_asc">Title: A → Z</SelectItem>
+                  <SelectItem value="title_desc">Title: Z → A</SelectItem>
+                  <SelectItem value="country_asc">Country: A → Z</SelectItem>
+                  <SelectItem value="country_desc">Country: Z → A</SelectItem>
+                  <SelectItem value="status_asc">Status: A → Z</SelectItem>
+                  <SelectItem value="status_desc">Status: Z → A</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -175,7 +222,7 @@ export default function Jobs() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : jobs && jobs.length > 0 ? (
+            ) : sortedJobs.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -186,11 +233,12 @@ export default function Jobs() {
                       <TableHead>Country</TableHead>
                       <TableHead>Salary</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
                       <TableHead className="text-right">Candidates</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {jobs.map((job) => (
+                    {sortedJobs.map((job) => (
                       <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/jobs/${job.id}`)}>
                         <TableCell className="font-medium">{job.title}</TableCell>
                         <TableCell>
@@ -232,6 +280,12 @@ export default function Jobs() {
                           <Badge className={statusColors[job.status]}>
                             {job.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                            <Calendar className="h-4 w-4" />
+                            {format(new Date(job.created_at), 'dd MMM yyyy')}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           {candidateCounts?.[job.id] || 0}
