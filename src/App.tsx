@@ -33,6 +33,7 @@ import EmployerCandidateDetail from "./pages/EmployerCandidateDetail";
 import EmployerProjectDetail from "./pages/EmployerProjectDetail";
 import EmployerJobDetail from "./pages/EmployerJobDetail";
 import EmployerDashboard from "./pages/EmployerDashboard";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,12 @@ const App = () => (
             <Route path="/projects/:id/workflow/:phase" element={
               <ProtectedRoute>
                 <ProjectWorkflowPhase />
+              </ProtectedRoute>
+            } />
+            {/* Analytics */}
+            <Route path="/analytics" element={
+              <ProtectedRoute>
+                <Analytics />
               </ProtectedRoute>
             } />
             {/* Billing */}
