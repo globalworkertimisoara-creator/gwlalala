@@ -63,10 +63,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "activity_log_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_job_statistics"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "activity_log_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -116,6 +130,13 @@ export type Database = {
             referencedRelation: "agency_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agency_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
+            referencedColumns: ["id"]
+          },
         ]
       }
       agency_job_invitations: {
@@ -149,10 +170,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "agency_job_invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "agency_job_invitations_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_job_invitations_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_job_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -274,6 +309,13 @@ export type Database = {
             referencedRelation: "agency_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agency_team_invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
+            referencedColumns: ["id"]
+          },
         ]
       }
       agency_worker_documents: {
@@ -390,10 +432,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "agency_workers_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_workers_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_job_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -655,6 +711,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "billing_records_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "billing_records_candidate_id_fkey"
             columns: ["candidate_id"]
             isOneToOne: false
@@ -666,6 +729,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_records_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_job_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -716,6 +786,13 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
             referencedColumns: ["id"]
           },
           {
@@ -804,6 +881,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "candidate_interviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
+            referencedColumns: ["id"]
+          },
         ]
       }
       candidate_job_links: {
@@ -844,6 +928,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_job_links_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_job_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -927,6 +1018,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "candidate_offers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
+            referencedColumns: ["id"]
+          },
         ]
       }
       candidate_workflow: {
@@ -985,6 +1083,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_workflow_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -1386,6 +1491,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "employer_project_access_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
+            referencedColumns: ["id"]
+          },
         ]
       }
       escalations: {
@@ -1471,10 +1583,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "escalations_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_job_statistics"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "escalations_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -1510,6 +1636,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_assignments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "v_job_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -1563,6 +1696,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -1645,6 +1785,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
           {
@@ -1743,6 +1890,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -2043,7 +2197,136 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_agency_performance: {
+        Row: {
+          agency_name: string | null
+          id: string | null
+          projects_involved: number | null
+          success_rate: number | null
+          successful_placements: number | null
+          total_candidates_submitted: number | null
+        }
+        Relationships: []
+      }
+      v_document_statistics: {
+        Row: {
+          avg_review_hours: number | null
+          document_count: number | null
+          phase: Database["public"]["Enums"]["workflow_phase"] | null
+          status: Database["public"]["Enums"]["document_status"] | null
+        }
+        Relationships: []
+      }
+      v_job_statistics: {
+        Row: {
+          client_company: string | null
+          country: string | null
+          days_open: number | null
+          id: string | null
+          interviewing_count: number | null
+          placed_count: number | null
+          status: string | null
+          title: string | null
+          total_applications: number | null
+        }
+        Relationships: []
+      }
+      v_jobs_by_country: {
+        Row: {
+          avg_days_open: number | null
+          country: string | null
+          job_count: number | null
+          open_jobs: number | null
+        }
+        Relationships: []
+      }
+      v_jobs_by_status: {
+        Row: {
+          job_count: number | null
+          status: string | null
+        }
+        Relationships: []
+      }
+      v_pipeline_phase_counts: {
+        Row: {
+          avg_days_in_pipeline: number | null
+          candidate_count: number | null
+          current_phase: Database["public"]["Enums"]["workflow_phase"] | null
+          workflow_type: Database["public"]["Enums"]["workflow_type"] | null
+        }
+        Relationships: []
+      }
+      v_project_statistics: {
+        Row: {
+          agencies_involved: number | null
+          avg_days_to_completion: number | null
+          completed_candidates: number | null
+          country: string | null
+          employer_name: string | null
+          fill_percentage: number | null
+          id: string | null
+          name: string | null
+          start_date: string | null
+          status: string | null
+          total_candidates: number | null
+        }
+        Relationships: []
+      }
+      v_projects_by_country: {
+        Row: {
+          active_projects: number | null
+          country: string | null
+          project_count: number | null
+        }
+        Relationships: []
+      }
+      v_projects_by_status: {
+        Row: {
+          project_count: number | null
+          status: string | null
+        }
+        Relationships: []
+      }
+      v_system_overview: {
+        Row: {
+          active_agencies: number | null
+          active_projects: number | null
+          candidates_last_30_days: number | null
+          completed_workflows: number | null
+          open_jobs: number | null
+          pending_documents: number | null
+          stalled_workflows: number | null
+          total_candidates: number | null
+        }
+        Relationships: []
+      }
+      v_top_agencies: {
+        Row: {
+          agency_name: string | null
+          success_rate: number | null
+          successful_placements: number | null
+        }
+        Relationships: []
+      }
+      v_top_positions: {
+        Row: {
+          avg_applications_per_posting: number | null
+          job_postings: number | null
+          title: string | null
+          total_applications: number | null
+        }
+        Relationships: []
+      }
+      v_workflow_completion: {
+        Row: {
+          avg_completion_days: number | null
+          completed_count: number | null
+          stalled_count: number | null
+          total_workflows: number | null
+          workflow_type: Database["public"]["Enums"]["workflow_type"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       agency_has_candidate_access: {
@@ -2084,6 +2367,25 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["agency_team_role"]
       }
+      get_candidates_timeline: {
+        Args: {
+          p_end_date?: string
+          p_interval?: string
+          p_start_date?: string
+        }
+        Returns: {
+          candidate_count: number
+          period: string
+        }[]
+      }
+      get_conversion_rates: {
+        Args: never
+        Returns: {
+          conversion_rate: number
+          from_phase: string
+          to_phase: string
+        }[]
+      }
       get_employer_candidates: {
         Args: { p_project_id: string }
         Returns: {
@@ -2100,6 +2402,33 @@ export type Database = {
       get_employer_team_role_fn: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["employer_team_role"]
+      }
+      get_pipeline_funnel: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          count: number
+          percentage: number
+          phase: string
+        }[]
+      }
+      get_project_metrics: {
+        Args: { p_project_id: string }
+        Returns: {
+          metric_name: string
+          metric_unit: string
+          metric_value: number
+        }[]
+      }
+      get_projects_timeline: {
+        Args: {
+          p_end_date?: string
+          p_interval?: string
+          p_start_date?: string
+        }
+        Returns: {
+          period: string
+          project_count: number
+        }[]
       }
       has_employer_project_access: {
         Args: { _project_id: string; _user_id: string }
