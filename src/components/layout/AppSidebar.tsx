@@ -16,6 +16,7 @@ import {
   FolderKanban,
   Receipt,
   Eye,
+  BarChart3,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -75,6 +76,7 @@ const navItems: NavItem[] = [
   { title: 'Jobs', url: '/jobs', icon: Briefcase, requirePermission: 'viewAllJobs' },
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
   { title: 'Billing', url: '/billing', icon: Receipt, requirePermission: 'viewBilling' },
+  { title: 'Analytics', url: '/analytics', icon: BarChart3, requirePermission: 'viewAllCandidates' },
   { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
   { title: 'Settings', url: '/settings', icon: Settings, requirePermission: 'modifySettings' },
 ];
