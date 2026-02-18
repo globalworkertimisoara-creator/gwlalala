@@ -3,6 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OverviewCards from '@/components/analytics/OverviewCards';
 import PipelineAnalytics from '@/components/analytics/PipelineAnalytics';
 import ProjectAnalytics from '@/components/analytics/ProjectAnalytics';
+import JobAnalytics from '@/components/analytics/JobAnalytics';
+import AgencyAnalytics from '@/components/analytics/AgencyAnalytics';
 import { BarChart3 } from 'lucide-react';
 
 const Analytics = () => {
@@ -25,6 +27,7 @@ const Analytics = () => {
           <TabsList>
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="jobs-agencies">Jobs & Agencies</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pipeline">
@@ -33,6 +36,13 @@ const Analytics = () => {
 
           <TabsContent value="projects">
             <ProjectAnalytics />
+          </TabsContent>
+
+          <TabsContent value="jobs-agencies">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <JobAnalytics />
+              <AgencyAnalytics />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
