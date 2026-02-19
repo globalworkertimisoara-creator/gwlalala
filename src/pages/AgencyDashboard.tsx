@@ -13,6 +13,9 @@ import TeamManagement from '@/components/agency/TeamManagement';
 import { AgencyJobsList } from '@/components/agency/AgencyJobsList';
 import { AgencyProjectsView } from '@/components/agency/AgencyProjectsView';
 import { AgencyBillingView } from '@/components/agency/AgencyBillingView';
+import AgencyOverviewCards from '@/components/analytics/agency/AgencyOverviewCards';
+import AgencyPipelineView from '@/components/analytics/agency/AgencyPipelineView';
+import AgencyAnalyticsProjectsView from '@/components/analytics/agency/AgencyProjectsView';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +44,7 @@ import {
   ArrowLeft,
   Eye,
   FolderOpen,
+  BarChart3,
 } from 'lucide-react';
 import { getStageLabel, getStageColor } from '@/types/database';
 import { CreateAgencyProfileInput } from '@/types/agency';
@@ -328,6 +332,10 @@ export default function AgencyDashboard() {
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              My Analytics
+            </TabsTrigger>
             {isOwner && (
               <TabsTrigger value="team">
                 <Users className="h-4 w-4 mr-2" />
@@ -504,6 +512,23 @@ export default function AgencyDashboard() {
                 isLoading={updateProfile.isPending}
               />
             </div>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-8">
+            <AgencyOverviewCards />
+            <Tabs defaultValue="pipeline" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="pipeline">My Pipeline</TabsTrigger>
+                <TabsTrigger value="my-projects">My Projects</TabsTrigger>
+              </TabsList>
+              <TabsContent value="pipeline">
+                <AgencyPipelineView />
+              </TabsContent>
+              <TabsContent value="my-projects">
+                <AgencyAnalyticsProjectsView />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* Team Tab */}
