@@ -34,6 +34,7 @@ import EmployerProjectDetail from "./pages/EmployerProjectDetail";
 import EmployerJobDetail from "./pages/EmployerJobDetail";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Analytics from "./pages/Analytics";
+import AgencyAnalytics from "./pages/AgencyAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -162,6 +163,11 @@ const App = () => (
             <Route path="/agency/jobs" element={
               <ProtectedRoute requireAgency>
                 <AgencyJobs />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-analytics" element={
+              <ProtectedRoute requireAgency>
+                <AgencyAnalytics />
               </ProtectedRoute>
             } />
             <Route path="/candidates/:id/upload" element={

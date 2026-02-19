@@ -2197,6 +2197,32 @@ export type Database = {
       }
     }
     Views: {
+      v_agency_own_workflow_health: {
+        Row: {
+          agency_id: string | null
+          avg_completion_days: number | null
+          completed_count: number | null
+          stalled_count: number | null
+          total_workflows: number | null
+          workflow_type: Database["public"]["Enums"]["workflow_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_agency_performance: {
         Row: {
           agency_name: string | null
