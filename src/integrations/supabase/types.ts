@@ -80,6 +80,13 @@ export type Database = {
             foreignKeyName: "activity_log_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "activity_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
@@ -134,6 +141,13 @@ export type Database = {
             foreignKeyName: "agency_activity_log_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "agency_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
             referencedRelation: "v_agency_performance"
             referencedColumns: ["id"]
           },
@@ -168,6 +182,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "agency_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_job_invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "agency_job_invitations_agency_id_fkey"
@@ -313,6 +334,13 @@ export type Database = {
             foreignKeyName: "agency_team_invitations_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "agency_team_invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
             referencedRelation: "v_agency_performance"
             referencedColumns: ["id"]
           },
@@ -430,6 +458,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "agency_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "agency_workers_agency_id_fkey"
@@ -714,6 +749,13 @@ export type Database = {
             foreignKeyName: "billing_records_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "billing_records_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
             referencedRelation: "v_agency_performance"
             referencedColumns: ["id"]
           },
@@ -787,6 +829,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "agency_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_activity_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "candidate_activity_log_agency_id_fkey"
@@ -880,6 +929,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_interviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "candidate_interviews_project_id_fkey"
@@ -1022,6 +1078,13 @@ export type Database = {
             foreignKeyName: "candidate_offers_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "candidate_offers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
@@ -1084,6 +1147,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_workflow_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "candidate_workflow_project_id_fkey"
@@ -1495,6 +1565,13 @@ export type Database = {
             foreignKeyName: "employer_project_access_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "employer_project_access_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
@@ -1595,6 +1672,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "escalations_project_id_fkey"
@@ -1702,6 +1786,13 @@ export type Database = {
             foreignKeyName: "jobs_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "v_project_statistics"
             referencedColumns: ["id"]
           },
@@ -1786,6 +1877,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "notifications_project_id_fkey"
@@ -1891,6 +1989,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_assignments_project_id_fkey"
@@ -2197,6 +2302,85 @@ export type Database = {
       }
     }
     Views: {
+      v_agency_own_candidates_by_country: {
+        Row: {
+          agency_id: string | null
+          candidate_count: number | null
+          country: string | null
+          placed_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_agency_own_overview: {
+        Row: {
+          active_projects: number | null
+          agency_id: string | null
+          candidates_last_30_days: number | null
+          completed_placements: number | null
+          pending_documents: number | null
+          stalled_workflows: number | null
+          total_candidates: number | null
+        }
+        Relationships: []
+      }
+      v_agency_own_projects: {
+        Row: {
+          agency_id: string | null
+          avg_days_to_placement: number | null
+          candidates_placed: number | null
+          candidates_submitted: number | null
+          country: string | null
+          placement_rate: number | null
+          project_id: string | null
+          project_name: string | null
+          status: Database["public"]["Enums"]["project_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_agency_own_workflow_health: {
         Row: {
           agency_id: string | null
@@ -2213,6 +2397,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "agency_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_workers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_overview"
+            referencedColumns: ["agency_id"]
           },
           {
             foreignKeyName: "agency_workers_agency_id_fkey"
@@ -2379,6 +2570,38 @@ export type Database = {
       employer_has_candidate_access: {
         Args: { _candidate_id: string; _user_id: string }
         Returns: boolean
+      }
+      get_agency_candidates_timeline: {
+        Args: {
+          p_agency_id: string
+          p_end_date?: string
+          p_interval?: string
+          p_start_date?: string
+        }
+        Returns: {
+          candidate_count: number
+          period: string
+        }[]
+      }
+      get_agency_own_metrics: {
+        Args: { p_agency_id: string }
+        Returns: {
+          metric_name: string
+          metric_unit: string
+          metric_value: number
+        }[]
+      }
+      get_agency_pipeline_funnel: {
+        Args: {
+          p_agency_id: string
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: {
+          count: number
+          percentage: number
+          phase: string
+        }[]
       }
       get_agency_profile_id: { Args: { _user_id: string }; Returns: string }
       get_agency_profiles_limited: {
