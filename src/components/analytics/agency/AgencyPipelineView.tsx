@@ -12,10 +12,14 @@ import { useAgencyPipelineFunnel, useAgencyOwnWorkflowHealth, useAgencyCandidate
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, Users } from 'lucide-react';
 
-export default function AgencyPipelineView() {
-  const { data: funnelData } = useAgencyPipelineFunnel();
-  const { data: workflowHealth } = useAgencyOwnWorkflowHealth();
-  const { data: timeline } = useAgencyCandidatesTimeline('month');
+interface AgencyPipelineViewProps {
+  agencyId?: string;
+}
+
+export default function AgencyPipelineView({ agencyId }: AgencyPipelineViewProps = {}) {
+  const { data: funnelData } = useAgencyPipelineFunnel(agencyId);
+  const { data: workflowHealth } = useAgencyOwnWorkflowHealth(agencyId);
+  const { data: timeline } = useAgencyCandidatesTimeline('month', agencyId);
   const [selectedPhase, setSelectedPhase] = useState<any>(null);
   const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
   const [selectedMonth, setSelectedMonth] = useState<any>(null);

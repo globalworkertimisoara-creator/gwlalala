@@ -516,17 +516,17 @@ export default function AgencyDashboard() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-8">
-            <AgencyOverviewCards />
+            <AgencyOverviewCards agencyId={activeAgencyId || undefined} />
             <Tabs defaultValue="pipeline" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="pipeline">My Pipeline</TabsTrigger>
                 <TabsTrigger value="my-projects">My Projects</TabsTrigger>
               </TabsList>
               <TabsContent value="pipeline">
-                <AgencyPipelineView />
+                <AgencyPipelineView agencyId={activeAgencyId || undefined} />
               </TabsContent>
               <TabsContent value="my-projects">
-                <AgencyAnalyticsProjectsView />
+                <AgencyAnalyticsProjectsView agencyId={activeAgencyId || undefined} />
               </TabsContent>
             </Tabs>
           </TabsContent>
