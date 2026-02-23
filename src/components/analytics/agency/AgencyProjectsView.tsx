@@ -12,9 +12,13 @@ import { useAgencyOwnProjects, useAgencyOwnCandidatesByCountry } from '@/hooks/u
 import { Badge } from '@/components/ui/badge';
 import { MapPin, TrendingUp, Users } from 'lucide-react';
 
-export default function AgencyProjectsView() {
-  const { data: projects } = useAgencyOwnProjects();
-  const { data: byCountry } = useAgencyOwnCandidatesByCountry();
+interface AgencyProjectsViewProps {
+  agencyId?: string;
+}
+
+export default function AgencyProjectsView({ agencyId }: AgencyProjectsViewProps = {}) {
+  const { data: projects } = useAgencyOwnProjects(agencyId);
+  const { data: byCountry } = useAgencyOwnCandidatesByCountry(agencyId);
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<any>(null);
 

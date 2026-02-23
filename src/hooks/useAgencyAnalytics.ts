@@ -2,6 +2,7 @@
  * src/hooks/useAgencyAnalytics.ts
  *
  * React hooks for agency-specific analytics (agencies see ONLY their own data)
+ * Accepts optional agencyId param for admin preview mode.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -22,18 +23,23 @@ async function getAgencyId(): Promise<string> {
   return data.id;
 }
 
+async function resolveAgencyId(overrideId?: string): Promise<string> {
+  if (overrideId) return overrideId;
+  return getAgencyId();
+}
+
 // ─── Agency Own Overview ──────────────────────────────────────────────────────
 
-export function useAgencyOwnOverview() {
+export function useAgencyOwnOverview(agencyId?: string) {
   return useQuery({
-    queryKey: ['agency-analytics', 'overview'],
+    queryKey: ['agency-analytics', 'overview', agencyId],
     queryFn: async () => {
-      const agencyId = await getAgencyId();
+      const id = await resolveAgencyId(agencyId);
 
       const { data, error } = await supabase
         .from('v_agency_own_overview' as any)
         .select('*')
-        .eq('agency_id', agencyId)
+        .eq('agency_id', id)
         .single();
 
       if (error) throw error;
@@ -45,14 +51,14 @@ export function useAgencyOwnOverview() {
 
 // ─── Agency Own Pipeline Funnel ───────────────────────────────────────────────
 
-export function useAgencyPipelineFunnel(startDate?: string, endDate?: string) {
+export function useAgencyPipelineFunnel(agencyId?: string, startDate?: string, endDate?: string) {
   return useQuery({
-    queryKey: ['agency-analytics', 'pipeline-funnel', startDate, endDate],
+    queryKey: ['agency-analytics', 'pipeline-funnel', agencyId, startDate, endDate],
     queryFn: async () => {
-      const agencyId = await getAgencyId();
+      const id = await resolveAgencyId(agencyId);
 
       const { data, error } = await (supabase.rpc as any)('get_agency_pipeline_funnel', {
-        p_agency_id: agencyId,
+        p_agency_id: id,
         p_start_date: startDate || null,
         p_end_date: endDate || new Date().toISOString(),
       });
@@ -65,14 +71,14 @@ export function useAgencyPipelineFunnel(startDate?: string, endDate?: string) {
 
 // ─── Agency Own Performance Metrics ───────────────────────────────────────────
 
-export function useAgencyOwnMetrics() {
+export function useAgencyOwnMetrics(agencyId?: string) {
   return useQuery({
-    queryKey: ['agency-analytics', 'metrics'],
+    queryKey: ['agency-analytics', 'metrics', agencyId],
     queryFn: async () => {
-      const agencyId = await getAgencyId();
+      const id = await resolveAgencyId(agencyId);
 
       const { data, error } = await (supabase.rpc as any)('get_agency_own_metrics', {
-        p_agency_id: agencyId,
+        p_agency_id: id,
       });
 
       if (error) throw error;
@@ -83,16 +89,16 @@ export function useAgencyOwnMetrics() {
 
 // ─── Agency Own Projects ──────────────────────────────────────────────────────
 
-export function useAgencyOwnProjects() {
+export function useAgencyOwnProjects(agencyId?: string) {
   return useQuery({
-    queryKey: ['agency-analytics', 'projects'],
+    queryKey: ['agency-analytics', 'projects', agencyId],
     queryFn: async () => {
-      const agencyId = await getAgencyId();
+      const id = await resolveAgencyId(agencyId);
 
       const { data, error } = await supabase
         .from('v_agency_own_projects' as any)
         .select('*')
-        .eq('agency_id', agencyId)
+        .eq('agency_id', id)
         .order('candidates_submitted', { ascending: false });
 
       if (error) throw error;
@@ -103,16 +109,16 @@ export function useAgencyOwnProjects() {
 
 // ─── Agency Own Candidates by Country ─────────────────────────────────────────
 
-export function useAgencyOwnCandidatesByCountry() {
+export function useAgencyOwnCandidatesByCountry(agencyId?: string) {
   return useQuery({
-    queryKey: ['agency-analytics', 'candidates-by-country'],
+    queryKey: ['agency-analytics', 'candidates-by-country', agencyId],
     queryFn: async () => {
-      const agencyId = await getAgencyId();
+      const id = await resolveAgencyId(agencyId);
 
       const { data, error } = await supabase
         .from('v_agency_own_candidates_by_country' as any)
         .select('*')
-        .eq('agency_id', agencyId)
+        .eq('agency_id', id)
         .order('candidate_count', { ascending: false });
 
       if (error) throw error;
@@ -125,16 +131,17 @@ export function useAgencyOwnCandidatesByCountry() {
 
 export function useAgencyCandidatesTimeline(
   interval: 'day' | 'week' | 'month' = 'week',
+  agencyId?: string,
   startDate?: string,
   endDate?: string
 ) {
   return useQuery({
-    queryKey: ['agency-analytics', 'timeline', interval, startDate, endDate],
+    queryKey: ['agency-analytics', 'timeline', interval, agencyId, startDate, endDate],
     queryFn: async () => {
-      const agencyId = await getAgencyId();
+      const id = await resolveAgencyId(agencyId);
 
       const { data, error } = await (supabase.rpc as any)('get_agency_candidates_timeline', {
-        p_agency_id: agencyId,
+        p_agency_id: id,
         p_interval: interval,
         p_start_date: startDate || new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString(),
         p_end_date: endDate || new Date().toISOString(),
@@ -148,16 +155,16 @@ export function useAgencyCandidatesTimeline(
 
 // ─── Agency Own Workflow Health ───────────────────────────────────────────────
 
-export function useAgencyOwnWorkflowHealth() {
+export function useAgencyOwnWorkflowHealth(agencyId?: string) {
   return useQuery({
-    queryKey: ['agency-analytics', 'workflow-health'],
+    queryKey: ['agency-analytics', 'workflow-health', agencyId],
     queryFn: async () => {
-      const agencyId = await getAgencyId();
+      const id = await resolveAgencyId(agencyId);
 
       const { data, error } = await supabase
         .from('v_agency_own_workflow_health' as any)
         .select('*')
-        .eq('agency_id', agencyId);
+        .eq('agency_id', id);
 
       if (error) throw error;
       return data;

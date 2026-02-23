@@ -12,10 +12,14 @@ import { useAgencyOwnOverview, useAgencyPipelineFunnel, useAgencyOwnProjects, us
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 
+interface AgencyOverviewCardsProps {
+  agencyId?: string;
+}
+
 type DrilldownType = 'candidates' | 'projects' | 'placements' | 'documents' | null;
 
-function CandidatesDrilldown() {
-  const { data: funnel } = useAgencyPipelineFunnel();
+function CandidatesDrilldown({ agencyId }: { agencyId?: string }) {
+  const { data: funnel } = useAgencyPipelineFunnel(agencyId);
   const funnelArr = Array.isArray(funnel) ? funnel : [];
   return (
     <div className="space-y-3">
@@ -34,8 +38,8 @@ function CandidatesDrilldown() {
   );
 }
 
-function ProjectsDrilldown() {
-  const { data: projects } = useAgencyOwnProjects();
+function ProjectsDrilldown({ agencyId }: { agencyId?: string }) {
+  const { data: projects } = useAgencyOwnProjects(agencyId);
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">Your active projects</p>
@@ -53,8 +57,8 @@ function ProjectsDrilldown() {
   );
 }
 
-function WorkflowHealthDrilldown() {
-  const { data: health } = useAgencyOwnWorkflowHealth();
+function WorkflowHealthDrilldown({ agencyId }: { agencyId?: string }) {
+  const { data: health } = useAgencyOwnWorkflowHealth(agencyId);
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">Workflow completion details</p>
@@ -91,8 +95,8 @@ const DRILLDOWN_TITLES: Record<string, string> = {
   documents: 'Documents & Workflow Health',
 };
 
-export default function AgencyOverviewCards() {
-  const { data: overview, isLoading } = useAgencyOwnOverview();
+export default function AgencyOverviewCards({ agencyId }: AgencyOverviewCardsProps = {}) {
+  const { data: overview, isLoading } = useAgencyOwnOverview(agencyId);
   const [drilldown, setDrilldown] = useState<DrilldownType>(null);
 
   if (isLoading) {
@@ -197,10 +201,10 @@ export default function AgencyOverviewCards() {
           <DialogHeader>
             <DialogTitle>{drilldown ? DRILLDOWN_TITLES[drilldown] : ''}</DialogTitle>
           </DialogHeader>
-          {drilldown === 'candidates' && <CandidatesDrilldown />}
-          {drilldown === 'projects' && <ProjectsDrilldown />}
-          {drilldown === 'placements' && <WorkflowHealthDrilldown />}
-          {drilldown === 'documents' && <WorkflowHealthDrilldown />}
+          {drilldown === 'candidates' && <CandidatesDrilldown agencyId={agencyId} />}
+          {drilldown === 'projects' && <ProjectsDrilldown agencyId={agencyId} />}
+          {drilldown === 'placements' && <WorkflowHealthDrilldown agencyId={agencyId} />}
+          {drilldown === 'documents' && <WorkflowHealthDrilldown agencyId={agencyId} />}
         </DialogContent>
       </Dialog>
     </>
