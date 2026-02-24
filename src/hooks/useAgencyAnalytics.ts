@@ -45,6 +45,7 @@ export function useAgencyOwnOverview(agencyId?: string) {
       if (error) throw error;
       return data as any;
     },
+    retry: 1,
     refetchInterval: 60000,
   });
 }
@@ -64,8 +65,9 @@ export function useAgencyPipelineFunnel(agencyId?: string, startDate?: string, e
       });
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    retry: 1,
   });
 }
 
@@ -82,8 +84,9 @@ export function useAgencyOwnMetrics(agencyId?: string) {
       });
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    retry: 1,
   });
 }
 
@@ -102,8 +105,9 @@ export function useAgencyOwnProjects(agencyId?: string) {
         .order('candidates_submitted', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    retry: 1,
   });
 }
 
@@ -122,8 +126,9 @@ export function useAgencyOwnCandidatesByCountry(agencyId?: string) {
         .order('candidate_count', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    retry: 1,
   });
 }
 
@@ -148,8 +153,9 @@ export function useAgencyCandidatesTimeline(
       });
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    retry: 1,
   });
 }
 
@@ -167,7 +173,8 @@ export function useAgencyOwnWorkflowHealth(agencyId?: string) {
         .eq('agency_id', id);
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    retry: 1,
   });
 }
