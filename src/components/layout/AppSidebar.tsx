@@ -17,6 +17,8 @@ import {
   Receipt,
   Eye,
   BarChart3,
+  CheckSquare,
+  FileText,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -50,6 +52,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { TasksSidebar } from '@/components/tasks/TasksSidebar';
 import type { RolePermissions } from '@/config/permissions';
 import { ROLES, type AppRole } from '@/types/database';
 
@@ -75,6 +78,8 @@ const navItems: NavItem[] = [
   { title: 'Candidates', url: '/candidates', icon: Users, requirePermission: 'viewAllCandidates' },
   { title: 'Jobs', url: '/jobs', icon: Briefcase, requirePermission: 'viewAllJobs' },
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
+  { title: 'Tasks', url: '/tasks', icon: CheckSquare },
+  { title: 'Contracts', url: '/contracts', icon: FileText },
   { title: 'Billing', url: '/billing', icon: Receipt, requirePermission: 'viewBilling' },
   { title: 'Analytics', url: '/analytics', icon: BarChart3, requirePermission: 'viewAllCandidates' },
   { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
@@ -138,7 +143,12 @@ export function AppSidebar() {
               </div>
             )}
           </div>
-          {!isCollapsed && <NotificationCenter />}
+          {!isCollapsed && (
+            <div className="flex items-center gap-1">
+              <TasksSidebar />
+              <NotificationCenter />
+            </div>
+          )}
         </div>
       </SidebarHeader>
 

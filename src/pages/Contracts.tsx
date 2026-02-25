@@ -1,0 +1,231 @@
+import { useState } from 'react';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, FileText, AlertTriangle, Clock } from 'lucide-react';
+import { useContracts, useExpiringContracts, useCreateContract, type CreateContractInput } from '@/hooks/useContracts';
+import { format } from 'date-fns';
+
+const statusColors: Record<string, string> = {
+  draft: 'bg-muted text-muted-foreground',
+  sent: 'bg-blue-100 text-blue-800',
+  signed: 'bg-green-100 text-green-800',
+  active: 'bg-emerald-100 text-emerald-800',
+  expired: 'bg-destructive/10 text-destructive',
+  terminated: 'bg-red-100 text-red-800',
+};
+
+const typeLabels: Record<string, string> = {
+  employer_agreement: 'Employer Agreement',
+  agency_agreement: 'Agency Agreement',
+  worker_contract: 'Worker Contract',
+  service_agreement: 'Service Agreement',
+};
+
+export default function Contracts() {
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const filters: any = {};
+  if (typeFilter !== 'all') filters.contract_type = typeFilter;
+  if (statusFilter !== 'all') filters.status = statusFilter;
+
+  const { data: contracts = [], isLoading } = useContracts(Object.keys(filters).length > 0 ? filters : undefined);
+  const { data: expiring = [] } = useExpiringContracts(30);
+  const createContract = useCreateContract();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [form, setForm] = useState<CreateContractInput>({
+    contract_type: 'employer_agreement',
+    party_type: 'employer',
+    party_id: '',
+    title: '',
+  });
+
+  const handleCreate = async () => {
+    if (!form.title.trim() || !form.party_id.trim()) return;
+    await createContract.mutateAsync(form);
+    setForm({ contract_type: 'employer_agreement', party_type: 'employer', party_id: '', title: '' });
+    setDialogOpen(false);
+  };
+
+  return (
+    <AppLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Contract Management</h1>
+            <p className="text-muted-foreground">Track agreements with agencies, employers, and workers</p>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-2" /> New Contract</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Contract</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Title</Label>
+                  <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Contract Type</Label>
+                    <Select value={form.contract_type} onValueChange={v => setForm(p => ({ ...p, contract_type: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="employer_agreement">Employer Agreement</SelectItem>
+                        <SelectItem value="agency_agreement">Agency Agreement</SelectItem>
+                        <SelectItem value="worker_contract">Worker Contract</SelectItem>
+                        <SelectItem value="service_agreement">Service Agreement</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Party Type</Label>
+                    <Select value={form.party_type} onValueChange={v => setForm(p => ({ ...p, party_type: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="employer">Employer</SelectItem>
+                        <SelectItem value="agency">Agency</SelectItem>
+                        <SelectItem value="worker">Worker</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label>Party ID</Label>
+                  <Input value={form.party_id} onChange={e => setForm(p => ({ ...p, party_id: e.target.value }))} placeholder="UUID of the company, agency, or candidate" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Start Date</Label>
+                    <Input type="date" value={form.start_date || ''} onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>End Date</Label>
+                    <Input type="date" value={form.end_date || ''} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Value</Label>
+                    <Input type="number" value={form.total_value || ''} onChange={e => setForm(p => ({ ...p, total_value: parseFloat(e.target.value) || undefined }))} />
+                  </div>
+                  <div>
+                    <Label>Currency</Label>
+                    <Input value={form.currency || 'EUR'} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))} />
+                  </div>
+                </div>
+                <div>
+                  <Label>Notes</Label>
+                  <Textarea value={form.notes || ''} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />
+                </div>
+                <Button className="w-full" onClick={handleCreate} disabled={createContract.isPending}>
+                  Create Contract
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Expiring Contracts Alert */}
+        {expiring.length > 0 && (
+          <Card className="border-amber-200 bg-amber-50/50">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2 text-amber-800">
+                <AlertTriangle className="h-5 w-5" />
+                <p className="font-medium">{expiring.length} contract{expiring.length > 1 ? 's' : ''} expiring within 30 days</p>
+              </div>
+              <div className="mt-2 space-y-1">
+                {expiring.slice(0, 3).map(c => (
+                  <p key={c.id} className="text-sm text-amber-700">
+                    {c.title} — expires {format(new Date(c.end_date!), 'MMM d, yyyy')}
+                  </p>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Filters */}
+        <div className="flex gap-4">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="All Types" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="employer_agreement">Employer Agreement</SelectItem>
+              <SelectItem value="agency_agreement">Agency Agreement</SelectItem>
+              <SelectItem value="worker_contract">Worker Contract</SelectItem>
+              <SelectItem value="service_agreement">Service Agreement</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="All Statuses" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="signed">Signed</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="terminated">Terminated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Contracts Table */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Party</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead>Start</TableHead>
+                  <TableHead>End</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+                ) : contracts.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No contracts found</TableCell></TableRow>
+                ) : contracts.map(c => (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        {c.title}
+                      </div>
+                    </TableCell>
+                    <TableCell>{typeLabels[c.contract_type] || c.contract_type}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{c.party_type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[c.status] || 'bg-muted'}>{c.status}</Badge>
+                    </TableCell>
+                    <TableCell>{c.total_value ? `${c.total_value.toLocaleString()} ${c.currency}` : '—'}</TableCell>
+                    <TableCell>{c.start_date ? format(new Date(c.start_date), 'MMM d, yyyy') : '—'}</TableCell>
+                    <TableCell>{c.end_date ? format(new Date(c.end_date), 'MMM d, yyyy') : '—'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>
+  );
+}

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleOverrideBanner } from "@/components/layout/RoleOverrideBanner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Pipeline from "./pages/Pipeline";
 import Candidates from "./pages/Candidates";
@@ -35,8 +36,23 @@ import EmployerJobDetail from "./pages/EmployerJobDetail";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import Analytics from "./pages/Analytics";
 import AgencyAnalytics from "./pages/AgencyAnalytics";
+import Tasks from "./pages/Tasks";
+import Contracts from "./pages/Contracts";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,        // 30s before refetch
+      gcTime: 5 * 60_000,       // 5min garbage collection
+      retry: 2,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -184,6 +200,21 @@ const App = () => (
             <Route path="/agency-workers/:id" element={
               <ProtectedRoute>
                 <AgencyWorkerDetail />
+              </ProtectedRoute>
+            } />
+            {/* Tasks & Contracts */}
+            <Route path="/tasks" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <Tasks />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/contracts" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <Contracts />
+                </ErrorBoundary>
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

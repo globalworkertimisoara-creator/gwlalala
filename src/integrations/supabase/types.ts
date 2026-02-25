@@ -1323,6 +1323,78 @@ export type Database = {
         }
         Relationships: []
       }
+      contracts: {
+        Row: {
+          auto_renew: boolean | null
+          contract_type: string
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          end_date: string | null
+          id: string
+          job_id: string | null
+          notes: string | null
+          party_id: string
+          party_type: string
+          project_id: string | null
+          renewal_date: string | null
+          signed_by_party_at: string | null
+          signed_by_staff_at: string | null
+          start_date: string | null
+          status: string
+          storage_path: string | null
+          title: string
+          total_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          contract_type: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          end_date?: string | null
+          id?: string
+          job_id?: string | null
+          notes?: string | null
+          party_id: string
+          party_type: string
+          project_id?: string | null
+          renewal_date?: string | null
+          signed_by_party_at?: string | null
+          signed_by_staff_at?: string | null
+          start_date?: string | null
+          status?: string
+          storage_path?: string | null
+          title: string
+          total_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          auto_renew?: boolean | null
+          contract_type?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          end_date?: string | null
+          id?: string
+          job_id?: string | null
+          notes?: string | null
+          party_id?: string
+          party_type?: string
+          project_id?: string | null
+          renewal_date?: string | null
+          signed_by_party_at?: string | null
+          signed_by_staff_at?: string | null
+          start_date?: string | null
+          status?: string
+          storage_path?: string | null
+          title?: string
+          total_value?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_templates: {
         Row: {
           created_at: string
@@ -2147,6 +2219,99 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      storage_metadata: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          file_name: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          storage_backend: string
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          storage_backend?: string
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          storage_backend?: string
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_role: Database["public"]["Enums"]["app_role"] | null
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          priority: string
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          task_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       team_members: {
         Row: {
