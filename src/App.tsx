@@ -38,6 +38,7 @@ import Analytics from "./pages/Analytics";
 import AgencyAnalytics from "./pages/AgencyAnalytics";
 import Tasks from "./pages/Tasks";
 import Contracts from "./pages/Contracts";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -214,6 +215,13 @@ const App = () => (
               <ProtectedRoute>
                 <ErrorBoundary>
                   <Contracts />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <Reports />
                 </ErrorBoundary>
               </ProtectedRoute>
             } />

@@ -19,6 +19,7 @@ import {
   BarChart3,
   CheckSquare,
   FileText,
+  FileDown,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -80,6 +81,7 @@ const navItems: NavItem[] = [
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
   { title: 'Tasks', url: '/tasks', icon: CheckSquare },
   { title: 'Contracts', url: '/contracts', icon: FileText },
+  { title: 'Reports', url: '/reports', icon: FileDown },
   { title: 'Billing', url: '/billing', icon: Receipt, requirePermission: 'viewBilling' },
   { title: 'Analytics', url: '/analytics', icon: BarChart3, requirePermission: 'viewAllCandidates' },
   { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
