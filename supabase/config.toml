@@ -3,6 +3,12 @@ project_id = "yhuoexfivagwuaudjqan"
 [functions.extract-document-data]
 verify_jwt = true
 
+[functions.generate-report]
+verify_jwt = false
+
+[functions.daily-checks]
+verify_jwt = false
+
 [functions.google-oauth]
 verify_jwt = false
 
