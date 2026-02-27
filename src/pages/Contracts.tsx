@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, FileText, AlertTriangle, Clock } from 'lucide-react';
+import { Plus, FileText, AlertTriangle, Loader2 } from 'lucide-react';
 import { useContracts, useExpiringContracts, useCreateContract, type CreateContractInput } from '@/hooks/useContracts';
 import { format } from 'date-fns';
 
@@ -56,15 +56,16 @@ export default function Contracts() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Contract Management</h1>
+      <div className="p-6 lg:p-8 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Contract Management</h1>
             <p className="text-muted-foreground">Track agreements with agencies, employers, and workers</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" /> New Contract</Button>
+              <Button className="gap-2"><Plus className="h-4 w-4" /> New Contract</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -128,9 +129,13 @@ export default function Contracts() {
                   <Label>Notes</Label>
                   <Textarea value={form.notes || ''} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />
                 </div>
-                <Button className="w-full" onClick={handleCreate} disabled={createContract.isPending}>
-                  Create Contract
-                </Button>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleCreate} disabled={createContract.isPending}>
+                    {createContract.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Contract
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
@@ -156,73 +161,90 @@ export default function Contracts() {
         )}
 
         {/* Filters */}
-        <div className="flex gap-4">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="All Types" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="employer_agreement">Employer Agreement</SelectItem>
-              <SelectItem value="agency_agreement">Agency Agreement</SelectItem>
-              <SelectItem value="worker_contract">Worker Contract</SelectItem>
-              <SelectItem value="service_agreement">Service Agreement</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="All Statuses" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="signed">Signed</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-              <SelectItem value="terminated">Terminated</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder="All Types" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="employer_agreement">Employer Agreement</SelectItem>
+                  <SelectItem value="agency_agreement">Agency Agreement</SelectItem>
+                  <SelectItem value="worker_contract">Worker Contract</SelectItem>
+                  <SelectItem value="service_agreement">Service Agreement</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder="All Statuses" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="signed">Signed</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="terminated">Terminated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Contracts Table */}
         <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Party</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Start</TableHead>
-                  <TableHead>End</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
-                ) : contracts.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No contracts found</TableCell></TableRow>
-                ) : contracts.map(c => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        {c.title}
-                      </div>
-                    </TableCell>
-                    <TableCell>{typeLabels[c.contract_type] || c.contract_type}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{c.party_type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[c.status] || 'bg-muted'}>{c.status}</Badge>
-                    </TableCell>
-                    <TableCell>{c.total_value ? `${c.total_value.toLocaleString()} ${c.currency}` : '—'}</TableCell>
-                    <TableCell>{c.start_date ? format(new Date(c.start_date), 'MMM d, yyyy') : '—'}</TableCell>
-                    <TableCell>{c.end_date ? format(new Date(c.end_date), 'MMM d, yyyy') : '—'}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <CardHeader>
+            <CardTitle>All Contracts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : contracts.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No contracts found</p>
+                <p className="text-sm">Create your first contract to get started.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Party</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Value</TableHead>
+                      <TableHead>Start</TableHead>
+                      <TableHead>End</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contracts.map(c => (
+                      <TableRow key={c.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            {c.title}
+                          </div>
+                        </TableCell>
+                        <TableCell>{typeLabels[c.contract_type] || c.contract_type}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{c.party_type}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[c.status] || 'bg-muted'}>{c.status}</Badge>
+                        </TableCell>
+                        <TableCell>{c.total_value ? `${c.total_value.toLocaleString()} ${c.currency}` : '—'}</TableCell>
+                        <TableCell>{c.start_date ? format(new Date(c.start_date), 'MMM d, yyyy') : '—'}</TableCell>
+                        <TableCell>{c.end_date ? format(new Date(c.end_date), 'MMM d, yyyy') : '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
