@@ -1323,6 +1323,47 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_documents: {
+        Row: {
+          contract_id: string
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string
+          id: string
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           auto_renew: boolean | null
@@ -1338,6 +1379,7 @@ export type Database = {
           party_type: string
           project_id: string | null
           renewal_date: string | null
+          sales_person_id: string | null
           signed_by_party_at: string | null
           signed_by_staff_at: string | null
           start_date: string | null
@@ -1361,6 +1403,7 @@ export type Database = {
           party_type: string
           project_id?: string | null
           renewal_date?: string | null
+          sales_person_id?: string | null
           signed_by_party_at?: string | null
           signed_by_staff_at?: string | null
           start_date?: string | null
@@ -1384,6 +1427,7 @@ export type Database = {
           party_type?: string
           project_id?: string | null
           renewal_date?: string | null
+          sales_person_id?: string | null
           signed_by_party_at?: string | null
           signed_by_staff_at?: string | null
           start_date?: string | null
@@ -2212,6 +2256,80 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_commissions: {
+        Row: {
+          adjustment_reason: string | null
+          commission_amount: number
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          original_amount: number | null
+          project_id: string | null
+          sales_person_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          adjustment_reason?: string | null
+          commission_amount: number
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          original_amount?: number | null
+          project_id?: string | null
+          sales_person_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          adjustment_reason?: string | null
+          commission_amount?: number
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          original_amount?: number | null
+          project_id?: string | null
+          sales_person_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_commissions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_reports: {
         Row: {
           created_at: string
@@ -2741,6 +2859,61 @@ export type Database = {
         }
         Relationships: []
       }
+      v_sales_commission_summary: {
+        Row: {
+          adjustment_reason: string | null
+          commission_amount: number | null
+          commission_status: string | null
+          contract_id: string | null
+          contract_status: string | null
+          contract_title: string | null
+          contract_type: string | null
+          contract_value: number | null
+          created_at: string | null
+          currency: string | null
+          employer_name: string | null
+          id: string | null
+          original_amount: number | null
+          party_id: string | null
+          party_type: string | null
+          project_id: string | null
+          project_name: string | null
+          project_status: Database["public"]["Enums"]["project_status"] | null
+          sales_person_id: string | null
+          sales_person_name: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_commissions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_system_overview: {
         Row: {
           active_agencies: number | null
@@ -2802,6 +2975,10 @@ export type Database = {
       }
       can_view_notification: {
         Args: { _notification_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_sales_commissions: {
+        Args: { _user_id: string }
         Returns: boolean
       }
       employer_has_candidate_access: {
