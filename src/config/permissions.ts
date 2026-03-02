@@ -101,6 +101,9 @@ export interface RolePermissions {
   createOffers: boolean;
   viewOffers: boolean;
   approveOffers: boolean;
+
+  // Sales
+  viewSalesAnalytics: boolean;
 }
 
 // ─── Internal Staff Permissions ───────────────────────────────────────────────
