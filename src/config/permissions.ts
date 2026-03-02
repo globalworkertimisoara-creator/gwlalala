@@ -171,6 +171,7 @@ const ADMIN_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: true,
 };
 
 const RECRUITER_PERMISSIONS: RolePermissions = {
@@ -236,6 +237,7 @@ const RECRUITER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 const OPERATIONS_MANAGER_PERMISSIONS: RolePermissions = {
@@ -301,6 +303,7 @@ const OPERATIONS_MANAGER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 const DOCUMENTATION_STAFF_PERMISSIONS: RolePermissions = {
@@ -366,6 +369,7 @@ const DOCUMENTATION_STAFF_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 // ─── Agency Team Permissions ──────────────────────────────────────────────────
@@ -433,6 +437,7 @@ const AGENCY_OWNER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 const AGENCY_RECRUITER_PERMISSIONS: RolePermissions = {
@@ -498,6 +503,7 @@ const AGENCY_RECRUITER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 const AGENCY_DOCUMENT_STAFF_PERMISSIONS: RolePermissions = {
@@ -563,6 +569,7 @@ const AGENCY_DOCUMENT_STAFF_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
@@ -628,6 +635,7 @@ const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 // ─── Documentation Lead Permissions ───────────────────────────────────────────
@@ -695,6 +703,7 @@ const DOCUMENTATION_LEAD_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: true,
 };
 
 // ─── Sales Manager Permissions ────────────────────────────────────────────────
@@ -762,6 +771,7 @@ const SALES_MANAGER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 // ─── Project Manager Permissions ──────────────────────────────────────────────
@@ -830,6 +840,7 @@ const PROJECT_MANAGER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: false,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 // ─── Employer Team Permissions ────────────────────────────────────────────────
@@ -897,6 +908,7 @@ const EMPLOYER_ADMIN_PERMISSIONS: RolePermissions = {
   createOffers: true,
   viewOffers: true,
   approveOffers: true,
+  viewSalesAnalytics: false,
 };
 
 const EMPLOYER_HR_PERMISSIONS: RolePermissions = {
@@ -962,6 +974,7 @@ const EMPLOYER_HR_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: true,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 const EMPLOYER_HIRING_MANAGER_PERMISSIONS: RolePermissions = {
@@ -1027,6 +1040,7 @@ const EMPLOYER_HIRING_MANAGER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: true,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 const EMPLOYER_VIEWER_PERMISSIONS: RolePermissions = {
@@ -1092,6 +1106,7 @@ const EMPLOYER_VIEWER_PERMISSIONS: RolePermissions = {
   createOffers: false,
   viewOffers: true,
   approveOffers: false,
+  viewSalesAnalytics: false,
 };
 
 
