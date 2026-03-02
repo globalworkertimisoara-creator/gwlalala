@@ -82,6 +82,7 @@ const navItems: NavItem[] = [
   { title: 'Tasks', url: '/tasks', icon: CheckSquare },
   { title: 'Contracts', url: '/contracts', icon: FileText },
   { title: 'Reports', url: '/reports', icon: FileDown },
+  { title: 'Sales Analytics', url: '/sales-analytics', icon: BarChart3, requirePermission: 'viewSalesAnalytics' },
   { title: 'Billing', url: '/billing', icon: Receipt, requirePermission: 'viewBilling' },
   { title: 'Analytics', url: '/analytics', icon: BarChart3, requirePermission: 'viewAllCandidates' },
   { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
