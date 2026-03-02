@@ -10,7 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, FileText, AlertTriangle, Loader2 } from 'lucide-react';
-import { useContracts, useExpiringContracts, useCreateContract, type CreateContractInput } from '@/hooks/useContracts';
+import { useContracts, useExpiringContracts, useCreateContract, type CreateContractInput, type Contract } from '@/hooks/useContracts';
+import { useSalesStaff } from '@/hooks/useSalesCommissions';
+import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
 import { format } from 'date-fns';
 
 const statusColors: Record<string, string> = {
@@ -39,7 +41,10 @@ export default function Contracts() {
   const { data: contracts = [], isLoading } = useContracts(Object.keys(filters).length > 0 ? filters : undefined);
   const { data: expiring = [] } = useExpiringContracts(30);
   const createContract = useCreateContract();
+  const { data: salesStaff = [] } = useSalesStaff();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [form, setForm] = useState<CreateContractInput>({
     contract_type: 'employer_agreement',
     party_type: 'employer',
@@ -124,6 +129,18 @@ export default function Contracts() {
                     <Label>Currency</Label>
                     <Input value={form.currency || 'EUR'} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))} />
                   </div>
+                </div>
+                <div>
+                  <Label>Sales Person</Label>
+                  <Select value={(form as any).sales_person_id || 'none'} onValueChange={v => setForm(p => ({ ...p, sales_person_id: v === 'none' ? undefined : v } as any))}>
+                    <SelectTrigger><SelectValue placeholder="Select sales person" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {salesStaff.map(s => (
+                        <SelectItem key={s.user_id} value={s.user_id}>{s.full_name || s.user_id}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Notes</Label>
@@ -222,7 +239,7 @@ export default function Contracts() {
                   </TableHeader>
                   <TableBody>
                     {contracts.map(c => (
-                      <TableRow key={c.id} className="hover:bg-muted/50">
+                      <TableRow key={c.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => { setSelectedContract(c); setDetailOpen(true); }}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -247,6 +264,7 @@ export default function Contracts() {
             )}
           </CardContent>
         </Card>
+        <ContractDetailDialog contract={selectedContract} open={detailOpen} onOpenChange={setDetailOpen} />
       </div>
     </AppLayout>
   );
