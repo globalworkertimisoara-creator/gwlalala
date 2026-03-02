@@ -21,6 +21,7 @@ export interface Contract {
   notes: string | null;
   project_id: string | null;
   job_id: string | null;
+  sales_person_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -41,6 +42,7 @@ export interface CreateContractInput {
   notes?: string;
   project_id?: string;
   job_id?: string;
+  sales_person_id?: string;
 }
 
 export function useContracts(filters?: { status?: string; party_type?: string; contract_type?: string }) {
