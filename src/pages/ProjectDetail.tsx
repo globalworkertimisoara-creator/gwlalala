@@ -63,6 +63,7 @@ import {
   Route,
 } from 'lucide-react';
 import WorkflowPhaseTracker from '@/components/projects/WorkflowPhaseTracker';
+import { format } from 'date-fns';
 import { getProjectStatusColor, getProjectStatusLabel, PROJECT_STATUS_CONFIG, ProjectStatus, WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
 import { useState, useMemo } from 'react';
 
