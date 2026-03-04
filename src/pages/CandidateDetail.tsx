@@ -137,7 +137,6 @@ export default function CandidateDetail() {
 
   // Mutation hooks
   const updateStage = useUpdateCandidateStage();
-  const updateCandidate = useUpdateCandidate();
   const createNote = useCreateNote();
   const deleteNote = useDeleteNote();
 
