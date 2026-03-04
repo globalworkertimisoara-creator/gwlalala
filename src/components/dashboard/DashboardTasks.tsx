@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,13 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, CheckCircle, Clock, Circle, AlertTriangle, Loader2, LayoutList, LayoutGrid, ExternalLink } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Plus, CheckCircle, Clock, Circle, AlertTriangle, Loader2, LayoutList, LayoutGrid, ExternalLink, FileText, Bell } from 'lucide-react';
 import { useTasks, useTeamTasks, useCreateTask, useUpdateTask, type CreateTaskInput } from '@/hooks/useTasks';
+import { useNotifications, useMarkNotificationRead } from '@/hooks/useNotifications';
 import { useStaffProfiles } from '@/hooks/useStaffProfiles';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, isPast, isToday, addDays, isBefore } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { format, isPast, isToday, addDays, isBefore, formatDistanceToNow } from 'date-fns';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const priorityColors: Record<string, string> = {
   low: 'bg-muted text-muted-foreground',
