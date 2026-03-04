@@ -213,6 +213,7 @@ export interface CreateJobInput {
   required_skills?: string;
   description?: string;
   status?: JobStatus;
+  project_id?: string;
 }
 
 export interface UpdateJobInput extends Partial<CreateJobInput> {}
