@@ -233,6 +233,7 @@ export function NotificationCenter() {
                     onMarkRead={handleMarkRead}
                     onNavigate={handleNavigate}
                   />
+                ))
               )}
             </TabsContent>
 
