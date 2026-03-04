@@ -9,6 +9,7 @@ import { useCandidateActivityLog, useLogCandidateActivity } from '@/hooks/useCan
 import { usePipelineCandidates } from '@/hooks/usePipelineCandidates';
 import { CandidateActivityLog } from '@/components/candidates/CandidateActivityLog';
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
+import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
 import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline';
@@ -52,6 +53,7 @@ import {
   Sparkles,
   Save,
   X,
+  FolderSymlink,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -139,6 +141,7 @@ export default function CandidateDetail() {
   const [stageNote, setStageNote] = useState('');
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isApplyingData, setIsApplyingData] = useState(false);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
 
   // ─── Loading / Not Found ───────────────────────────────────────────────────
 
@@ -191,13 +194,33 @@ export default function CandidateDetail() {
 
   const handleStageChange = async () => {
     if (!selectedStage || !id) return;
+    const oldStage = candidate?.current_stage;
     await updateStage.mutateAsync({
       id,
       stage: selectedStage as RecruitmentStage,
       note: stageNote || undefined,
     });
+    // Log activity
+    logCandidateActivity.mutate({
+      candidate_id: id,
+      event_type: 'stage_change',
+      summary: `Stage changed from ${getStageLabel(oldStage as RecruitmentStage)} to ${getStageLabel(selectedStage as RecruitmentStage)}`,
+      is_shared_event: true,
+      details: { from_stage: oldStage, to_stage: selectedStage, note: stageNote || null },
+    });
     setSelectedStage('');
     setStageNote('');
+  };
+
+  const handleProjectLinked = (projectId: string, projectName: string, workflowType: string) => {
+    if (!id) return;
+    logCandidateActivity.mutate({
+      candidate_id: id,
+      event_type: 'linked_to_project',
+      summary: `Linked to project "${projectName}" with ${workflowType.replace('_', ' ')} workflow`,
+      is_shared_event: true,
+      details: { project_id: projectId, project_name: projectName, workflow_type: workflowType },
+    });
   };
 
   const handleDataExtracted = (data: ExtractedData) => {
@@ -557,6 +580,26 @@ export default function CandidateDetail() {
                 </CardContent>
               </Card>
               )}
+
+              {/* Link to Project */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Link to Project</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Link this candidate to a project to start their recruitment workflow.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => setIsLinkDialogOpen(true)}
+                  >
+                    <FolderSymlink className="h-4 w-4" />
+                    Link to Project
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -727,6 +770,14 @@ export default function CandidateDetail() {
             />
           </TabsContent>
         </Tabs>
+
+        {/* Link to Project Dialog */}
+        <LinkToProjectDialog
+          open={isLinkDialogOpen}
+          onOpenChange={setIsLinkDialogOpen}
+          candidate={candidate}
+          onLinked={handleProjectLinked}
+        />
       </div>
     </AppLayout>
   );
