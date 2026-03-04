@@ -239,10 +239,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
   const [references, setReferences] = useState<ReferenceEntry[]>([]);
 
   // ── JSON fields ──
-  const [salary, setSalary] = useState({ current_salary: '', expected_salary: '', currency: '' });
-  const [availability, setAvailability] = useState({ available_to_start: '', employment_status: '', notice_period: '' });
+  const [salary, setSalary] = useState({ current_salary: '', expected_salary: '', currency: '', negotiable: false });
+  const [availability, setAvailability] = useState({ available_to_start: '', employment_status: '', notice_period: '', willing_to_relocate: false });
   const [jobPrefs, setJobPrefs] = useState({ preferred_titles: '', preferred_countries: '', preferred_work_type: '' });
   const [driverLicense, setDriverLicense] = useState({ has_license: false, license_type: '', years_experience: null as number | null });
+  const [family, setFamily] = useState({ has_spouse: false, children_ages: '', family_willing_to_relocate: false });
 
   // ── Document state ──
   const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>([]);
@@ -261,10 +262,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       passport_issued_by: '', national_id_number: '', parents_names: '',
     });
     setEducation([]); setWorkExperience([]); setLanguages([]); setSkills([]); setReferences([]);
-    setSalary({ current_salary: '', expected_salary: '', currency: '' });
-    setAvailability({ available_to_start: '', employment_status: '', notice_period: '' });
+    setSalary({ current_salary: '', expected_salary: '', currency: '', negotiable: false });
+    setAvailability({ available_to_start: '', employment_status: '', notice_period: '', willing_to_relocate: false });
     setJobPrefs({ preferred_titles: '', preferred_countries: '', preferred_work_type: '' });
     setDriverLicense({ has_license: false, license_type: '', years_experience: null });
+    setFamily({ has_spouse: false, children_ages: '', family_willing_to_relocate: false });
     setPendingDocuments([]); setExtractedFields(new Set()); setUploadProgress(0);
   };
 
@@ -316,11 +318,13 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       current_salary: data.salary_expectations?.current_salary || s.current_salary,
       expected_salary: data.salary_expectations?.expected_salary || s.expected_salary,
       currency: data.salary_expectations?.currency || s.currency,
+      negotiable: data.salary_expectations?.negotiable ?? s.negotiable,
     }));
     if (data.availability) setAvailability(a => ({
       available_to_start: data.availability?.available_to_start || a.available_to_start,
       employment_status: data.availability?.employment_status || a.employment_status,
       notice_period: data.availability?.notice_period || a.notice_period,
+      willing_to_relocate: data.availability?.willing_to_relocate ?? a.willing_to_relocate,
     }));
     if (data.job_preferences) setJobPrefs(j => ({
       preferred_titles: data.job_preferences?.preferred_titles || j.preferred_titles,
@@ -331,6 +335,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       has_license: data.driver_license?.has_license ?? d.has_license,
       license_type: data.driver_license?.license_type || d.license_type,
       years_experience: data.driver_license?.years_experience ?? d.years_experience,
+    }));
+    if (data.family_info) setFamily(f => ({
+      has_spouse: data.family_info?.has_spouse ?? f.has_spouse,
+      children_ages: data.family_info?.children_ages || f.children_ages,
+      family_willing_to_relocate: data.family_info?.family_willing_to_relocate ?? f.family_willing_to_relocate,
     }));
   };
 
@@ -399,6 +408,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       const hasSalary = salary.current_salary || salary.expected_salary;
       const hasAvail = availability.available_to_start || availability.employment_status;
       const hasPrefs = jobPrefs.preferred_titles || jobPrefs.preferred_countries;
+      const hasFamily = family.has_spouse || family.children_ages;
 
       const candidate = await createCandidate.mutateAsync({
         full_name: formData.full_name,
@@ -425,6 +435,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
         salary_expectations: hasSalary ? salary : undefined,
         availability: hasAvail ? availability : undefined,
         job_preferences: hasPrefs ? jobPrefs : undefined,
+        family_info: hasFamily ? family : undefined,
       });
 
       // Save structured CV data
@@ -718,16 +729,21 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
           {/* ── Salary & Availability ── */}
           <Section title="Salary & Availability" icon={<DollarSign className="h-4 w-4" />}>
             <p className="text-xs font-medium text-muted-foreground mb-1">Salary Expectations</p>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div><Label className="text-xs">Current Salary</Label>
                 <Input value={salary.current_salary} onChange={e => setSalary(s => ({ ...s, current_salary: e.target.value }))} /></div>
               <div><Label className="text-xs">Expected Salary</Label>
                 <Input value={salary.expected_salary} onChange={e => setSalary(s => ({ ...s, expected_salary: e.target.value }))} /></div>
               <div><Label className="text-xs">Currency</Label>
                 <Input value={salary.currency} onChange={e => setSalary(s => ({ ...s, currency: e.target.value }))} placeholder="EUR, USD..." /></div>
+              <div><Label className="text-xs">Negotiable?</Label>
+                <Select value={salary.negotiable ? 'yes' : 'no'} onValueChange={v => setSalary(s => ({ ...s, negotiable: v === 'yes' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                </Select></div>
             </div>
             <p className="text-xs font-medium text-muted-foreground mb-1 mt-3">Availability</p>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div><Label className="text-xs">Available to Start</Label>
                 <Select value={availability.available_to_start || '_none'} onValueChange={v => setAvailability(a => ({ ...a, available_to_start: v === '_none' ? '' : v }))}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
@@ -751,6 +767,29 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
                 </Select></div>
               <div><Label className="text-xs">Notice Period</Label>
                 <Input value={availability.notice_period} onChange={e => setAvailability(a => ({ ...a, notice_period: e.target.value }))} placeholder="e.g. 30 days" /></div>
+              <div><Label className="text-xs">Willing to Relocate?</Label>
+                <Select value={availability.willing_to_relocate ? 'yes' : 'no'} onValueChange={v => setAvailability(a => ({ ...a, willing_to_relocate: v === 'yes' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                </Select></div>
+            </div>
+          </Section>
+
+          {/* ── Family ── */}
+          <Section title="Family" icon={<span>👨‍👩‍👧‍👦</span>}>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div><Label className="text-xs">Spouse?</Label>
+                <Select value={family.has_spouse ? 'yes' : 'no'} onValueChange={v => setFamily(f => ({ ...f, has_spouse: v === 'yes' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="no">No</SelectItem><SelectItem value="yes">Yes</SelectItem></SelectContent>
+                </Select></div>
+              <div><Label className="text-xs">Children Ages</Label>
+                <Input value={family.children_ages} onChange={e => setFamily(f => ({ ...f, children_ages: e.target.value }))} placeholder="e.g. 5, 8, 12" /></div>
+              <div><Label className="text-xs">Family Willing to Relocate?</Label>
+                <Select value={family.family_willing_to_relocate ? 'yes' : 'no'} onValueChange={v => setFamily(f => ({ ...f, family_willing_to_relocate: v === 'yes' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                </Select></div>
             </div>
           </Section>
 
