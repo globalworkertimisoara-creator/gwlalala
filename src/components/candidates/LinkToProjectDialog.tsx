@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WORKFLOW_TYPE_CONFIG } from '@/types/project';
 import { useProjects } from '@/hooks/useProjects';
 import { useCreateWorkflow } from '@/hooks/useWorkflow';
 import { Candidate } from '@/types/database';
@@ -36,6 +37,14 @@ export function LinkToProjectDialog({ open, onOpenChange, candidate, onLinked }:
   }, [projects, search]);
 
   const selectedProject = projects?.find(p => p.id === selectedProjectId);
+
+  const handleSelectProject = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    const proj = projects?.find(p => p.id === projectId);
+    if (proj?.default_workflow_type) {
+      setWorkflowType(proj.default_workflow_type as 'full_immigration' | 'no_visa');
+    }
+  };
 
   const handleLink = () => {
     if (!candidate || !selectedProjectId || !selectedProject) return;
