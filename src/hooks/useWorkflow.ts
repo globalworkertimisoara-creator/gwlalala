@@ -73,9 +73,12 @@ export function useCreateWorkflow() {
       toast({ title: 'Workflow created successfully' });
     },
     onError: (error) => {
+      const isDuplicate = error.message?.includes('duplicate key') || error.message?.includes('unique constraint');
       toast({
-        title: 'Failed to create workflow',
-        description: error.message,
+        title: isDuplicate ? 'Already linked' : 'Failed to create workflow',
+        description: isDuplicate
+          ? 'This candidate is already linked to the selected project.'
+          : error.message,
         variant: 'destructive',
       });
     },

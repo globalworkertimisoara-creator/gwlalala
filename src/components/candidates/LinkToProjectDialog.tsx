@@ -58,6 +58,11 @@ export function LinkToProjectDialog({ open, onOpenChange, candidate, onLinked }:
           setSearch('');
           setWorkflowType('full_immigration');
         },
+        onError: (error) => {
+          if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+            // Already handled by useCreateWorkflow toast, but we can add context
+          }
+        },
       }
     );
   };
