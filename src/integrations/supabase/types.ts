@@ -1098,6 +1098,7 @@ export type Database = {
           current_phase: Database["public"]["Enums"]["workflow_phase"]
           documentation_completed_at: string | null
           id: string
+          pipeline_stage: Database["public"]["Enums"]["recruitment_stage"]
           project_id: string
           recruitment_completed_at: string | null
           residence_permit_completed_at: string | null
@@ -1112,6 +1113,7 @@ export type Database = {
           current_phase?: Database["public"]["Enums"]["workflow_phase"]
           documentation_completed_at?: string | null
           id?: string
+          pipeline_stage?: Database["public"]["Enums"]["recruitment_stage"]
           project_id: string
           recruitment_completed_at?: string | null
           residence_permit_completed_at?: string | null
@@ -1126,6 +1128,7 @@ export type Database = {
           current_phase?: Database["public"]["Enums"]["workflow_phase"]
           documentation_completed_at?: string | null
           id?: string
+          pipeline_stage?: Database["public"]["Enums"]["recruitment_stage"]
           project_id?: string
           recruitment_completed_at?: string | null
           residence_permit_completed_at?: string | null
