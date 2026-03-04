@@ -9,13 +9,16 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Users } from 'lucide-react';
+import { Users, FolderSymlink } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CandidateTableProps {
   candidates: Candidate[];
   onCandidateClick?: (candidate: Candidate) => void;
+  onLinkToProject?: (candidate: Candidate) => void;
 }
 
 function getInitials(fullName: string): string {
@@ -27,7 +30,7 @@ function getInitials(fullName: string): string {
     .slice(0, 2);
 }
 
-export function CandidateTable({ candidates, onCandidateClick }: CandidateTableProps) {
+export function CandidateTable({ candidates, onCandidateClick, onLinkToProject }: CandidateTableProps) {
   if (candidates.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-12 text-center">
@@ -49,6 +52,7 @@ export function CandidateTable({ candidates, onCandidateClick }: CandidateTableP
             <TableHead>Stage</TableHead>
             <TableHead>Days in Stage</TableHead>
             <TableHead>Added</TableHead>
+            {onLinkToProject && <TableHead className="w-[60px]"></TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -104,6 +108,26 @@ export function CandidateTable({ candidates, onCandidateClick }: CandidateTableP
                 <TableCell className="text-muted-foreground">
                   {format(new Date(candidate.created_at), 'MMM d, yyyy')}
                 </TableCell>
+                {onLinkToProject && (
+                  <TableCell>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onLinkToProject(candidate);
+                          }}
+                        >
+                          <FolderSymlink className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Link to Project</TooltipContent>
+                    </Tooltip>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { CandidateTable } from '@/components/candidates/CandidateTable';
 import { AddCandidateDialog } from '@/components/candidates/AddCandidateDialog';
+import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
 import { useCandidates } from '@/hooks/useCandidates';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ const Candidates = () => {
 
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [linkCandidate, setLinkCandidate] = useState<Candidate | null>(null);
 
   const handleExportCSV = () => {
     if (!candidates || candidates.length === 0) return;
@@ -129,12 +131,17 @@ const Candidates = () => {
           <CandidateTable 
             candidates={candidates || []} 
             onCandidateClick={handleCandidateClick}
+            onLinkToProject={(c) => setLinkCandidate(c)}
           />
         )}
       </div>
 
-      {/* Add Candidate Dialog */}
       <AddCandidateDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <LinkToProjectDialog
+        open={!!linkCandidate}
+        onOpenChange={(open) => { if (!open) setLinkCandidate(null); }}
+        candidate={linkCandidate}
+      />
     </AppLayout>
   );
 };
