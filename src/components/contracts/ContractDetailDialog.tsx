@@ -16,7 +16,6 @@ import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useContractActivityLog } from '@/hooks/useContractActivityLog';
-import { Badge as BadgeUI } from '@/components/ui/badge';
 
 const fileTypeLabels: Record<string, string> = {
   main_contract: 'Main Contract',
@@ -65,10 +64,30 @@ export function ContractDetailDialog({ contract, open, onOpenChange }: ContractD
 }
 
 function ContractMetadata({ contract }: { contract: Contract }) {
+  const updateContract = useUpdateContract();
+  const { toast } = useToast();
+
+  const handleStatusChange = async (newStatus: string) => {
+    await updateContract.mutateAsync({ id: contract.id, status: newStatus, _oldContract: contract } as any);
+    toast({ title: 'Status updated' });
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4 text-sm">
       <div><span className="text-muted-foreground">Type:</span> <span className="font-medium">{contract.contract_type}</span></div>
-      <div><span className="text-muted-foreground">Status:</span> <Badge variant="outline">{contract.status}</Badge></div>
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground">Status:</span>
+        <Select value={contract.status} onValueChange={handleStatusChange}>
+          <SelectTrigger className="h-7 w-[130px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {['draft', 'sent', 'signed', 'active', 'expired', 'terminated'].map(s => (
+              <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div><span className="text-muted-foreground">Party:</span> <span className="font-medium">{contract.party_type}</span></div>
       <div><span className="text-muted-foreground">Value:</span> <span className="font-medium">{contract.total_value ? `${contract.total_value.toLocaleString()} ${contract.currency}` : '—'}</span></div>
       <div><span className="text-muted-foreground">Start:</span> <span>{contract.start_date ? format(new Date(contract.start_date), 'MMM d, yyyy') : '—'}</span></div>
