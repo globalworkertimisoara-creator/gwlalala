@@ -74,20 +74,56 @@ export function useUpdatePipelineStage() {
   return useMutation({
     mutationFn: async ({
       workflowId,
+      candidateId,
+      fromStage,
       stage,
     }: {
       workflowId: string;
+      candidateId: string;
+      fromStage: RecruitmentStage;
       stage: RecruitmentStage;
     }) => {
+      // 1. Update the pipeline stage and updated_at
       const { error } = await supabase
         .from('candidate_workflow')
-        .update({ pipeline_stage: stage })
+        .update({ pipeline_stage: stage, updated_at: new Date().toISOString() })
         .eq('id', workflowId);
-
       if (error) throw error;
+
+      // 2. Get current user for attribution
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // 3. Log in stage_history
+      const { error: histErr } = await supabase
+        .from('stage_history')
+        .insert({
+          candidate_id: candidateId,
+          from_stage: fromStage,
+          to_stage: stage,
+          changed_by: user.id,
+          note: `Pipeline stage moved from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`,
+        });
+      if (histErr) console.error('stage_history insert error:', histErr);
+
+      // 4. Log in candidate_activity_log
+      const { error: actErr } = await supabase
+        .from('candidate_activity_log')
+        .insert({
+          candidate_id: candidateId,
+          actor_id: user.id,
+          actor_type: 'staff',
+          event_type: 'stage_change',
+          is_shared_event: true,
+          summary: `Pipeline stage changed from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`,
+          details: { from_stage: fromStage, to_stage: stage, workflow_id: workflowId },
+        } as any);
+      if (actErr) console.error('activity_log insert error:', actErr);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
+      queryClient.invalidateQueries({ queryKey: ['stage-history'] });
+      queryClient.invalidateQueries({ queryKey: ['candidate-activity-log'] });
       toast({
         title: 'Pipeline stage updated',
         description: 'The candidate has been moved to the new stage.',
