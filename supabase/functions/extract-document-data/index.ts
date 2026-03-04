@@ -174,19 +174,21 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Get user info to verify they're authenticated
-    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-    if (userError || !user) {
+    // Verify JWT claims
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid authentication', data: null }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    const userId = claimsData.claims.sub;
 
     // Check if user has access to the storage path via RLS
     // For agency-documents, verify the path starts with their agency folder
     // For candidate-documents, only staff can access
-    const { data: roleData } = await userSupabase.from('user_roles').select('role').eq('user_id', user.id).single();
+    const { data: roleData } = await userSupabase.from('user_roles').select('role').eq('user_id', userId).single();
     const isAgency = roleData?.role === 'agency';
 
     if (bucket === 'candidate-documents' && isAgency) {
@@ -198,14 +200,14 @@ serve(async (req) => {
 
     if (bucket === 'agency-documents' && isAgency) {
       // Verify agency can only access their own documents
-      const { data: agencyProfile } = await userSupabase.from('agency_profiles').select('id').eq('user_id', user.id).single();
+      const { data: agencyProfile } = await userSupabase.from('agency_profiles').select('id').eq('user_id', userId).single();
       
       // SECURITY: Normalize path and ensure strict folder containment (prevent traversal)
       const normalizedPath = storage_path.replace(/\/+/g, '/');
       
       // Path must start with agency ID followed by a slash - prevents accessing other folders
       if (!agencyProfile || !normalizedPath.startsWith(agencyProfile.id + '/')) {
-        console.error(`Security: Agency ${user.id} attempted to access unauthorized path: ${storage_path}`);
+        console.error(`Security: Agency ${userId} attempted to access unauthorized path: ${storage_path}`);
         return new Response(
           JSON.stringify({ success: false, error: 'Access denied to this path', data: null }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
