@@ -140,6 +140,11 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
     const { active, over } = event;
     if (!over) return;
 
+    // Save scroll position before mutation triggers re-render
+    if (scrollContainerRef.current) {
+      savedScrollLeft.current = scrollContainerRef.current.scrollLeft;
+    }
+
     const workflowId = active.id as string;
     const newStage = over.id as RecruitmentStage;
     const candidate = filtered.find(c => c.workflow_id === workflowId);
@@ -152,6 +157,17 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
         stage: newStage,
       });
     }
+  }
+
+  // Restore scroll position after candidates data changes
+  const prevCandidatesRef = useRef(candidates);
+  if (prevCandidatesRef.current !== candidates) {
+    prevCandidatesRef.current = candidates;
+    requestAnimationFrame(() => {
+      if (scrollContainerRef.current && savedScrollLeft.current > 0) {
+        scrollContainerRef.current.scrollLeft = savedScrollLeft.current;
+      }
+    });
   }
 
   if (isLoading) {
