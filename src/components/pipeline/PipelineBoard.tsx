@@ -287,7 +287,7 @@ export function PipelineBoard({ candidates, isLoading, projectId, onCandidateCli
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div ref={scrollContainerRef} className="overflow-x-auto pb-4">
+        <div ref={scrollContainerRef} className="overflow-x-auto pb-4" onScroll={handleScroll}>
           <div className={isCompact ? "flex gap-2 min-w-max" : "flex gap-4 min-w-max"}>
             {pipelineStages.map((stage) => {
               const stageCandidates = filtered.filter(c => c.pipeline_stage === stage);
