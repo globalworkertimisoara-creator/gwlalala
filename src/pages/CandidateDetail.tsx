@@ -115,6 +115,7 @@ export default function CandidateDetail() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { can } = usePermissions();
+  const queryClient = useQueryClient();
 
   // Pipeline context from URL params
   const fromPipeline = searchParams.get('from') === 'pipeline';
