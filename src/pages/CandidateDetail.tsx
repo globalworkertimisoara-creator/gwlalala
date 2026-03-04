@@ -587,22 +587,65 @@ export default function CandidateDetail() {
               </Card>
               )}
 
-              {/* Link to Project */}
+              {/* Project Links */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Link to Project</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FolderSymlink className="h-4 w-4" />
+                    Projects
+                    {candidateWorkflows.length > 0 && (
+                      <span className="text-xs text-muted-foreground font-normal">({candidateWorkflows.length})</span>
+                    )}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Link this candidate to a project to start their recruitment workflow.
-                  </p>
+                <CardContent className="space-y-3">
+                  {candidateWorkflows.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Not linked to any project yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {candidateWorkflows.map((wf: any) => (
+                        <div
+                          key={wf.id}
+                          className="flex items-center justify-between p-2.5 rounded-lg border bg-card hover:bg-accent/30 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/projects/${wf.project_id}`)}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{wf.project_name}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="secondary" className={cn('text-[10px] px-1.5 py-0', getStageColor(wf.pipeline_stage))}>
+                                {getStageLabel(wf.pipeline_stage)}
+                              </Badge>
+                              <span className="text-[10px] text-muted-foreground capitalize">
+                                {wf.workflow_type?.replace('_', ' ')}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Unlink from "${wf.project_name}"?`)) {
+                                deleteWorkflow.mutate({ workflowId: wf.id, candidateId: id! });
+                              }
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <Button
                     variant="outline"
                     className="w-full gap-2"
                     onClick={() => setIsLinkDialogOpen(true)}
                   >
-                    <FolderSymlink className="h-4 w-4" />
-                    Link to Project
+                    <Plus className="h-4 w-4" />
+                    {candidateWorkflows.length === 0 ? 'Link to Project' : 'Link to Another Project'}
                   </Button>
                 </CardContent>
               </Card>
