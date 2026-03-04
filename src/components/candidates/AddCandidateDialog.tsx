@@ -532,7 +532,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
         current_country: formData.current_country || undefined,
         current_city: formData.current_city || undefined,
         linkedin: formData.linkedin || undefined,
-        current_stage: formData.current_stage,
+        current_stage: formData.current_stage as RecruitmentStage,
         expected_start_date: formData.expected_start_date || undefined,
         date_of_birth: formData.date_of_birth || undefined,
         gender: formData.gender || undefined,
