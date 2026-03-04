@@ -188,10 +188,12 @@ export function useAddCandidateToPipeline() {
       candidateId,
       projectId,
       stage = 'sourced' as RecruitmentStage,
+      workflowType = 'full_immigration',
     }: {
       candidateId: string;
       projectId: string;
       stage?: RecruitmentStage;
+      workflowType?: 'full_immigration' | 'no_visa';
     }) => {
       // Check if candidate already in this project's pipeline
       const { data: existing } = await supabase
@@ -205,19 +207,38 @@ export function useAddCandidateToPipeline() {
         throw new Error('Candidate is already in this project pipeline');
       }
 
+      // Map workflow type to initial pipeline stage
+      const initialStage = workflowType === 'no_visa' ? 'screening' : stage;
+
       const { error } = await supabase
         .from('candidate_workflow')
         .insert({
           candidate_id: candidateId,
           project_id: projectId,
-          pipeline_stage: stage,
+          pipeline_stage: initialStage,
           current_phase: 'recruitment',
+          workflow_type: workflowType,
         });
 
       if (error) throw error;
+
+      // Log activity
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('candidate_activity_log').insert({
+          candidate_id: candidateId,
+          actor_id: user.id,
+          actor_type: 'staff',
+          event_type: 'linked_to_project',
+          is_shared_event: true,
+          summary: `Added to project pipeline (${workflowType.replace('_', ' ')}) at ${initialStage.replace(/_/g, ' ')} stage`,
+          details: { project_id: projectId, workflow_type: workflowType, initial_stage: initialStage },
+        } as any);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
+      queryClient.invalidateQueries({ queryKey: ['candidate-activity-log'] });
       toast({
         title: 'Candidate added to pipeline',
         description: 'The candidate has been added to the project pipeline.',
