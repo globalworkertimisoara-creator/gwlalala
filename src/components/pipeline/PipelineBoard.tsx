@@ -90,6 +90,7 @@ function buildCandidateForCard(pc: PipelineCandidate) {
 interface PipelineBoardProps {
   candidates: PipelineCandidate[];
   isLoading: boolean;
+  projectId?: string;
   onCandidateClick?: (candidateId: string) => void;
 }
 
