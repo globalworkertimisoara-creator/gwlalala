@@ -770,6 +770,14 @@ export default function CandidateDetail() {
             />
           </TabsContent>
         </Tabs>
+
+        {/* Link to Project Dialog */}
+        <LinkToProjectDialog
+          open={isLinkDialogOpen}
+          onOpenChange={setIsLinkDialogOpen}
+          candidate={candidate}
+          onLinked={handleProjectLinked}
+        />
       </div>
     </AppLayout>
   );
