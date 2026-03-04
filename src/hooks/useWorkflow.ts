@@ -70,6 +70,13 @@ export function useCreateWorkflow() {
       queryClient.invalidateQueries({
         queryKey: ['workflow', variables.candidateId, variables.projectId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ['candidate-workflows', variables.candidateId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['candidate-projects', variables.candidateId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
       toast({ title: 'Workflow created successfully' });
     },
     onError: (error) => {
