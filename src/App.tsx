@@ -65,6 +65,7 @@ const App = () => (
         <Sonner />
         <RoleOverrideBanner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/agency-auth" element={<AgencyAuth />} />
