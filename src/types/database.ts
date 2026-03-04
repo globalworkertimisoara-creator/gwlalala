@@ -190,9 +190,14 @@ export interface CreateCandidateInput {
   phone?: string;
   nationality?: string;
   current_country?: string;
+  current_city?: string;
   linkedin?: string;
   current_stage?: RecruitmentStage;
   expected_start_date?: string;
+  date_of_birth?: string;
+  gender?: string;
+  marital_status?: string;
+  whatsapp?: string;
   // Passport fields
   passport_number?: string;
   passport_expiry?: string;
