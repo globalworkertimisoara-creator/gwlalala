@@ -194,13 +194,33 @@ export default function CandidateDetail() {
 
   const handleStageChange = async () => {
     if (!selectedStage || !id) return;
+    const oldStage = candidate?.current_stage;
     await updateStage.mutateAsync({
       id,
       stage: selectedStage as RecruitmentStage,
       note: stageNote || undefined,
     });
+    // Log activity
+    logCandidateActivity.mutate({
+      candidate_id: id,
+      event_type: 'stage_change',
+      summary: `Stage changed from ${getStageLabel(oldStage as RecruitmentStage)} to ${getStageLabel(selectedStage as RecruitmentStage)}`,
+      is_shared_event: true,
+      details: { from_stage: oldStage, to_stage: selectedStage, note: stageNote || null },
+    });
     setSelectedStage('');
     setStageNote('');
+  };
+
+  const handleProjectLinked = (projectId: string, projectName: string, workflowType: string) => {
+    if (!id) return;
+    logCandidateActivity.mutate({
+      candidate_id: id,
+      event_type: 'linked_to_project',
+      summary: `Linked to project "${projectName}" with ${workflowType.replace('_', ' ')} workflow`,
+      is_shared_event: true,
+      details: { project_id: projectId, project_name: projectName, workflow_type: workflowType },
+    });
   };
 
   const handleDataExtracted = (data: ExtractedData) => {
