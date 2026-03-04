@@ -573,6 +573,27 @@ export default function ProjectDetail() {
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
+                      <Label>Workflow Type</Label>
+                      <Select
+                        value={pipelineWorkflowType || project.default_workflow_type || 'full_immigration'}
+                        onValueChange={(v) => setPipelineWorkflowType(v as WorkflowType)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
+                            <SelectItem key={value} value={value}>
+                              {config.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {WORKFLOW_TYPE_CONFIG[(pipelineWorkflowType || project.default_workflow_type || 'full_immigration') as WorkflowType]?.description}
+                      </p>
+                    </div>
+                    <div>
                       <Label>Search candidates</Label>
                       <Input
                         placeholder="Name or email..."
