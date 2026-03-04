@@ -9,6 +9,7 @@ import { useCandidateActivityLog, useLogCandidateActivity } from '@/hooks/useCan
 import { usePipelineCandidates } from '@/hooks/usePipelineCandidates';
 import { CandidateActivityLog } from '@/components/candidates/CandidateActivityLog';
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
+import { CandidateCVTab } from '@/components/candidates/CandidateCVTab';
 import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
 import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
@@ -484,8 +485,9 @@ export default function CandidateDetail() {
 
         {/* ── Tabbed Content ───────────────────────────────────────────────── */}
         <Tabs defaultValue="overview">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="cv">CV</TabsTrigger>
             <TabsTrigger value="workflow">Workflow</TabsTrigger>
             <TabsTrigger value="notes">
               Notes{notes && notes.length > 0 && <span className="ml-1.5 text-xs opacity-60">({notes.length})</span>}
@@ -822,6 +824,11 @@ export default function CandidateDetail() {
               showActorType={true}
               title="Full Activity Log"
             />
+          </TabsContent>
+
+          {/* ── CV / Profile ─────────────────────────────────────────────── */}
+          <TabsContent value="cv" className="mt-4">
+            <CandidateCVTab candidate={candidate as any} />
           </TabsContent>
         </Tabs>
 
