@@ -303,7 +303,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     setFormData(prev => {
       const updated = { ...prev };
       const apply = (field: keyof typeof prev, value?: string | null) => {
-        if (value && !prev[field]) { updated[field] = value; newExtracted.add(field); }
+        if (value && !prev[field]) { (updated as any)[field] = value; newExtracted.add(field); }
       };
 
       apply('full_name', data.full_name);
