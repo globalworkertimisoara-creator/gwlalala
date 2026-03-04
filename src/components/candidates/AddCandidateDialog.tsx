@@ -54,6 +54,149 @@ const DOC_TYPES: { value: DocType; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
+function QuickFillDropZone({
+  selectedDocType, setSelectedDocType, isUploading, isExtracting, uploadProgress,
+  pendingDocuments, fileInputRef, onFileSelect, onFileDrop, onRemoveDocument,
+}: {
+  selectedDocType: DocType;
+  setSelectedDocType: (v: DocType) => void;
+  isUploading: boolean;
+  isExtracting: boolean;
+  uploadProgress: number;
+  pendingDocuments: PendingDocument[];
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFileDrop: (files: FileList) => void;
+  onRemoveDocument: (index: number) => void;
+}) {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    if (e.dataTransfer.files?.length) {
+      onFileDrop(e.dataTransfer.files);
+    }
+  }, [onFileDrop]);
+
+  return (
+    <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span className="font-medium text-sm">Quick Fill with Documents</span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Drag & drop or browse to upload a resume, passport, or other documents to automatically extract candidate information
+      </p>
+
+      <div className="flex gap-2">
+        <Select value={selectedDocType} onValueChange={(v) => setSelectedDocType(v as DocType)}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {DOC_TYPES.map(dt => (
+              <SelectItem key={dt.value} value={dt.value}>{dt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2 flex-1"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading || isExtracting}
+        >
+          {isUploading || isExtracting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Upload className="h-4 w-4" />
+          )}
+          {isExtracting ? 'Extracting data...' : isUploading ? 'Uploading...' : 'Browse Files'}
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+          onChange={onFileSelect}
+        />
+      </div>
+
+      {/* Drag & Drop Zone */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => !(isUploading || isExtracting) && fileInputRef.current?.click()}
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+          isDragOver
+            ? 'border-primary bg-primary/5'
+            : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+        }`}
+      >
+        <Upload className={`h-8 w-8 mx-auto mb-2 ${isDragOver ? 'text-primary' : 'text-muted-foreground'}`} />
+        <p className="text-sm font-medium">
+          {isDragOver ? 'Drop files here' : 'Drag & drop files here'}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, DOCX — max 10MB</p>
+      </div>
+
+      {uploadProgress > 0 && (
+        <Progress value={uploadProgress} className="h-1" />
+      )}
+
+      {/* Pending documents list */}
+      {pendingDocuments.length > 0 && (
+        <div className="space-y-2">
+          {pendingDocuments.map((doc, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-2 p-2 rounded-md bg-background border"
+            >
+              <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm truncate">{doc.file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {DOC_TYPES.find(d => d.value === doc.docType)?.label}
+                </p>
+              </div>
+              {doc.uploaded ? (
+                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+              ) : (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+                onClick={() => onRemoveDocument(idx)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogProps) {
   const createCandidate = useCreateCandidate();
   const { extractData, isExtracting } = useDocumentExtraction();
