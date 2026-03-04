@@ -1,6 +1,7 @@
 import { PipelineCandidate } from '@/hooks/usePipelineCandidates';
 import { RecruitmentStage, STAGES, getStageLabel } from '@/types/database';
-import { CandidateCard } from './CandidateCard';
+import { DraggableCandidateCard } from './DraggableCandidateCard';
+import { DroppableStageColumn } from './DroppableStageColumn';
 import { cn } from '@/lib/utils';
 import { Loader2, Search, LayoutGrid, List } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -8,14 +9,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { differenceInDays } from 'date-fns';
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from '@dnd-kit/core';
+import { CandidateCard } from './CandidateCard';
+import { useUpdatePipelineStage } from '@/hooks/usePipelineCandidates';
 
-// Active pipeline stages (exclude closed_not_placed from main view)
 const pipelineStages: RecruitmentStage[] = STAGES
   .filter(s => s.value !== 'closed_not_placed')
   .map(s => s.value);
 
-// Color mapping for stage headers
 const stageHeaderColors: Record<RecruitmentStage, string> = {
   sourced: 'border-l-slate-400',
   contacted: 'border-l-blue-400',
@@ -52,6 +63,29 @@ const compactStageLabels: Record<RecruitmentStage, string> = {
   closed_not_placed: 'Closed',
 };
 
+function buildCandidateForCard(pc: PipelineCandidate) {
+  return {
+    id: pc.candidate_id,
+    full_name: pc.full_name,
+    email: pc.email,
+    phone: pc.phone,
+    nationality: pc.nationality,
+    current_country: pc.current_country,
+    current_stage: pc.pipeline_stage,
+    linkedin: null,
+    rejection_reason: null,
+    expected_start_date: null,
+    added_by: null,
+    created_at: pc.workflow_updated_at,
+    updated_at: pc.workflow_updated_at,
+    passport_number: null,
+    passport_expiry: null,
+    passport_issue_date: null,
+    passport_issued_by: null,
+    parents_names: null,
+  };
+}
+
 interface PipelineBoardProps {
   candidates: PipelineCandidate[];
   isLoading: boolean;
@@ -59,10 +93,17 @@ interface PipelineBoardProps {
 
 export function PipelineBoard({ candidates, isLoading }: PipelineBoardProps) {
   const navigate = useNavigate();
+  const updateStage = useUpdatePipelineStage();
   const [searchTerm, setSearchTerm] = useState('');
   const [nationalityFilter, setNationalityFilter] = useState<string>('');
   const [countryFilter, setCountryFilter] = useState<string>('');
   const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
+  const [activeDragCandidate, setActiveDragCandidate] = useState<PipelineCandidate | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
 
   const { nationalities, countries } = useMemo(() => {
     const nats = new Set<string>();
@@ -84,6 +125,26 @@ export function PipelineBoard({ candidates, isLoading }: PipelineBoardProps) {
   }, [candidates, searchTerm, nationalityFilter, countryFilter]);
 
   const isCompact = viewMode === 'compact';
+
+  function handleDragStart(event: DragStartEvent) {
+    const draggedId = event.active.id as string;
+    const found = filtered.find(c => c.workflow_id === draggedId);
+    setActiveDragCandidate(found || null);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveDragCandidate(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const workflowId = active.id as string;
+    const newStage = over.id as RecruitmentStage;
+    const candidate = filtered.find(c => c.workflow_id === workflowId);
+
+    if (candidate && candidate.pipeline_stage !== newStage) {
+      updateStage.mutate({ workflowId, stage: newStage });
+    }
+  }
 
   if (isLoading) {
     return (
@@ -146,91 +207,90 @@ export function PipelineBoard({ candidates, isLoading }: PipelineBoardProps) {
         </div>
       </div>
 
-      {/* Pipeline Board */}
-      <div className="overflow-x-auto pb-4">
-        <div className={isCompact ? "flex gap-2 min-w-max" : "flex gap-4 min-w-max"}>
-          {pipelineStages.map((stage) => {
-            const stageCandidates = filtered.filter(c => c.pipeline_stage === stage);
-            const label = isCompact ? compactStageLabels[stage] : getStageLabel(stage).split(' / ')[0];
+      {/* Pipeline Board with DnD */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="overflow-x-auto pb-4">
+          <div className={isCompact ? "flex gap-2 min-w-max" : "flex gap-4 min-w-max"}>
+            {pipelineStages.map((stage) => {
+              const stageCandidates = filtered.filter(c => c.pipeline_stage === stage);
+              const label = isCompact ? compactStageLabels[stage] : getStageLabel(stage).split(' / ')[0];
 
-            return (
-              <div
-                key={stage}
-                className={cn(
-                  "flex-shrink-0",
-                  isCompact
-                    ? "pipeline-column-compact min-w-[160px] max-w-[200px]"
-                    : "pipeline-column min-w-[280px] max-w-[320px]"
-                )}
-              >
-                <div className={cn(
-                  "flex items-center gap-2 mb-3 pl-2 border-l-4",
-                  stageHeaderColors[stage]
-                )}>
-                  <h3 className={cn(
-                    "font-semibold text-foreground truncate",
-                    isCompact ? "text-xs" : "text-sm"
-                  )}>
-                    {label}
-                  </h3>
-                  <span className={cn(
-                    "flex items-center justify-center rounded-full bg-muted font-medium text-muted-foreground",
-                    isCompact ? "h-5 w-5 text-[10px]" : "h-6 w-6 text-xs"
-                  )}>
-                    {stageCandidates.length}
-                  </span>
-                </div>
-                <div className={isCompact ? "space-y-1.5" : "space-y-3"}>
-                  {stageCandidates.map((pc) => {
-                    // Adapt PipelineCandidate to Candidate shape for CandidateCard
-                    const candidateForCard = {
-                      id: pc.candidate_id,
-                      full_name: pc.full_name,
-                      email: pc.email,
-                      phone: pc.phone,
-                      nationality: pc.nationality,
-                      current_country: pc.current_country,
-                      current_stage: pc.pipeline_stage,
-                      linkedin: null,
-                      rejection_reason: null,
-                      expected_start_date: null,
-                      added_by: null,
-                      created_at: pc.workflow_updated_at,
-                      updated_at: pc.workflow_updated_at,
-                      passport_number: null,
-                      passport_expiry: null,
-                      passport_issue_date: null,
-                      passport_issued_by: null,
-                      parents_names: null,
-                    };
-                    return (
-                      <CandidateCard
-                        key={pc.workflow_id}
-                        candidate={candidateForCard}
-                        onClick={() => navigate(`/candidates/${pc.candidate_id}`)}
-                        compact={isCompact}
-                      />
-                    );
-                  })}
-                  {stageCandidates.length === 0 && (
-                    <div className={cn(
-                      "rounded-lg border-2 border-dashed border-border/60 text-center",
-                      isCompact ? "p-3" : "p-6"
-                    )}>
-                      <p className={cn(
-                        "text-muted-foreground",
-                        isCompact ? "text-[10px]" : "text-sm"
-                      )}>
-                        No candidates
-                      </p>
-                    </div>
+              return (
+                <div
+                  key={stage}
+                  className={cn(
+                    "flex-shrink-0",
+                    isCompact
+                      ? "pipeline-column-compact min-w-[160px] max-w-[200px]"
+                      : "pipeline-column min-w-[280px] max-w-[320px]"
                   )}
+                >
+                  <div className={cn(
+                    "flex items-center gap-2 mb-3 pl-2 border-l-4",
+                    stageHeaderColors[stage]
+                  )}>
+                    <h3 className={cn(
+                      "font-semibold text-foreground truncate",
+                      isCompact ? "text-xs" : "text-sm"
+                    )}>
+                      {label}
+                    </h3>
+                    <span className={cn(
+                      "flex items-center justify-center rounded-full bg-muted font-medium text-muted-foreground",
+                      isCompact ? "h-5 w-5 text-[10px]" : "h-6 w-6 text-xs"
+                    )}>
+                      {stageCandidates.length}
+                    </span>
+                  </div>
+                  <DroppableStageColumn stage={stage}>
+                    <div className={isCompact ? "space-y-1.5" : "space-y-3"}>
+                      {stageCandidates.map((pc) => (
+                        <DraggableCandidateCard
+                          key={pc.workflow_id}
+                          id={pc.workflow_id}
+                          candidate={buildCandidateForCard(pc)}
+                          onClick={() => navigate(`/candidates/${pc.candidate_id}`)}
+                          compact={isCompact}
+                        />
+                      ))}
+                      {stageCandidates.length === 0 && (
+                        <div className={cn(
+                          "rounded-lg border-2 border-dashed border-border/60 text-center",
+                          isCompact ? "p-3" : "p-6"
+                        )}>
+                          <p className={cn(
+                            "text-muted-foreground",
+                            isCompact ? "text-[10px]" : "text-sm"
+                          )}>
+                            No candidates
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </DroppableStageColumn>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+
+        {/* Drag Overlay */}
+        <DragOverlay>
+          {activeDragCandidate ? (
+            <div className="opacity-90 shadow-lg rounded-lg">
+              <CandidateCard
+                candidate={buildCandidateForCard(activeDragCandidate)}
+                compact={isCompact}
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }
