@@ -641,7 +641,7 @@ export default function CandidateDetail() {
               </Button>
             </div>
             )}
-            {id && (
+            {id && can('uploadDocuments') && (
               <CandidateDocumentUpload 
                 candidateId={id}
                 onDataExtracted={handleDataExtracted}
