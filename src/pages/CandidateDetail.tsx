@@ -17,6 +17,8 @@ import DocumentChecklist from '@/components/workflow/DocumentChecklist';
 import {
   useWorkflow,
   useCreateWorkflow,
+  useCandidateWorkflows,
+  useDeleteWorkflow,
   useDocumentTemplates,
   useWorkflowDocuments,
   useUploadDocument,
@@ -128,6 +130,10 @@ export default function CandidateDetail() {
   // Pipeline stage for this project (if coming from pipeline)
   const { data: pipelineWorkflows = [] } = usePipelineCandidates(pipelineProjectId);
   const pipelineEntry = fromPipeline ? pipelineWorkflows.find(w => w.candidate_id === id) : undefined;
+
+  // Candidate project links
+  const { data: candidateWorkflows = [] } = useCandidateWorkflows(id);
+  const deleteWorkflow = useDeleteWorkflow();
 
   // Mutation hooks
   const updateStage = useUpdateCandidateStage();
