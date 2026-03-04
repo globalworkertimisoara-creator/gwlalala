@@ -168,6 +168,7 @@ const Pipeline = () => {
             <PipelineBoard
               candidates={pipelineCandidates}
               isLoading={pipelineLoading}
+              projectId={activeProjectId}
               onCandidateClick={handleCandidateClick}
             />
           </>
