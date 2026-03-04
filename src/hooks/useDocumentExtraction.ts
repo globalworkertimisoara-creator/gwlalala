@@ -78,16 +78,23 @@ export interface ExtractedData {
     current_salary?: string;
     expected_salary?: string;
     currency?: string;
+    negotiable?: boolean;
   };
   availability?: {
     available_to_start?: string;
     employment_status?: string;
     notice_period?: string;
+    willing_to_relocate?: boolean;
   };
   job_preferences?: {
     preferred_titles?: string;
     preferred_countries?: string;
     preferred_work_type?: string;
+  };
+  family_info?: {
+    has_spouse?: boolean;
+    children_ages?: string;
+    family_willing_to_relocate?: boolean;
   };
   
   // General
