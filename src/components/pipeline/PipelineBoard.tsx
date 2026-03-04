@@ -100,6 +100,8 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
   const [countryFilter, setCountryFilter] = useState<string>('');
   const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
   const [activeDragCandidate, setActiveDragCandidate] = useState<PipelineCandidate | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const savedScrollLeft = useRef<number>(0);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
