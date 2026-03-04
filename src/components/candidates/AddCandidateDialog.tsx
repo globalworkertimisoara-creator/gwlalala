@@ -414,7 +414,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     uploadAndExtract(newDoc, pendingDocuments.length);
   }, [selectedDocType, pendingDocuments.length]);
 
-
+  const removeDocument = async (index: number) => {
     const doc = pendingDocuments[index];
     
     // Clean up uploaded file
