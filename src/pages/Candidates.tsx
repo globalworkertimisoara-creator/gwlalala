@@ -68,9 +68,9 @@ const Candidates = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Candidates</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Candidates & Leads</h1>
             <p className="text-muted-foreground">
-              Manage and review all candidate applications
+              Internal leads from marketing channels, referrals, and direct applications
             </p>
           </div>
           <div className="flex gap-2">

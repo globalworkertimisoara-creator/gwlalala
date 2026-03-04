@@ -4,32 +4,21 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useJobs, useCreateJob, useJobCandidateCount } from '@/hooks/useJobs';
+import { useInvitedJobs } from '@/hooks/useAgencyInvitations';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/contexts/AuthContext';
 import { JobStatus } from '@/types/database';
-import { Plus, Search, Building2, MapPin, DollarSign, Loader2, FolderOpen, ArrowUpDown, Calendar } from 'lucide-react';
+import { Plus, Search, Building2, MapPin, DollarSign, Loader2, FolderOpen, ArrowUpDown, Calendar, Briefcase } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,44 +38,58 @@ export default function Jobs() {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
-  const { can } = usePermissions();
+  const { can, isAgency } = usePermissions();
+  const { isAgency: authIsAgency } = useAuth();
 
-  const { data: jobs, isLoading } = useJobs({
+  const isAgencyUser = isAgency || authIsAgency;
+
+  // Internal staff: all jobs; Agency: only invited jobs
+  const { data: allJobs, isLoading: allJobsLoading } = useJobs({
     status: statusFilter === 'all' ? undefined : statusFilter,
     search: search || undefined,
   });
+  const { data: invitedJobs, isLoading: invitedJobsLoading } = useInvitedJobs();
   const { data: candidateCounts } = useJobCandidateCount();
   const createJob = useCreateJob();
 
-  const sortedJobs = useMemo(() => {
-    if (!jobs) return [];
-    const sorted = [...jobs];
-    switch (sortBy) {
-      case 'newest':
-        return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      case 'oldest':
-        return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      case 'title_asc':
-        return sorted.sort((a, b) => a.title.localeCompare(b.title));
-      case 'title_desc':
-        return sorted.sort((a, b) => b.title.localeCompare(a.title));
-      case 'country_asc':
-        return sorted.sort((a, b) => a.country.localeCompare(b.country));
-      case 'country_desc':
-        return sorted.sort((a, b) => b.country.localeCompare(a.country));
-      case 'status_asc':
-        return sorted.sort((a, b) => a.status.localeCompare(b.status));
-      case 'status_desc':
-        return sorted.sort((a, b) => b.status.localeCompare(a.status));
-      default:
-        return sorted;
+  const isLoading = isAgencyUser ? invitedJobsLoading : allJobsLoading;
+
+  // For agency users, filter invited jobs client-side by search/status
+  const baseJobs = useMemo(() => {
+    if (!isAgencyUser) return allJobs || [];
+    let jobs = invitedJobs || [];
+    if (statusFilter !== 'all') {
+      jobs = jobs.filter(j => j.status === statusFilter);
     }
-  }, [jobs, sortBy]);
+    if (search) {
+      const q = search.toLowerCase();
+      jobs = jobs.filter(j =>
+        j.title.toLowerCase().includes(q) ||
+        j.client_company.toLowerCase().includes(q) ||
+        j.country.toLowerCase().includes(q)
+      );
+    }
+    return jobs;
+  }, [isAgencyUser, allJobs, invitedJobs, statusFilter, search]);
+
+  const sortedJobs = useMemo(() => {
+    const sorted = [...baseJobs];
+    switch (sortBy) {
+      case 'newest': return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case 'oldest': return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case 'title_asc': return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'title_desc': return sorted.sort((a, b) => b.title.localeCompare(a.title));
+      case 'country_asc': return sorted.sort((a, b) => a.country.localeCompare(b.country));
+      case 'country_desc': return sorted.sort((a, b) => b.country.localeCompare(a.country));
+      case 'status_asc': return sorted.sort((a, b) => a.status.localeCompare(b.status));
+      case 'status_desc': return sorted.sort((a, b) => b.status.localeCompare(a.status));
+      default: return sorted;
+    }
+  }, [baseJobs, sortBy]);
 
   const handleCreateJob = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-
     await createJob.mutateAsync({
       title: formData.get('title') as string,
       client_company: formData.get('client_company') as string,
@@ -95,8 +98,15 @@ export default function Jobs() {
       required_skills: formData.get('required_skills') as string || undefined,
       description: formData.get('description') as string || undefined,
     });
-
     setIsDialogOpen(false);
+  };
+
+  const handleJobClick = (jobId: string) => {
+    if (isAgencyUser) {
+      navigate(`/agency/jobs/${jobId}`);
+    } else {
+      navigate(`/jobs/${jobId}`);
+    }
   };
 
   return (
@@ -105,64 +115,66 @@ export default function Jobs() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Jobs</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+              {isAgencyUser ? 'Available Jobs' : 'Jobs'}
+            </h1>
             <p className="text-muted-foreground">
-              Manage job openings and linked candidates
+              {isAgencyUser
+                ? 'View jobs you\'ve been invited to and submit workers'
+                : 'Manage job openings and linked candidates'}
             </p>
           </div>
-          {can('createJobs') && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Job
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create New Job</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateJob} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Job Title *</Label>
-                    <Input id="title" name="title" required />
+          {!isAgencyUser && can('createJobs') && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Job
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Create New Job</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreateJob} className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Job Title *</Label>
+                      <Input id="title" name="title" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="client_company">Client Company *</Label>
+                      <Input id="client_company" name="client_company" required />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country *</Label>
+                      <Input id="country" name="country" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="salary_range">Salary Range</Label>
+                      <Input id="salary_range" name="salary_range" placeholder="e.g., €50k-70k" />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="client_company">Client Company *</Label>
-                    <Input id="client_company" name="client_company" required />
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country *</Label>
-                    <Input id="country" name="country" required />
+                    <Label htmlFor="required_skills">Required Skills</Label>
+                    <Input id="required_skills" name="required_skills" placeholder="e.g., JavaScript, React, Node.js" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="salary_range">Salary Range</Label>
-                    <Input id="salary_range" name="salary_range" placeholder="e.g., €50k-70k" />
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea id="description" name="description" rows={3} />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="required_skills">Required Skills</Label>
-                  <Input id="required_skills" name="required_skills" placeholder="e.g., JavaScript, React, Node.js" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" name="description" rows={3} />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createJob.isPending}>
-                    {createJob.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Job
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                    <Button type="submit" disabled={createJob.isPending}>
+                      {createJob.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Create Job
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
 
@@ -215,7 +227,11 @@ export default function Jobs() {
         {/* Jobs Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Jobs</CardTitle>
+            <CardTitle>
+              {isAgencyUser
+                ? `${sortedJobs.length} Job${sortedJobs.length !== 1 ? 's' : ''} Available`
+                : 'All Jobs'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -228,34 +244,46 @@ export default function Jobs() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Job Title</TableHead>
-                      <TableHead>Project</TableHead>
+                      {!isAgencyUser && <TableHead>Project</TableHead>}
                       <TableHead>Client</TableHead>
                       <TableHead>Country</TableHead>
                       <TableHead>Salary</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
-                      <TableHead className="text-right">Candidates</TableHead>
+                      {!isAgencyUser && <TableHead className="text-right">Candidates</TableHead>}
+                      {isAgencyUser && <TableHead className="text-right">Action</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sortedJobs.map((job) => (
-                      <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/jobs/${job.id}`)}>
-                        <TableCell className="font-medium">{job.title}</TableCell>
+                      <TableRow
+                        key={job.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleJobClick(job.id)}
+                      >
                         <TableCell>
-                          {(job as any).projects ? (
-                            <div className="flex items-center gap-2">
-                              <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                              <span 
-                                className="text-primary hover:underline cursor-pointer"
-                                onClick={(e) => { e.stopPropagation(); navigate(`/projects/${(job as any).projects.id}`); }}
-                              >
-                                {(job as any).projects.name}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{job.title}</span>
+                          </div>
                         </TableCell>
+                        {!isAgencyUser && (
+                          <TableCell>
+                            {(job as any).projects ? (
+                              <div className="flex items-center gap-2">
+                                <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                                <span
+                                  className="text-primary hover:underline cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/projects/${(job as any).projects.id}`); }}
+                                >
+                                  {(job as any).projects.name}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -269,11 +297,13 @@ export default function Jobs() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {job.salary_range && (
+                          {job.salary_range ? (
                             <div className="flex items-center gap-2">
                               <DollarSign className="h-4 w-4 text-muted-foreground" />
                               {job.salary_range}
                             </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -287,9 +317,21 @@ export default function Jobs() {
                             {format(new Date(job.created_at), 'dd MMM yyyy')}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
-                          {candidateCounts?.[job.id] || 0}
-                        </TableCell>
+                        {!isAgencyUser && (
+                          <TableCell className="text-right">
+                            {candidateCounts?.[job.id] || 0}
+                          </TableCell>
+                        )}
+                        {isAgencyUser && (
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); navigate(`/agency/jobs/${job.id}`); }}
+                            >
+                              View & Submit
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -297,9 +339,13 @@ export default function Jobs() {
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No jobs found</p>
-                <p className="text-sm">Create your first job to get started.</p>
+                <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>{isAgencyUser ? 'No jobs available' : 'No jobs found'}</p>
+                <p className="text-sm">
+                  {isAgencyUser
+                    ? 'You haven\'t been invited to any jobs yet.'
+                    : 'Create your first job to get started.'}
+                </p>
               </div>
             )}
           </CardContent>

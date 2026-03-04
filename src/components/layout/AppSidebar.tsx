@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
   { title: 'Projects', url: '/projects', icon: FolderKanban, requirePermission: 'viewAllProjects' },
   { title: 'Pipeline', url: '/pipeline', icon: Kanban, requirePermission: 'viewAllCandidates' },
   { title: 'Candidates', url: '/candidates', icon: Users, requirePermission: 'viewAllCandidates' },
-  { title: 'Jobs', url: '/jobs', icon: Briefcase, requirePermission: 'viewAllJobs' },
+  { title: 'Jobs', url: '/jobs', icon: Briefcase },
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
   { title: 'Tasks', url: '/tasks', icon: CheckSquare },
   { title: 'Contracts', url: '/contracts', icon: FileText },
