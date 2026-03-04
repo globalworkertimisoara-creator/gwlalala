@@ -262,10 +262,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       passport_issued_by: '', national_id_number: '', parents_names: '',
     });
     setEducation([]); setWorkExperience([]); setLanguages([]); setSkills([]); setReferences([]);
-    setSalary({ current_salary: '', expected_salary: '', currency: '' });
-    setAvailability({ available_to_start: '', employment_status: '', notice_period: '' });
+    setSalary({ current_salary: '', expected_salary: '', currency: '', negotiable: false });
+    setAvailability({ available_to_start: '', employment_status: '', notice_period: '', willing_to_relocate: false });
     setJobPrefs({ preferred_titles: '', preferred_countries: '', preferred_work_type: '' });
     setDriverLicense({ has_license: false, license_type: '', years_experience: null });
+    setFamily({ has_spouse: false, children_ages: '', family_willing_to_relocate: false });
     setPendingDocuments([]); setExtractedFields(new Set()); setUploadProgress(0);
   };
 
@@ -317,11 +318,13 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       current_salary: data.salary_expectations?.current_salary || s.current_salary,
       expected_salary: data.salary_expectations?.expected_salary || s.expected_salary,
       currency: data.salary_expectations?.currency || s.currency,
+      negotiable: data.salary_expectations?.negotiable ?? s.negotiable,
     }));
     if (data.availability) setAvailability(a => ({
       available_to_start: data.availability?.available_to_start || a.available_to_start,
       employment_status: data.availability?.employment_status || a.employment_status,
       notice_period: data.availability?.notice_period || a.notice_period,
+      willing_to_relocate: data.availability?.willing_to_relocate ?? a.willing_to_relocate,
     }));
     if (data.job_preferences) setJobPrefs(j => ({
       preferred_titles: data.job_preferences?.preferred_titles || j.preferred_titles,
@@ -332,6 +335,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       has_license: data.driver_license?.has_license ?? d.has_license,
       license_type: data.driver_license?.license_type || d.license_type,
       years_experience: data.driver_license?.years_experience ?? d.years_experience,
+    }));
+    if (data.family_info) setFamily(f => ({
+      has_spouse: data.family_info?.has_spouse ?? f.has_spouse,
+      children_ages: data.family_info?.children_ages || f.children_ages,
+      family_willing_to_relocate: data.family_info?.family_willing_to_relocate ?? f.family_willing_to_relocate,
     }));
   };
 
@@ -400,6 +408,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       const hasSalary = salary.current_salary || salary.expected_salary;
       const hasAvail = availability.available_to_start || availability.employment_status;
       const hasPrefs = jobPrefs.preferred_titles || jobPrefs.preferred_countries;
+      const hasFamily = family.has_spouse || family.children_ages;
 
       const candidate = await createCandidate.mutateAsync({
         full_name: formData.full_name,
@@ -426,6 +435,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
         salary_expectations: hasSalary ? salary : undefined,
         availability: hasAvail ? availability : undefined,
         job_preferences: hasPrefs ? jobPrefs : undefined,
+        family_info: hasFamily ? family : undefined,
       });
 
       // Save structured CV data
