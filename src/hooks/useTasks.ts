@@ -96,10 +96,12 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: async (input: CreateTaskInput) => {
-      const { data, error } = await supabase.from('tasks' as any).insert({
-        ...input,
-        created_by: user?.id,
-      }).select().single();
+      const payload: any = { ...input, created_by: user?.id };
+      // Ensure date-only strings get a time component for timestamptz columns
+      if (payload.due_date && !payload.due_date.includes('T')) {
+        payload.due_date = `${payload.due_date}T23:59:59`;
+      }
+      const { data, error } = await supabase.from('tasks' as any).insert(payload).select().single();
       if (error) throw error;
       return data as unknown as Task;
     },
