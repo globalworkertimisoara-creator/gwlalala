@@ -120,9 +120,11 @@ export default function ProjectDetail() {
 
   const handleAddCandidate = async (candidateId: string) => {
     if (!id) return;
-    await addToPipeline.mutateAsync({ candidateId, projectId: id });
+    const wfType = (pipelineWorkflowType || project?.default_workflow_type || 'full_immigration') as 'full_immigration' | 'no_visa';
+    await addToPipeline.mutateAsync({ candidateId, projectId: id, workflowType: wfType });
     setAddDialogOpen(false);
     setCandidateSearch('');
+    setPipelineWorkflowType('');
   };
 
   const handleLinkJob = async (jobId: string) => {
