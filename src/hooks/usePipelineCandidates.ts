@@ -127,22 +127,53 @@ export function useUpdatePipelineStage() {
         } as any);
       if (actErr) console.error('activity_log insert error:', actErr);
     },
-    onSuccess: () => {
+    onMutate: async ({ workflowId, stage }) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['pipeline-candidates'] });
+
+      // Snapshot previous value
+      const previousData = queryClient.getQueriesData({ queryKey: ['pipeline-candidates'] });
+
+      // Optimistically update all matching queries
+      queryClient.setQueriesData(
+        { queryKey: ['pipeline-candidates'] },
+        (old: PipelineCandidate[] | undefined) => {
+          if (!old) return old;
+          return old.map(c =>
+            c.workflow_id === workflowId
+              ? { ...c, pipeline_stage: stage, workflow_updated_at: new Date().toISOString() }
+              : c
+          );
+        }
+      );
+
+      return { previousData };
+    },
+    onError: (error: Error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Failed to update stage',
+        description: error.message,
+      });
+    },
+    onSettled: () => {
+      // Always refetch after mutation to ensure server state
       queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
       queryClient.invalidateQueries({ queryKey: ['stage-history'] });
       queryClient.invalidateQueries({ queryKey: ['candidate-activity-log'] });
       queryClient.invalidateQueries({ queryKey: ['candidate'] });
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
+    },
+    onSuccess: () => {
       toast({
         title: 'Pipeline stage updated',
         description: 'The candidate has been moved to the new stage.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to update stage',
-        description: error.message,
       });
     },
   });
