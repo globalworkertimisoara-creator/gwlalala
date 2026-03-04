@@ -159,6 +159,13 @@ export function CandidateDocumentUpload({
     if (Object.keys(autoUpdates).length > 0) {
       try {
         await updateCandidate.mutateAsync({ id: candidateId, ...autoUpdates });
+        logActivity.mutate({
+          candidate_id: candidateId,
+          event_type: 'profile_auto_updated',
+          summary: `Auto-filled ${Object.keys(autoUpdates).length} empty field(s) from document extraction`,
+          is_shared_event: true,
+          details: { fields_updated: Object.keys(autoUpdates) },
+        });
       } catch (err) {
         console.error('Auto-apply error:', err);
       }
@@ -197,6 +204,15 @@ export function CandidateDocumentUpload({
         storage_path: storagePath,
         uploaded_by: user?.id,
       } as any);
+
+      // Log upload activity
+      logActivity.mutate({
+        candidate_id: candidateId,
+        event_type: 'document_uploaded',
+        summary: `Uploaded document: ${file.name} (${DOC_TYPE_LABELS[uploadDocType]})`,
+        is_shared_event: true,
+        details: { file_name: file.name, doc_type: uploadDocType },
+      });
 
       // Extract data via OCR
       const extractionType = uploadDocType === 'resume' ? 'cv_profile' : uploadDocType;
@@ -245,6 +261,13 @@ export function CandidateDocumentUpload({
         updates[c.field] = c.newValue;
       }
       await updateCandidate.mutateAsync({ id: candidateId, ...updates });
+      logActivity.mutate({
+        candidate_id: candidateId,
+        event_type: 'profile_updated',
+        summary: `Approved and updated ${approved.length} field(s) from document extraction`,
+        is_shared_event: true,
+        details: { fields_updated: approved.map(c => ({ field: c.field, old: c.currentValue, new: c.newValue })) },
+      });
       toast({
         title: 'Profile updated',
         description: `${approved.length} field(s) updated with new data.`,
@@ -337,6 +360,19 @@ export function CandidateDocumentUpload({
 
       if (total > 0) {
         toast({ title: 'CV data applied', description: `${total} entries saved to profile.` });
+        logActivity.mutate({
+          candidate_id: candidateId,
+          event_type: 'cv_data_applied',
+          summary: `Applied structured CV data: ${total} entries (${[
+            structuredCounts?.education ? `${structuredCounts.education} education` : '',
+            structuredCounts?.work ? `${structuredCounts.work} work exp` : '',
+            structuredCounts?.languages ? `${structuredCounts.languages} languages` : '',
+            structuredCounts?.skills ? `${structuredCounts.skills} skills` : '',
+            structuredCounts?.references ? `${structuredCounts.references} references` : '',
+          ].filter(Boolean).join(', ')})`,
+          is_shared_event: true,
+          details: { counts: structuredCounts },
+        });
       }
 
       setExtractedData(null);
@@ -364,9 +400,16 @@ export function CandidateDocumentUpload({
     setConflicts(prev => prev.map((c, i) => i === index ? { ...c, approved: !c.approved } : c));
   };
 
-  const handleDeleteDoc = async (docId: string, storagePath: string) => {
+  const handleDeleteDoc = async (docId: string, storagePath: string, fileName?: string) => {
     if (!candidateId) return;
     await deleteDoc.mutateAsync({ id: docId, storagePath, candidateId });
+    logActivity.mutate({
+      candidate_id: candidateId,
+      event_type: 'document_deleted',
+      summary: `Deleted document: ${fileName || 'Unknown'}`,
+      is_shared_event: true,
+      details: { file_name: fileName, doc_id: docId },
+    });
   };
 
   const handleDownload = async (storagePath: string, fileName: string) => {
@@ -381,6 +424,13 @@ export function CandidateDocumentUpload({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      logActivity.mutate({
+        candidate_id: candidateId,
+        event_type: 'document_downloaded',
+        summary: `Downloaded document: ${fileName}`,
+        is_shared_event: false,
+        details: { file_name: fileName },
+      });
     } catch (err) {
       console.error('Download error:', err);
     }
