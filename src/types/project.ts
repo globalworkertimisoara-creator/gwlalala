@@ -1,6 +1,12 @@
 // Project types for GlobalWorker Recruitment Tracker
 
 export type ProjectStatus = 'draft' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+export type WorkflowType = 'full_immigration' | 'no_visa';
+
+export const WORKFLOW_TYPE_CONFIG: Record<WorkflowType, { label: string; description: string }> = {
+  full_immigration: { label: 'Full Immigration', description: '5 phases including visa processing' },
+  no_visa: { label: 'No Visa Required', description: '4 phases without visa processing' },
+};
 
 export interface Project {
   id: string;
@@ -11,6 +17,7 @@ export interface Project {
   sales_person_id: string | null;
   sales_person_name: string | null;
   status: ProjectStatus;
+  default_workflow_type: WorkflowType;
   contract_signed_at: string | null;
   notes: string | null;
   created_by: string | null;
