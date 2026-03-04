@@ -131,6 +131,8 @@ export function useUpdatePipelineStage() {
       queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
       queryClient.invalidateQueries({ queryKey: ['stage-history'] });
       queryClient.invalidateQueries({ queryKey: ['candidate-activity-log'] });
+      queryClient.invalidateQueries({ queryKey: ['candidate'] });
+      queryClient.invalidateQueries({ queryKey: ['candidates'] });
       toast({
         title: 'Pipeline stage updated',
         description: 'The candidate has been moved to the new stage.',
