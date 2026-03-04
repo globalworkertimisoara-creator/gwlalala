@@ -100,11 +100,13 @@ const Index = () => {
           />
         </div>
 
-        {/* Charts, Activity & Tasks */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <StageChart candidates={candidates || []} />
+        {/* Tasks */}
+        <DashboardTasks />
+
+        {/* Charts & Activity */}
+        <div className="grid gap-6 lg:grid-cols-2">
           <RecentCandidates candidates={candidates || []} onCandidateClick={(c) => navigate(`/candidates/${c.id}`)} />
-          <DashboardTasks />
+          <StageChart candidates={candidates || []} />
         </div>
       </div>
     </AppLayout>
