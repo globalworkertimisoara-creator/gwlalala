@@ -15,9 +15,10 @@ interface LinkToProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   candidate: Candidate | null;
+  onLinked?: (projectId: string, projectName: string, workflowType: string) => void;
 }
 
-export function LinkToProjectDialog({ open, onOpenChange, candidate }: LinkToProjectDialogProps) {
+export function LinkToProjectDialog({ open, onOpenChange, candidate, onLinked }: LinkToProjectDialogProps) {
   const [search, setSearch] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [workflowType, setWorkflowType] = useState<'full_immigration' | 'no_visa'>('full_immigration');
@@ -37,11 +38,12 @@ export function LinkToProjectDialog({ open, onOpenChange, candidate }: LinkToPro
   const selectedProject = projects?.find(p => p.id === selectedProjectId);
 
   const handleLink = () => {
-    if (!candidate || !selectedProjectId) return;
+    if (!candidate || !selectedProjectId || !selectedProject) return;
     createWorkflow.mutate(
       { candidateId: candidate.id, projectId: selectedProjectId, workflowType },
       {
         onSuccess: () => {
+          onLinked?.(selectedProjectId, selectedProject.name, workflowType);
           onOpenChange(false);
           setSelectedProjectId(null);
           setSearch('');
