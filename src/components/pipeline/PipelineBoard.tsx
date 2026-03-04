@@ -7,7 +7,7 @@ import { Loader2, Search, LayoutGrid, List } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DndContext,
@@ -100,6 +100,8 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
   const [countryFilter, setCountryFilter] = useState<string>('');
   const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
   const [activeDragCandidate, setActiveDragCandidate] = useState<PipelineCandidate | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const savedScrollLeft = useRef<number>(0);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -138,6 +140,11 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
     const { active, over } = event;
     if (!over) return;
 
+    // Save scroll position before mutation triggers re-render
+    if (scrollContainerRef.current) {
+      savedScrollLeft.current = scrollContainerRef.current.scrollLeft;
+    }
+
     const workflowId = active.id as string;
     const newStage = over.id as RecruitmentStage;
     const candidate = filtered.find(c => c.workflow_id === workflowId);
@@ -150,6 +157,17 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
         stage: newStage,
       });
     }
+  }
+
+  // Restore scroll position after candidates data changes
+  const prevCandidatesRef = useRef(candidates);
+  if (prevCandidatesRef.current !== candidates) {
+    prevCandidatesRef.current = candidates;
+    requestAnimationFrame(() => {
+      if (scrollContainerRef.current && savedScrollLeft.current > 0) {
+        scrollContainerRef.current.scrollLeft = savedScrollLeft.current;
+      }
+    });
   }
 
   if (isLoading) {
@@ -220,7 +238,7 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="overflow-x-auto pb-4">
+        <div ref={scrollContainerRef} className="overflow-x-auto pb-4">
           <div className={isCompact ? "flex gap-2 min-w-max" : "flex gap-4 min-w-max"}>
             {pipelineStages.map((stage) => {
               const stageCandidates = filtered.filter(c => c.pipeline_stage === stage);
