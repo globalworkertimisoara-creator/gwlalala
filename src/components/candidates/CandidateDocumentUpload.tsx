@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useDocuments, useDeleteDocument } from '@/hooks/useDocuments';
 import { useUpdateCandidate } from '@/hooks/useCandidates';
+import { useLogCandidateActivity } from '@/hooks/useCandidateActivityLog';
 import {
   useSaveCandidateEducation,
   useSaveCandidateWorkExperience,
