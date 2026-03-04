@@ -1,10 +1,16 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useProject, useUpdateProject, useDeleteProject } from '@/hooks/useProjects';
+import { usePipelineCandidates, useAddCandidateToPipeline } from '@/hooks/usePipelineCandidates';
+import { useCandidates } from '@/hooks/useCandidates';
+import { PipelineBoard } from '@/components/pipeline/PipelineBoard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -25,6 +31,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -41,10 +54,13 @@ import {
   Briefcase,
   Trash2,
   Loader2,
+  Plus,
+  GitBranchPlus,
 } from 'lucide-react';
 import WorkflowPhaseTracker from '@/components/projects/WorkflowPhaseTracker';
 import { format } from 'date-fns';
 import { getProjectStatusColor, getProjectStatusLabel, PROJECT_STATUS_CONFIG, ProjectStatus } from '@/types/project';
+import { useState, useMemo } from 'react';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +68,27 @@ export default function ProjectDetail() {
   const { data: project, isLoading } = useProject(id!);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+
+  // Pipeline data
+  const { data: pipelineCandidates = [], isLoading: pipelineLoading } = usePipelineCandidates(id);
+  const { data: allCandidates = [] } = useCandidates();
+  const addToPipeline = useAddCandidateToPipeline();
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [candidateSearch, setCandidateSearch] = useState('');
+
+  const existingCandidateIds = new Set(pipelineCandidates.map(pc => pc.candidate_id));
+  const availableCandidates = useMemo(() => {
+    return allCandidates
+      .filter(c => !existingCandidateIds.has(c.id))
+      .filter(c => !candidateSearch || c.full_name.toLowerCase().includes(candidateSearch.toLowerCase()) || c.email.toLowerCase().includes(candidateSearch.toLowerCase()));
+  }, [allCandidates, existingCandidateIds, candidateSearch]);
+
+  const handleAddCandidate = async (candidateId: string) => {
+    if (!id) return;
+    await addToPipeline.mutateAsync({ candidateId, projectId: id });
+    setAddDialogOpen(false);
+    setCandidateSearch('');
+  };
 
   const handleStatusChange = (status: ProjectStatus) => {
     if (project) {
@@ -132,176 +169,245 @@ export default function ProjectDetail() {
           </AlertDialog>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Details */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Project Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Employer</p>
-                    <p className="font-medium">{project.employer_name}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Location</p>
-                    <p className="font-medium">{project.location}</p>
-                  </div>
-                </div>
-                {project.sales_person_name && (
-                  <div className="flex items-center gap-3">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Sales Person</p>
-                      <p className="font-medium">{project.sales_person_name}</p>
+        {/* Tabs: Overview | Pipeline | Workflow */}
+        <Tabs defaultValue="overview">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="pipeline" className="gap-1.5">
+              <GitBranchPlus className="h-3.5 w-3.5" />
+              Pipeline ({pipelineCandidates.length})
+            </TabsTrigger>
+            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Left Column - Details */}
+              <div className="lg:col-span-1 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Project Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Employer</p>
+                        <p className="font-medium">{project.employer_name}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {project.contract_signed_at && (
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Contract Signed</p>
-                      <p className="font-medium">
-                        {format(new Date(project.contract_signed_at), 'MMM d, yyyy')}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Location</p>
+                        <p className="font-medium">{project.location}</p>
+                      </div>
                     </div>
-                  </div>
+                    {project.sales_person_name && (
+                      <div className="flex items-center gap-3">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Sales Person</p>
+                          <p className="font-medium">{project.sales_person_name}</p>
+                        </div>
+                      </div>
+                    )}
+                    {project.contract_signed_at && (
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Contract Signed</p>
+                          <p className="font-medium">
+                            {format(new Date(project.contract_signed_at), 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {project.days_since_contract !== null && (
+                      <div className="flex items-center gap-3">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Time Since Contract</p>
+                          <p className="font-medium">{project.days_since_contract} days</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Contract Countries</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {project.countries_in_contract.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {project.countries_in_contract.map(country => (
+                          <Badge key={country} variant="outline">
+                            {country}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No countries specified</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {project.notes && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Notes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm whitespace-pre-wrap">{project.notes}</p>
+                    </CardContent>
+                  </Card>
                 )}
-                {project.days_since_contract !== null && (
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Time Since Contract</p>
-                      <p className="font-medium">{project.days_since_contract} days</p>
+              </div>
+
+              {/* Right Column - Metrics & Jobs */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Fulfillment Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Contract Fulfillment</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-3xl font-bold">{project.fill_percentage}%</span>
+                      <span className="text-muted-foreground">
+                        {project.filled_positions} of {project.total_positions} positions filled
+                      </span>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    <Progress value={project.fill_percentage} className="h-3" />
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Contract Countries</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {project.countries_in_contract.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {project.countries_in_contract.map(country => (
-                      <Badge key={country} variant="outline">
-                        {country}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No countries specified</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {project.notes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm whitespace-pre-wrap">{project.notes}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Right Column - Metrics & Jobs */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Fulfillment Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Contract Fulfillment</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold">{project.fill_percentage}%</span>
-                  <span className="text-muted-foreground">
-                    {project.filled_positions} of {project.total_positions} positions filled
-                  </span>
-                </div>
-                <Progress value={project.fill_percentage} className="h-3" />
-              </CardContent>
-            </Card>
-
-            {/* Jobs Table */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />
-                  Linked Jobs ({project.jobs.length})
-                </CardTitle>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/jobs">Manage Jobs</Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {project.jobs.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>No jobs linked to this project yet</p>
-                    <p className="text-sm">Link jobs from the Jobs page</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-center">Total</TableHead>
-                        <TableHead className="text-center">Placed</TableHead>
-                        <TableHead className="text-right">Fill Rate</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {project.jobs.map(job => {
-                        const fillRate = job.total_candidates > 0
-                          ? Math.round((job.placed_candidates / job.total_candidates) * 100)
-                          : 0;
-                        return (
-                          <TableRow 
-                            key={job.id} 
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => navigate(`/jobs/${job.id}`)}
-                          >
-                            <TableCell className="font-medium">{job.title}</TableCell>
-                            <TableCell>
-                              <Badge variant={job.status === 'open' ? 'default' : 'secondary'}>
-                                {job.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center">{job.total_candidates}</TableCell>
-                            <TableCell className="text-center">{job.placed_candidates}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Progress value={fillRate} className="w-16 h-2" />
-                                <span className="text-sm w-10">{fillRate}%</span>
-                              </div>
-                            </TableCell>
+                {/* Jobs Table */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      Linked Jobs ({project.jobs.length})
+                    </CardTitle>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/jobs">Manage Jobs</Link>
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {project.jobs.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No jobs linked to this project yet</p>
+                        <p className="text-sm">Link jobs from the Jobs page</p>
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-center">Total</TableHead>
+                            <TableHead className="text-center">Placed</TableHead>
+                            <TableHead className="text-right">Fill Rate</TableHead>
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+                        </TableHeader>
+                        <TableBody>
+                          {project.jobs.map(job => {
+                            const fillRate = job.total_candidates > 0
+                              ? Math.round((job.placed_candidates / job.total_candidates) * 100)
+                              : 0;
+                            return (
+                              <TableRow
+                                key={job.id}
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => navigate(`/jobs/${job.id}`)}
+                              >
+                                <TableCell className="font-medium">{job.title}</TableCell>
+                                <TableCell>
+                                  <Badge variant={job.status === 'open' ? 'default' : 'secondary'}>
+                                    {job.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-center">{job.total_candidates}</TableCell>
+                                <TableCell className="text-center">{job.placed_candidates}</TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <Progress value={fillRate} className="w-16 h-2" />
+                                    <span className="text-sm w-10">{fillRate}%</span>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
 
-            {/* Workflow Phase Tracker */}
+          <TabsContent value="pipeline" className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">
+                {pipelineCandidates.length} candidates in this project's pipeline
+              </p>
+              <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gap-1.5">
+                    <Plus className="h-4 w-4" />
+                    Add to Pipeline
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add Candidate to Pipeline</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Search candidates</Label>
+                      <Input
+                        placeholder="Name or email..."
+                        value={candidateSearch}
+                        onChange={e => setCandidateSearch(e.target.value)}
+                      />
+                    </div>
+                    <div className="max-h-64 overflow-y-auto space-y-1">
+                      {availableCandidates.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          {candidateSearch ? 'No matching candidates found' : 'All candidates are already in this pipeline'}
+                        </p>
+                      ) : (
+                        availableCandidates.slice(0, 20).map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => handleAddCandidate(c.id)}
+                            disabled={addToPipeline.isPending}
+                            className="w-full flex items-center justify-between p-2.5 rounded-lg border hover:bg-accent/50 transition-colors text-left"
+                          >
+                            <div>
+                              <p className="text-sm font-medium">{c.full_name}</p>
+                              <p className="text-xs text-muted-foreground">{c.email}</p>
+                            </div>
+                            <Plus className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <PipelineBoard candidates={pipelineCandidates} isLoading={pipelineLoading} />
+          </TabsContent>
+
+          <TabsContent value="workflow" className="mt-6">
             <WorkflowPhaseTracker projectId={project.id} />
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );

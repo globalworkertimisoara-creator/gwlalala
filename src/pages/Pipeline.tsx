@@ -1,98 +1,45 @@
 import { AppLayout } from '@/components/layout/AppLayout';
-import { PipelineColumn } from '@/components/pipeline/PipelineColumn';
-import { useCandidates, useCreateCandidate } from '@/hooks/useCandidates';
-import { RecruitmentStage, STAGES, Candidate } from '@/types/database';
+import { PipelineBoard } from '@/components/pipeline/PipelineBoard';
+import { usePipelineCandidates, useAddCandidateToPipeline } from '@/hooks/usePipelineCandidates';
+import { useProjects } from '@/hooks/useProjects';
+import { useCandidates } from '@/hooks/useCandidates';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, Search, LayoutGrid, List } from 'lucide-react';
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-
-// Active pipeline stages (exclude closed_not_placed from main view)
-const pipelineStages: RecruitmentStage[] = STAGES
-  .filter(s => s.value !== 'closed_not_placed')
-  .map(s => s.value);
+import { Input } from '@/components/ui/input';
+import { Plus, Loader2, FolderKanban } from 'lucide-react';
+import { useState, useMemo } from 'react';
 
 const Pipeline = () => {
-  const { data: candidates, isLoading } = useCandidates();
-  const createCandidate = useCreateCandidate();
-  const navigate = useNavigate();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  // Filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [nationalityFilter, setNationalityFilter] = useState<string>('');
-  const [countryFilter, setCountryFilter] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
+  const { data: projects = [], isLoading: projectsLoading } = useProjects();
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const { data: pipelineCandidates = [], isLoading: pipelineLoading } = usePipelineCandidates(selectedProjectId || undefined);
+  const { data: allCandidates = [] } = useCandidates();
+  const addToPipeline = useAddCandidateToPipeline();
 
-  // Extract unique nationalities and countries for filter dropdowns
-  const { nationalities, countries } = useMemo(() => {
-    const nats = new Set<string>();
-    const ctrs = new Set<string>();
-    (candidates || []).forEach(c => {
-      if (c.nationality) nats.add(c.nationality);
-      if (c.current_country) ctrs.add(c.current_country);
-    });
-    return {
-      nationalities: Array.from(nats).sort(),
-      countries: Array.from(ctrs).sort(),
-    };
-  }, [candidates]);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [candidateSearch, setCandidateSearch] = useState('');
 
-  // Filter candidates
-  const filteredCandidates = useMemo(() => {
-    return (candidates || []).filter(c => {
-      if (searchTerm && !c.full_name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-      if (nationalityFilter && nationalityFilter !== 'all' && c.nationality !== nationalityFilter) {
-        return false;
-      }
-      if (countryFilter && countryFilter !== 'all' && c.current_country !== countryFilter) {
-        return false;
-      }
-      return true;
-    });
-  }, [candidates, searchTerm, nationalityFilter, countryFilter]);
+  // Auto-select first project
+  const activeProjectId = selectedProjectId || (projects.length > 0 ? projects[0].id : '');
 
-  const handleCreateCandidate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  // Candidates not yet in this pipeline
+  const existingCandidateIds = new Set(pipelineCandidates.map(pc => pc.candidate_id));
+  const availableCandidates = useMemo(() => {
+    return allCandidates
+      .filter(c => !existingCandidateIds.has(c.id))
+      .filter(c => !candidateSearch || c.full_name.toLowerCase().includes(candidateSearch.toLowerCase()) || c.email.toLowerCase().includes(candidateSearch.toLowerCase()));
+  }, [allCandidates, existingCandidateIds, candidateSearch]);
 
-    await createCandidate.mutateAsync({
-      full_name: formData.get('full_name') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string || undefined,
-      nationality: formData.get('nationality') as string || undefined,
-      current_country: formData.get('current_country') as string || undefined,
-      linkedin: formData.get('linkedin') as string || undefined,
-      current_stage: formData.get('current_stage') as RecruitmentStage || 'sourced',
-    });
+  const selectedProject = projects.find(p => p.id === activeProjectId);
 
-    setIsDialogOpen(false);
+  const handleAddCandidate = async (candidateId: string) => {
+    if (!activeProjectId) return;
+    await addToPipeline.mutateAsync({ candidateId, projectId: activeProjectId });
+    setAddDialogOpen(false);
+    setCandidateSearch('');
   };
-
-  const handleCandidateClick = (candidate: Candidate) => {
-    navigate(`/candidates/${candidate.id}`);
-  };
-
-  const isCompact = viewMode === 'compact';
 
   return (
     <AppLayout>
@@ -100,151 +47,106 @@ const Pipeline = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Pipeline</h1>
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Recruitment Pipeline</h1>
             <p className="text-sm text-muted-foreground">
-              Track candidates through recruitment stages
+              Track candidates through recruitment stages per project
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1.5">
-                <Plus className="h-4 w-4" />
-                Add Candidate
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Add New Candidate</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateCandidate} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">Full Name *</Label>
-                    <Input id="full_name" name="full_name" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input id="email" name="email" type="email" required />
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" name="phone" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nationality">Nationality</Label>
-                    <Input id="nationality" name="nationality" placeholder="e.g., Romanian" />
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="current_country">Current Country</Label>
-                    <Input id="current_country" name="current_country" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="current_stage">Stage</Label>
-                    <Select name="current_stage" defaultValue="sourced">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STAGES.map(stage => (
-                          <SelectItem key={stage.value} value={stage.value}>
-                            {stage.label.split(' / ')[0]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="linkedin">LinkedIn URL</Label>
-                  <Input id="linkedin" name="linkedin" type="url" placeholder="https://linkedin.com/in/..." />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createCandidate.isPending}>
-                    {createCandidate.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Add Candidate
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Filter Bar */}
-        <div className="flex flex-wrap items-center gap-3 p-3 bg-card rounded-lg border border-border/60">
-          <div className="relative flex-1 min-w-[180px] max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 h-8 text-sm"
-            />
-          </div>
-          <Select value={nationalityFilter} onValueChange={setNationalityFilter}>
-            <SelectTrigger className="w-[140px] h-8 text-sm">
-              <SelectValue placeholder="Nationality" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Nationalities</SelectItem>
-              {nationalities.map(nat => (
-                <SelectItem key={nat} value={nat}>{nat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={countryFilter} onValueChange={setCountryFilter}>
-            <SelectTrigger className="w-[140px] h-8 text-sm">
-              <SelectValue placeholder="Country" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Countries</SelectItem>
-              {countries.map(country => (
-                <SelectItem key={country} value={country}>{country}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="ml-auto">
-            <ToggleGroup 
-              type="single" 
-              value={viewMode} 
-              onValueChange={(v) => v && setViewMode(v as 'compact' | 'detailed')}
-              size="sm"
+          <div className="flex items-center gap-3">
+            {/* Project Selector */}
+            <Select
+              value={activeProjectId}
+              onValueChange={v => setSelectedProjectId(v)}
             >
-              <ToggleGroupItem value="compact" aria-label="Compact view">
-                <List className="h-4 w-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="detailed" aria-label="Detailed view">
-                <LayoutGrid className="h-4 w-4" />
-              </ToggleGroupItem>
-            </ToggleGroup>
+              <SelectTrigger className="w-[260px]">
+                <div className="flex items-center gap-2">
+                  <FolderKanban className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Select project" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map(p => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name} — {p.employer_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {activeProjectId && (
+              <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gap-1.5">
+                    <Plus className="h-4 w-4" />
+                    Add to Pipeline
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add Candidate to Pipeline</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Search candidates</Label>
+                      <Input
+                        placeholder="Name or email..."
+                        value={candidateSearch}
+                        onChange={e => setCandidateSearch(e.target.value)}
+                      />
+                    </div>
+                    <div className="max-h-64 overflow-y-auto space-y-1">
+                      {availableCandidates.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          {candidateSearch ? 'No matching candidates found' : 'All candidates are already in this pipeline'}
+                        </p>
+                      ) : (
+                        availableCandidates.slice(0, 20).map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => handleAddCandidate(c.id)}
+                            disabled={addToPipeline.isPending}
+                            className="w-full flex items-center justify-between p-2.5 rounded-lg border hover:bg-accent/50 transition-colors text-left"
+                          >
+                            <div>
+                              <p className="text-sm font-medium">{c.full_name}</p>
+                              <p className="text-xs text-muted-foreground">{c.email}</p>
+                            </div>
+                            <Plus className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 
         {/* Pipeline Board */}
-        {isLoading ? (
+        {projectsLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : (
-          <div className="overflow-x-auto pb-4">
-            <div className={isCompact ? "flex gap-2 min-w-max" : "flex gap-4 min-w-max"}>
-              {pipelineStages.map((stage) => (
-                <PipelineColumn
-                  key={stage}
-                  stage={stage}
-                  candidates={filteredCandidates}
-                  onCandidateClick={handleCandidateClick}
-                  compact={isCompact}
-                />
-              ))}
-            </div>
+        ) : !activeProjectId ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <FolderKanban className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">No project selected</p>
+            <p className="text-sm">Select a project to view its recruitment pipeline</p>
           </div>
+        ) : (
+          <>
+            {selectedProject && (
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{selectedProject.name}</span>
+                <span>•</span>
+                <span>{selectedProject.employer_name}</span>
+                <span>•</span>
+                <span>{pipelineCandidates.length} candidates</span>
+              </div>
+            )}
+            <PipelineBoard candidates={pipelineCandidates} isLoading={pipelineLoading} />
+          </>
         )}
       </div>
     </AppLayout>
