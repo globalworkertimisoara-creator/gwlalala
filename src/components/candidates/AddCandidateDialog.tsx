@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { STAGES, RecruitmentStage, DocType } from '@/types/database';
 import { useCreateCandidate, useUpdateCandidate } from '@/hooks/useCandidates';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDocumentExtraction, ExtractedData } from '@/hooks/useDocumentExtraction';
 import {
   useSaveCandidateEducation,
@@ -209,6 +210,7 @@ function Section({ title, icon, count, children, defaultOpen = false }: {
 
 // ─── Main Dialog ─────────────────────────────────────────────────────────────
 export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogProps) {
+  const queryClient = useQueryClient();
   const createCandidate = useCreateCandidate();
   const updateCandidate = useUpdateCandidate();
   const { extractData, isExtracting } = useDocumentExtraction();
@@ -446,6 +448,15 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       if (skills.length > 0) promises.push(saveSkills.mutateAsync({ candidateId: candidate.id, entries: skills }));
       if (references.length > 0) promises.push(saveReferences.mutateAsync({ candidateId: candidate.id, entries: references }));
       await Promise.all(promises);
+
+      // Explicitly invalidate CV queries so they're fresh when detail page loads
+      if (promises.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ['candidate-education', candidate.id] });
+        queryClient.invalidateQueries({ queryKey: ['candidate-work-experience', candidate.id] });
+        queryClient.invalidateQueries({ queryKey: ['candidate-languages', candidate.id] });
+        queryClient.invalidateQueries({ queryKey: ['candidate-skills', candidate.id] });
+        queryClient.invalidateQueries({ queryKey: ['candidate-references', candidate.id] });
+      }
 
       // Move documents to candidate folder
       for (const doc of pendingDocuments) {

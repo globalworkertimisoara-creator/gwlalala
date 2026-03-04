@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useCandidate, useUpdateCandidateStage } from '@/hooks/useCandidates';
@@ -114,6 +115,7 @@ export default function CandidateDetail() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { can } = usePermissions();
+  const queryClient = useQueryClient();
 
   // Pipeline context from URL params
   const fromPipeline = searchParams.get('from') === 'pipeline';
@@ -605,7 +607,14 @@ export default function CandidateDetail() {
                 candidateId={id}
                 candidate={candidate}
                 onDataApplied={() => {
-                  // Queries auto-invalidate via hooks
+                  // Refresh all candidate and CV data queries
+                  queryClient.invalidateQueries({ queryKey: ['candidate', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-education', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-work-experience', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-languages', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-skills', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-references', id] });
+                  queryClient.invalidateQueries({ queryKey: ['documents', id] });
                 }}
               />
             )}
