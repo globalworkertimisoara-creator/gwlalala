@@ -210,6 +210,7 @@ function Section({ title, icon, count, children, defaultOpen = false }: {
 
 // ─── Main Dialog ─────────────────────────────────────────────────────────────
 export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogProps) {
+  const queryClient = useQueryClient();
   const createCandidate = useCreateCandidate();
   const updateCandidate = useUpdateCandidate();
   const { extractData, isExtracting } = useDocumentExtraction();
