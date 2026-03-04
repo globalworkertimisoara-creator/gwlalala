@@ -141,6 +141,7 @@ export default function CandidateDetail() {
   const [stageNote, setStageNote] = useState('');
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isApplyingData, setIsApplyingData] = useState(false);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
 
   // ─── Loading / Not Found ───────────────────────────────────────────────────
 
