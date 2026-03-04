@@ -94,7 +94,7 @@ interface PipelineBoardProps {
   onCandidateClick?: (candidateId: string) => void;
 }
 
-export function PipelineBoard({ candidates, isLoading, onCandidateClick }: PipelineBoardProps) {
+export function PipelineBoard({ candidates, isLoading, projectId, onCandidateClick }: PipelineBoardProps) {
   const navigate = useNavigate();
   const updateStage = useUpdatePipelineStage();
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,6 +104,31 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
   const [activeDragCandidate, setActiveDragCandidate] = useState<PipelineCandidate | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const savedScrollLeft = useRef<number>(0);
+  const scrollKey = projectId ? `pipeline-scroll-${projectId}` : null;
+
+  // Persist scroll position to sessionStorage on scroll
+  const handleScroll = useCallback(() => {
+    if (scrollContainerRef.current && scrollKey) {
+      sessionStorage.setItem(scrollKey, String(scrollContainerRef.current.scrollLeft));
+    }
+  }, [scrollKey]);
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    if (scrollKey && scrollContainerRef.current) {
+      const saved = sessionStorage.getItem(scrollKey);
+      if (saved) {
+        const val = parseInt(saved, 10);
+        if (!isNaN(val) && val > 0) {
+          requestAnimationFrame(() => {
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollLeft = val;
+            }
+          });
+        }
+      }
+    }
+  }, [scrollKey, isLoading]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
