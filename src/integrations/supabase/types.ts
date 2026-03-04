@@ -860,6 +860,53 @@ export type Database = {
           },
         ]
       }
+      candidate_education: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          degree_obtained: string | null
+          education_level: string
+          field_of_study: string | null
+          graduation_year: number | null
+          id: string
+          institution_name: string | null
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          degree_obtained?: string | null
+          education_level: string
+          field_of_study?: string | null
+          graduation_year?: number | null
+          id?: string
+          institution_name?: string | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          degree_obtained?: string | null
+          education_level?: string
+          field_of_study?: string | null
+          graduation_year?: number | null
+          id?: string
+          institution_name?: string | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_education_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_interviews: {
         Row: {
           candidate_id: string
@@ -995,6 +1042,38 @@ export type Database = {
           },
         ]
       }
+      candidate_languages: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          language_name: string
+          proficiency_level: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          language_name: string
+          proficiency_level?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          language_name?: string
+          proficiency_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_languages_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_offers: {
         Row: {
           benefits: string[] | null
@@ -1090,6 +1169,129 @@ export type Database = {
           },
         ]
       }
+      candidate_references: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          email: string | null
+          id: string
+          phone: string | null
+          position_title: string | null
+          reference_name: string
+          relationship: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          position_title?: string | null
+          reference_name: string
+          relationship?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          position_title?: string | null
+          reference_name?: string
+          relationship?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_references_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_skills: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          skill_name: string
+          years_experience: number | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          skill_name: string
+          years_experience?: number | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          skill_name?: string
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_skills_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_work_experience: {
+        Row: {
+          candidate_id: string
+          company_name: string | null
+          country: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          job_description: string | null
+          job_title: string
+          sort_order: number | null
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          job_description?: string | null
+          job_title: string
+          sort_order?: number | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          job_description?: string | null
+          job_title?: string
+          sort_order?: number | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_work_experience_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidate_workflow: {
         Row: {
           arrival_completed_at: string | null
@@ -1170,63 +1372,105 @@ export type Database = {
       candidates: {
         Row: {
           added_by: string | null
+          availability: Json | null
           created_at: string
+          current_city: string | null
           current_country: string | null
           current_stage: Database["public"]["Enums"]["recruitment_stage"]
+          date_of_birth: string | null
+          driver_license: Json | null
           email: string
           expected_start_date: string | null
+          family_info: Json | null
           full_name: string
+          gender: string | null
           id: string
+          internal_notes: Json | null
+          job_preferences: Json | null
           linkedin: string | null
+          marital_status: string | null
+          national_id_number: string | null
           nationality: string | null
+          number_of_children: number | null
           parents_names: string | null
           passport_expiry: string | null
           passport_issue_date: string | null
           passport_issued_by: string | null
           passport_number: string | null
           phone: string | null
+          profile_photo_url: string | null
           rejection_reason: string | null
+          salary_expectations: Json | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           added_by?: string | null
+          availability?: Json | null
           created_at?: string
+          current_city?: string | null
           current_country?: string | null
           current_stage?: Database["public"]["Enums"]["recruitment_stage"]
+          date_of_birth?: string | null
+          driver_license?: Json | null
           email: string
           expected_start_date?: string | null
+          family_info?: Json | null
           full_name: string
+          gender?: string | null
           id?: string
+          internal_notes?: Json | null
+          job_preferences?: Json | null
           linkedin?: string | null
+          marital_status?: string | null
+          national_id_number?: string | null
           nationality?: string | null
+          number_of_children?: number | null
           parents_names?: string | null
           passport_expiry?: string | null
           passport_issue_date?: string | null
           passport_issued_by?: string | null
           passport_number?: string | null
           phone?: string | null
+          profile_photo_url?: string | null
           rejection_reason?: string | null
+          salary_expectations?: Json | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           added_by?: string | null
+          availability?: Json | null
           created_at?: string
+          current_city?: string | null
           current_country?: string | null
           current_stage?: Database["public"]["Enums"]["recruitment_stage"]
+          date_of_birth?: string | null
+          driver_license?: Json | null
           email?: string
           expected_start_date?: string | null
+          family_info?: Json | null
           full_name?: string
+          gender?: string | null
           id?: string
+          internal_notes?: Json | null
+          job_preferences?: Json | null
           linkedin?: string | null
+          marital_status?: string | null
+          national_id_number?: string | null
           nationality?: string | null
+          number_of_children?: number | null
           parents_names?: string | null
           passport_expiry?: string | null
           passport_issue_date?: string | null
           passport_issued_by?: string | null
           passport_number?: string | null
           phone?: string | null
+          profile_photo_url?: string | null
           rejection_reason?: string | null
+          salary_expectations?: Json | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
