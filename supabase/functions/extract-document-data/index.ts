@@ -463,7 +463,7 @@ Return ONLY a JSON object with these possible fields:
             role: "user", 
             content: [
               { type: "text", text: basePrompt },
-              { type: "image_url", image_url: { url: signedUrlData.signedUrl } }
+              { type: "image_url", image_url: { url: dataUrl } }
             ]
           }
         ],
