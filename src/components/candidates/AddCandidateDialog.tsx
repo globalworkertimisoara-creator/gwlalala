@@ -239,10 +239,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
   const [references, setReferences] = useState<ReferenceEntry[]>([]);
 
   // ── JSON fields ──
-  const [salary, setSalary] = useState({ current_salary: '', expected_salary: '', currency: '' });
-  const [availability, setAvailability] = useState({ available_to_start: '', employment_status: '', notice_period: '' });
+  const [salary, setSalary] = useState({ current_salary: '', expected_salary: '', currency: '', negotiable: false });
+  const [availability, setAvailability] = useState({ available_to_start: '', employment_status: '', notice_period: '', willing_to_relocate: false });
   const [jobPrefs, setJobPrefs] = useState({ preferred_titles: '', preferred_countries: '', preferred_work_type: '' });
   const [driverLicense, setDriverLicense] = useState({ has_license: false, license_type: '', years_experience: null as number | null });
+  const [family, setFamily] = useState({ has_spouse: false, children_ages: '', family_willing_to_relocate: false });
 
   // ── Document state ──
   const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>([]);
