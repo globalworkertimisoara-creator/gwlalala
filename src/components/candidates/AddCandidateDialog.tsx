@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -25,11 +24,17 @@ import {
   Sparkles, 
   X, 
   CheckCircle2,
-  AlertCircle 
 } from 'lucide-react';
 import { STAGES, RecruitmentStage, DocType } from '@/types/database';
-import { useCreateCandidate } from '@/hooks/useCandidates';
+import { useCreateCandidate, useUpdateCandidate } from '@/hooks/useCandidates';
 import { useDocumentExtraction, ExtractedData } from '@/hooks/useDocumentExtraction';
+import {
+  useSaveCandidateEducation,
+  useSaveCandidateWorkExperience,
+  useSaveCandidateLanguages,
+  useSaveCandidateSkills,
+  useSaveCandidateReferences,
+} from '@/hooks/useCandidateCV';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -99,7 +104,7 @@ function QuickFillDropZone({
         <span className="font-medium text-sm">Quick Fill with Documents</span>
       </div>
       <p className="text-xs text-muted-foreground">
-        Drag & drop or browse to upload a resume, passport, or other documents to automatically extract candidate information
+        Drag & drop or browse to upload a resume, passport, or other documents to automatically extract candidate information including education, work experience, languages and skills
       </p>
 
       <div className="flex gap-2">
@@ -197,9 +202,43 @@ function QuickFillDropZone({
   );
 }
 
+// Preview of extracted CV structured data
+function ExtractedCVPreview({ data }: { data: ExtractedData }) {
+  const sections: { label: string; icon: string; count: number }[] = [];
+  if (data.education?.length) sections.push({ label: 'Education', icon: '🎓', count: data.education.length });
+  if (data.work_experience?.length) sections.push({ label: 'Work Experience', icon: '💼', count: data.work_experience.length });
+  if (data.languages?.length) sections.push({ label: 'Languages', icon: '🗣️', count: data.languages.length });
+  if (data.skills_list?.length) sections.push({ label: 'Skills', icon: '🛠️', count: data.skills_list.length });
+  if (data.references?.length) sections.push({ label: 'References', icon: '📋', count: data.references.length });
+
+  if (sections.length === 0) return null;
+
+  return (
+    <div className="border rounded-lg p-3 bg-primary/5 border-primary/30 space-y-2">
+      <p className="text-xs font-medium text-primary flex items-center gap-1">
+        <Sparkles className="h-3 w-3" />
+        CV data extracted — will be saved to profile automatically
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {sections.map(s => (
+          <Badge key={s.label} variant="secondary" className="text-xs gap-1">
+            {s.icon} {s.count} {s.label}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogProps) {
   const createCandidate = useCreateCandidate();
+  const updateCandidate = useUpdateCandidate();
   const { extractData, isExtracting } = useDocumentExtraction();
+  const saveEducation = useSaveCandidateEducation();
+  const saveWorkExp = useSaveCandidateWorkExperience();
+  const saveLanguages = useSaveCandidateLanguages();
+  const saveSkills = useSaveCandidateSkills();
+  const saveReferences = useSaveCandidateReferences();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -210,9 +249,14 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     phone: '',
     nationality: '',
     current_country: '',
+    current_city: '',
     linkedin: '',
     current_stage: 'sourced' as RecruitmentStage,
     expected_start_date: '',
+    date_of_birth: '',
+    gender: '',
+    marital_status: '',
+    whatsapp: '',
     // Passport fields
     passport_number: '',
     passport_expiry: '',
@@ -227,31 +271,25 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [extractedFields, setExtractedFields] = useState<Set<string>>(new Set());
+  // Store full extracted data for structured CV fields
+  const [fullExtractedData, setFullExtractedData] = useState<ExtractedData | null>(null);
 
   const resetForm = () => {
     setFormData({
-      full_name: '',
-      email: '',
-      phone: '',
-      nationality: '',
-      current_country: '',
-      linkedin: '',
-      current_stage: 'sourced',
-      expected_start_date: '',
-      passport_number: '',
-      passport_expiry: '',
-      passport_issue_date: '',
-      passport_issued_by: '',
-      parents_names: '',
+      full_name: '', email: '', phone: '', nationality: '', current_country: '',
+      current_city: '', linkedin: '', current_stage: 'sourced', expected_start_date: '',
+      date_of_birth: '', gender: '', marital_status: '', whatsapp: '',
+      passport_number: '', passport_expiry: '', passport_issue_date: '',
+      passport_issued_by: '', parents_names: '',
     });
     setPendingDocuments([]);
     setExtractedFields(new Set());
+    setFullExtractedData(null);
     setUploadProgress(0);
   };
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Remove from extracted fields if user manually edits
     setExtractedFields(prev => {
       const next = new Set(prev);
       next.delete(field);
@@ -264,57 +302,50 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
 
     setFormData(prev => {
       const updated = { ...prev };
+      const apply = (field: keyof typeof prev, value?: string | null) => {
+        if (value && !prev[field]) { updated[field] = value; newExtracted.add(field); }
+      };
 
-      if (data.full_name && !prev.full_name) {
-        updated.full_name = data.full_name;
-        newExtracted.add('full_name');
-      }
-      if (data.email && !prev.email) {
-        updated.email = data.email;
-        newExtracted.add('email');
-      }
-      if (data.phone && !prev.phone) {
-        updated.phone = data.phone;
-        newExtracted.add('phone');
-      }
-      if (data.nationality && !prev.nationality) {
-        updated.nationality = data.nationality;
-        newExtracted.add('nationality');
-      }
-      if (data.current_country && !prev.current_country) {
-        updated.current_country = data.current_country;
-        newExtracted.add('current_country');
-      }
-      if (data.linkedin && !prev.linkedin) {
-        updated.linkedin = data.linkedin;
-        newExtracted.add('linkedin');
-      }
-      // Passport fields
-      if (data.passport_number && !prev.passport_number) {
-        updated.passport_number = data.passport_number;
-        newExtracted.add('passport_number');
-      }
-      if (data.passport_expiry && !prev.passport_expiry) {
-        updated.passport_expiry = data.passport_expiry;
-        newExtracted.add('passport_expiry');
-      }
-      if (data.passport_issue_date && !prev.passport_issue_date) {
-        updated.passport_issue_date = data.passport_issue_date;
-        newExtracted.add('passport_issue_date');
-      }
-      if (data.passport_issued_by && !prev.passport_issued_by) {
-        updated.passport_issued_by = data.passport_issued_by;
-        newExtracted.add('passport_issued_by');
-      }
-      if (data.parents_names && !prev.parents_names) {
-        updated.parents_names = data.parents_names;
-        newExtracted.add('parents_names');
-      }
+      apply('full_name', data.full_name);
+      apply('email', data.email);
+      apply('phone', data.phone);
+      apply('nationality', data.nationality);
+      apply('current_country', data.current_country);
+      apply('current_city', data.current_city);
+      apply('linkedin', data.linkedin);
+      apply('date_of_birth', data.date_of_birth);
+      apply('gender', data.gender);
+      apply('marital_status', data.marital_status);
+      apply('whatsapp', data.whatsapp);
+      apply('passport_number', data.passport_number);
+      apply('passport_expiry', data.passport_expiry);
+      apply('passport_issue_date', data.passport_issue_date);
+      apply('passport_issued_by', data.passport_issued_by);
+      apply('parents_names', data.parents_names);
 
       return updated;
     });
 
     setExtractedFields(prev => new Set([...prev, ...newExtracted]));
+
+    // Store full data for structured CV fields
+    if (data.education?.length || data.work_experience?.length || data.languages?.length ||
+        data.skills_list?.length || data.references?.length) {
+      setFullExtractedData(prev => ({
+        ...prev,
+        ...data,
+        // Merge arrays rather than replace
+        education: data.education || prev?.education,
+        work_experience: data.work_experience || prev?.work_experience,
+        languages: data.languages || prev?.languages,
+        skills_list: data.skills_list || prev?.skills_list,
+        references: data.references || prev?.references,
+        driver_license: data.driver_license || prev?.driver_license,
+        salary_expectations: data.salary_expectations || prev?.salary_expectations,
+        availability: data.availability || prev?.availability,
+        job_preferences: data.job_preferences || prev?.job_preferences,
+      }));
+    }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -322,32 +353,18 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
 
     if (file.size > maxSize) {
-      toast({
-        variant: 'destructive',
-        title: 'File too large',
-        description: 'Maximum file size is 10MB',
-      });
+      toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 10MB' });
       return;
     }
 
-    // Add to pending documents
-    const newDoc: PendingDocument = {
-      file,
-      docType: selectedDocType,
-    };
-
+    const newDoc: PendingDocument = { file, docType: selectedDocType };
     setPendingDocuments(prev => [...prev, newDoc]);
-
-    // Upload immediately and run OCR
     await uploadAndExtract(newDoc, pendingDocuments.length);
 
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const uploadAndExtract = async (doc: PendingDocument, index: number) => {
@@ -355,13 +372,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     setUploadProgress(10);
 
     try {
-      // Generate unique path (will be moved to candidate folder after creation)
       const fileExt = doc.file.name.split('.').pop();
       const tempPath = `temp/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       setUploadProgress(30);
 
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('candidate-documents')
         .upload(tempPath, doc.file);
@@ -370,22 +385,23 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
 
       setUploadProgress(60);
 
-      // Update pending document with storage path
       setPendingDocuments(prev => 
         prev.map((d, i) => i === index ? { ...d, storagePath: tempPath, uploaded: true } : d)
       );
 
       setUploadProgress(80);
 
-      // Run OCR extraction
-      const extracted = await extractData(tempPath, doc.docType, 'candidate-documents');
+      // Use cv_profile extraction for resume/cv to get full structured data
+      const extractionType = (doc.docType === 'resume' || doc.docType === 'cv' as any) 
+        ? 'cv_profile' 
+        : doc.docType;
+      const extracted = await extractData(tempPath, extractionType, 'candidate-documents');
       
       if (extracted) {
         applyExtractedData(extracted);
       }
 
       setUploadProgress(100);
-
     } catch (error) {
       console.error('Upload/extract error:', error);
       toast({
@@ -393,7 +409,6 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
         title: 'Upload failed',
         description: error instanceof Error ? error.message : 'Failed to upload document',
       });
-      // Remove failed document
       setPendingDocuments(prev => prev.filter((_, i) => i !== index));
     } finally {
       setIsUploading(false);
@@ -416,40 +431,113 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
 
   const removeDocument = async (index: number) => {
     const doc = pendingDocuments[index];
-    
-    // Clean up uploaded file
     if (doc.storagePath) {
-      await supabase.storage
-        .from('candidate-documents')
-        .remove([doc.storagePath]);
+      await supabase.storage.from('candidate-documents').remove([doc.storagePath]);
+    }
+    setPendingDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const saveStructuredCVData = async (candidateId: string) => {
+    if (!fullExtractedData) return;
+
+    const promises: Promise<any>[] = [];
+
+    // Save additional candidate fields (JSON fields)
+    const extraUpdates: Record<string, any> = {};
+    if (fullExtractedData.driver_license) extraUpdates.driver_license = fullExtractedData.driver_license;
+    if (fullExtractedData.salary_expectations) extraUpdates.salary_expectations = fullExtractedData.salary_expectations;
+    if (fullExtractedData.availability) extraUpdates.availability = fullExtractedData.availability;
+    if (fullExtractedData.job_preferences) extraUpdates.job_preferences = fullExtractedData.job_preferences;
+    if (Object.keys(extraUpdates).length > 0) {
+      promises.push(updateCandidate.mutateAsync({ id: candidateId, ...extraUpdates }));
     }
 
-    setPendingDocuments(prev => prev.filter((_, i) => i !== index));
+    if (fullExtractedData.education?.length) {
+      promises.push(saveEducation.mutateAsync({
+        candidateId,
+        entries: fullExtractedData.education.map(e => ({
+          education_level: e.education_level || '',
+          field_of_study: e.field_of_study || '',
+          institution_name: e.institution_name || '',
+          graduation_year: e.graduation_year || null,
+          degree_obtained: e.degree_obtained || '',
+        })),
+      }));
+    }
+
+    if (fullExtractedData.work_experience?.length) {
+      promises.push(saveWorkExp.mutateAsync({
+        candidateId,
+        entries: fullExtractedData.work_experience.map(e => ({
+          job_title: e.job_title || '',
+          company_name: e.company_name || '',
+          country: e.country || '',
+          start_date: e.start_date || '',
+          end_date: e.end_date || '',
+          job_description: e.job_description || '',
+        })),
+      }));
+    }
+
+    if (fullExtractedData.languages?.length) {
+      promises.push(saveLanguages.mutateAsync({
+        candidateId,
+        entries: fullExtractedData.languages.map(l => ({
+          language_name: l.language_name || '',
+          proficiency_level: l.proficiency_level || 'basic',
+        })),
+      }));
+    }
+
+    if (fullExtractedData.skills_list?.length) {
+      promises.push(saveSkills.mutateAsync({
+        candidateId,
+        entries: fullExtractedData.skills_list.map(s => ({
+          skill_name: s.skill_name || '',
+          years_experience: s.years_experience || null,
+        })),
+      }));
+    }
+
+    if (fullExtractedData.references?.length) {
+      promises.push(saveReferences.mutateAsync({
+        candidateId,
+        entries: fullExtractedData.references.map(r => ({
+          reference_name: r.reference_name || '',
+          position_title: r.position_title || '',
+          phone: r.phone || '',
+          email: r.email || '',
+          relationship: r.relationship || '',
+        })),
+      }));
+    }
+
+    await Promise.all(promises);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.full_name || !formData.email) {
-      toast({
-        variant: 'destructive',
-        title: 'Required fields missing',
-        description: 'Please provide at least name and email',
-      });
+      toast({ variant: 'destructive', title: 'Required fields missing', description: 'Please provide at least name and email' });
       return;
     }
 
     try {
-      // Create candidate
       const candidate = await createCandidate.mutateAsync({
         full_name: formData.full_name,
         email: formData.email,
         phone: formData.phone || undefined,
         nationality: formData.nationality || undefined,
         current_country: formData.current_country || undefined,
+        current_city: formData.current_city || undefined,
         linkedin: formData.linkedin || undefined,
         current_stage: formData.current_stage,
         expected_start_date: formData.expected_start_date || undefined,
+        date_of_birth: formData.date_of_birth || undefined,
+        gender: formData.gender || undefined,
+        marital_status: formData.marital_status || undefined,
+        whatsapp: formData.whatsapp || undefined,
         passport_number: formData.passport_number || undefined,
         passport_expiry: formData.passport_expiry || undefined,
         passport_issue_date: formData.passport_issue_date || undefined,
@@ -457,13 +545,13 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
         parents_names: formData.parents_names || undefined,
       });
 
+      // Save structured CV data (education, work experience, languages, skills, references)
+      await saveStructuredCVData(candidate.id);
+
       // Move documents to candidate folder and create records
       for (const doc of pendingDocuments) {
         if (doc.storagePath && doc.uploaded) {
-          const fileExt = doc.file.name.split('.').pop();
           const newPath = `${candidate.id}/${Date.now()}-${doc.file.name}`;
-
-          // Move file
           const { error: moveError } = await supabase.storage
             .from('candidate-documents')
             .move(doc.storagePath, newPath);
@@ -473,7 +561,6 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
             continue;
           }
 
-          // Create document record
           await supabase.from('documents').insert({
             candidate_id: candidate.id,
             file_name: doc.file.name,
@@ -481,6 +568,10 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
             doc_type: doc.docType,
           });
         }
+      }
+
+      if (fullExtractedData) {
+        toast({ title: 'Candidate created with CV data', description: 'All extracted information has been saved to the profile.' });
       }
 
       resetForm();
@@ -491,6 +582,23 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
   };
 
   const isFieldExtracted = (field: string) => extractedFields.has(field);
+
+  const fieldInput = (field: keyof typeof formData, label: string, props?: Record<string, any>) => (
+    <div className="space-y-2">
+      <Label htmlFor={field} className="flex items-center gap-1">
+        {label}
+        {props?.required && ' *'}
+        {isFieldExtracted(field) && <Sparkles className="h-3 w-3 text-primary" />}
+      </Label>
+      <Input
+        id={field}
+        value={formData[field]}
+        onChange={(e) => handleChange(field, e.target.value)}
+        className={isFieldExtracted(field) ? 'border-primary/50 bg-primary/5' : ''}
+        {...props}
+      />
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -525,94 +633,72 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
             onRemoveDocument={removeDocument}
           />
 
+          {/* Extracted CV Data Preview */}
+          {fullExtractedData && <ExtractedCVPreview data={fullExtractedData} />}
+
           {/* Form Fields */}
           <div className="grid gap-4 sm:grid-cols-2">
+            {fieldInput('full_name', 'Full Name', { required: true })}
+            {fieldInput('email', 'Email', { required: true, type: 'email' })}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {fieldInput('phone', 'Phone')}
+            {fieldInput('nationality', 'Nationality', { placeholder: 'e.g., Romanian' })}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {fieldInput('current_country', 'Current Country')}
+            {fieldInput('current_city', 'Current City')}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {fieldInput('date_of_birth', 'Date of Birth', { type: 'date' })}
             <div className="space-y-2">
-              <Label htmlFor="full_name" className="flex items-center gap-1">
-                Full Name *
-                {isFieldExtracted('full_name') && (
-                  <Sparkles className="h-3 w-3 text-primary" />
-                )}
+              <Label htmlFor="gender" className="flex items-center gap-1">
+                Gender
+                {isFieldExtracted('gender') && <Sparkles className="h-3 w-3 text-primary" />}
               </Label>
-              <Input
-                id="full_name"
-                value={formData.full_name}
-                onChange={(e) => handleChange('full_name', e.target.value)}
-                required
-                className={isFieldExtracted('full_name') ? 'border-primary/50 bg-primary/5' : ''}
-              />
+              <Select value={formData.gender} onValueChange={(v) => handleChange('gender', v)}>
+                <SelectTrigger className={isFieldExtracted('gender') ? 'border-primary/50 bg-primary/5' : ''}>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-1">
-                Email *
-                {isFieldExtracted('email') && (
-                  <Sparkles className="h-3 w-3 text-primary" />
-                )}
+              <Label htmlFor="marital_status" className="flex items-center gap-1">
+                Marital Status
+                {isFieldExtracted('marital_status') && <Sparkles className="h-3 w-3 text-primary" />}
               </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                required
-                className={isFieldExtracted('email') ? 'border-primary/50 bg-primary/5' : ''}
-              />
+              <Select value={formData.marital_status} onValueChange={(v) => handleChange('marital_status', v)}>
+                <SelectTrigger className={isFieldExtracted('marital_status') ? 'border-primary/50 bg-primary/5' : ''}>
+                  <SelectValue placeholder="Select..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="married">Married</SelectItem>
+                  <SelectItem value="divorced">Divorced</SelectItem>
+                  <SelectItem value="widowed">Widowed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="flex items-center gap-1">
-                Phone
-                {isFieldExtracted('phone') && (
-                  <Sparkles className="h-3 w-3 text-primary" />
-                )}
-              </Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                className={isFieldExtracted('phone') ? 'border-primary/50 bg-primary/5' : ''}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nationality" className="flex items-center gap-1">
-                Nationality
-                {isFieldExtracted('nationality') && (
-                  <Sparkles className="h-3 w-3 text-primary" />
-                )}
-              </Label>
-              <Input
-                id="nationality"
-                value={formData.nationality}
-                onChange={(e) => handleChange('nationality', e.target.value)}
-                placeholder="e.g., Romanian"
-                className={isFieldExtracted('nationality') ? 'border-primary/50 bg-primary/5' : ''}
-              />
-            </div>
+            {fieldInput('whatsapp', 'WhatsApp')}
+            {fieldInput('linkedin', 'LinkedIn URL', { type: 'url', placeholder: 'https://linkedin.com/in/...' })}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="current_country" className="flex items-center gap-1">
-                Current Country
-                {isFieldExtracted('current_country') && (
-                  <Sparkles className="h-3 w-3 text-primary" />
-                )}
-              </Label>
-              <Input
-                id="current_country"
-                value={formData.current_country}
-                onChange={(e) => handleChange('current_country', e.target.value)}
-                className={isFieldExtracted('current_country') ? 'border-primary/50 bg-primary/5' : ''}
-              />
-            </div>
+            {fieldInput('expected_start_date', 'Expected Start Date', { type: 'date' })}
             <div className="space-y-2">
               <Label htmlFor="current_stage">Stage</Label>
-              <Select 
-                value={formData.current_stage} 
-                onValueChange={(v) => handleChange('current_stage', v)}
-              >
+              <Select value={formData.current_stage} onValueChange={(v) => handleChange('current_stage', v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -627,136 +713,28 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="linkedin" className="flex items-center gap-1">
-                LinkedIn URL
-                {isFieldExtracted('linkedin') && (
-                  <Sparkles className="h-3 w-3 text-primary" />
-                )}
-              </Label>
-              <Input
-                id="linkedin"
-                type="url"
-                value={formData.linkedin}
-                onChange={(e) => handleChange('linkedin', e.target.value)}
-                placeholder="https://linkedin.com/in/..."
-                className={isFieldExtracted('linkedin') ? 'border-primary/50 bg-primary/5' : ''}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="expected_start_date">Expected Start Date</Label>
-              <Input
-                id="expected_start_date"
-                type="date"
-                value={formData.expected_start_date}
-                onChange={(e) => handleChange('expected_start_date', e.target.value)}
-              />
-            </div>
-          </div>
-
           {/* Passport Section */}
           <div className="border rounded-lg p-4 space-y-4">
             <p className="text-sm font-medium text-foreground">Passport & Identity Information</p>
             
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="passport_number" className="flex items-center gap-1">
-                  Passport Number
-                  {isFieldExtracted('passport_number') && (
-                    <Sparkles className="h-3 w-3 text-primary" />
-                  )}
-                </Label>
-                <Input
-                  id="passport_number"
-                  value={formData.passport_number}
-                  onChange={(e) => handleChange('passport_number', e.target.value)}
-                  placeholder="e.g., AB1234567"
-                  className={isFieldExtracted('passport_number') ? 'border-primary/50 bg-primary/5' : ''}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="passport_issued_by" className="flex items-center gap-1">
-                  Issued By
-                  {isFieldExtracted('passport_issued_by') && (
-                    <Sparkles className="h-3 w-3 text-primary" />
-                  )}
-                </Label>
-                <Input
-                  id="passport_issued_by"
-                  value={formData.passport_issued_by}
-                  onChange={(e) => handleChange('passport_issued_by', e.target.value)}
-                  placeholder="e.g., Government of Romania"
-                  className={isFieldExtracted('passport_issued_by') ? 'border-primary/50 bg-primary/5' : ''}
-                />
-              </div>
+              {fieldInput('passport_number', 'Passport Number', { placeholder: 'e.g., AB1234567' })}
+              {fieldInput('passport_issued_by', 'Issued By', { placeholder: 'e.g., Government of Romania' })}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="passport_issue_date" className="flex items-center gap-1">
-                  Issue Date
-                  {isFieldExtracted('passport_issue_date') && (
-                    <Sparkles className="h-3 w-3 text-primary" />
-                  )}
-                </Label>
-                <Input
-                  id="passport_issue_date"
-                  type="date"
-                  value={formData.passport_issue_date}
-                  onChange={(e) => handleChange('passport_issue_date', e.target.value)}
-                  className={isFieldExtracted('passport_issue_date') ? 'border-primary/50 bg-primary/5' : ''}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="passport_expiry" className="flex items-center gap-1">
-                  Expiry Date
-                  {isFieldExtracted('passport_expiry') && (
-                    <Sparkles className="h-3 w-3 text-primary" />
-                  )}
-                </Label>
-                <Input
-                  id="passport_expiry"
-                  type="date"
-                  value={formData.passport_expiry}
-                  onChange={(e) => handleChange('passport_expiry', e.target.value)}
-                  className={isFieldExtracted('passport_expiry') ? 'border-primary/50 bg-primary/5' : ''}
-                />
-              </div>
+              {fieldInput('passport_issue_date', 'Issue Date', { type: 'date' })}
+              {fieldInput('passport_expiry', 'Expiry Date', { type: 'date' })}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="parents_names" className="flex items-center gap-1">
-                Parents Names
-                {isFieldExtracted('parents_names') && (
-                  <Sparkles className="h-3 w-3 text-primary" />
-                )}
-              </Label>
-              <Input
-                id="parents_names"
-                value={formData.parents_names}
-                onChange={(e) => handleChange('parents_names', e.target.value)}
-                placeholder="Father: John Doe, Mother: Jane Doe"
-                className={isFieldExtracted('parents_names') ? 'border-primary/50 bg-primary/5' : ''}
-              />
-            </div>
+            {fieldInput('parents_names', 'Parents Names', { placeholder: 'Father: John Doe, Mother: Jane Doe' })}
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => {
-                resetForm();
-                onOpenChange(false);
-              }}
-            >
+            <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={createCandidate.isPending || isUploading || isExtracting}
-            >
+            <Button type="submit" disabled={createCandidate.isPending || isUploading || isExtracting}>
               {createCandidate.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Candidate
             </Button>
