@@ -788,9 +788,12 @@ export default function CandidateDetail() {
                               {getStageLabel(entry.to_stage).split(' / ')[0]}
                             </Badge>
                           </div>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {format(new Date(entry.changed_at), 'MMM d, yyyy · HH:mm')}
-                          </span>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
+                            {entry.changed_by_name && (
+                              <span className="font-medium text-foreground">{entry.changed_by_name}</span>
+                            )}
+                            <span>{format(new Date(entry.changed_at), 'MMM d, yyyy · HH:mm')}</span>
+                          </div>
                         </div>
                         {entry.note && (
                           <p className="text-sm text-muted-foreground mt-2 italic">{entry.note}</p>
