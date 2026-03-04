@@ -1,5 +1,6 @@
 import { PipelineCandidate } from '@/hooks/usePipelineCandidates';
 import { RecruitmentStage, STAGES, getStageLabel } from '@/types/database';
+import { useQueryClient } from '@tanstack/react-query';
 import { DraggableCandidateCard } from './DraggableCandidateCard';
 import { DroppableStageColumn } from './DroppableStageColumn';
 import { cn } from '@/lib/utils';
@@ -135,10 +136,14 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
     setActiveDragCandidate(found || null);
   }
 
+  const queryClient = useQueryClient();
+
   function handleDragEnd(event: DragEndEvent) {
-    setActiveDragCandidate(null);
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      setActiveDragCandidate(null);
+      return;
+    }
 
     // Save scroll position before mutation triggers re-render
     if (scrollContainerRef.current) {
@@ -150,12 +155,30 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
     const candidate = filtered.find(c => c.workflow_id === workflowId);
 
     if (candidate && candidate.pipeline_stage !== newStage) {
+      // Apply optimistic update SYNCHRONOUSLY before clearing drag overlay
+      queryClient.setQueriesData(
+        { queryKey: ['pipeline-candidates'] },
+        (old: PipelineCandidate[] | undefined) => {
+          if (!old) return old;
+          return old.map(c =>
+            c.workflow_id === workflowId
+              ? { ...c, pipeline_stage: newStage, workflow_updated_at: new Date().toISOString() }
+              : c
+          );
+        }
+      );
+
+      // Now clear the drag overlay — the card is already in its new column
+      setActiveDragCandidate(null);
+
       updateStage.mutate({
         workflowId,
         candidateId: candidate.candidate_id,
         fromStage: candidate.pipeline_stage,
         stage: newStage,
       });
+    } else {
+      setActiveDragCandidate(null);
     }
   }
 
