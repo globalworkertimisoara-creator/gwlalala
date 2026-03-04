@@ -362,6 +362,8 @@ Extract everything visible. Translate all text to English.`,
 
     const basePrompt = extractionPrompts[doc_type] || extractionPrompts.other;
     
+    const isFullCVExtraction = doc_type === 'cv_profile';
+
     const systemPrompt = `You are a multilingual document data extraction AI with OCR capabilities. Analyze the provided document image and extract structured information.
 
 LANGUAGE SUPPORT:
@@ -385,13 +387,18 @@ Return ONLY a JSON object with these possible fields:
   "email": "string or null", 
   "phone": "string or null",
   "date_of_birth": "YYYY-MM-DD or null",
+  "gender": "male/female/other or null",
   "nationality": "string or null (in English)",
   "current_country": "string or null (in English)",
+  "current_city": "string or null",
+  "marital_status": "single/married/divorced/widowed or null",
+  "whatsapp": "string or null",
   "parents_names": "string or null (format: 'Father: Name, Mother: Name')",
   "passport_number": "string or null",
   "passport_expiry": "YYYY-MM-DD or null",
   "passport_issue_date": "YYYY-MM-DD or null",
   "passport_issued_by": "string or null (issuing authority/country)",
+  "national_id_number": "string or null",
   "skills": "comma-separated string in English or null",
   "experience_years": "number or null",
   "linkedin": "URL string or null",
@@ -403,7 +410,16 @@ Return ONLY a JSON object with these possible fields:
   "residence_permit_expiry": "YYYY-MM-DD or null",
   "document_type": "detected type",
   "confidence": "0-100 percentage",
-  "original_language": "detected language of the document"
+  "original_language": "detected language of the document"${isFullCVExtraction ? `,
+  "education": [{"education_level":"string","field_of_study":"string or null","institution_name":"string or null","graduation_year":"number or null","degree_obtained":"string or null"}],
+  "work_experience": [{"job_title":"string","company_name":"string or null","country":"string or null","start_date":"YYYY-MM-DD or null","end_date":"YYYY-MM-DD or null","job_description":"string or null"}],
+  "languages": [{"language_name":"string","proficiency_level":"basic/intermediate/advanced/fluent/native"}],
+  "skills_list": [{"skill_name":"string","years_experience":"number or null"}],
+  "references": [{"reference_name":"string","position_title":"string or null","phone":"string or null","email":"string or null","relationship":"string or null"}],
+  "driver_license": {"has_license":"boolean","license_type":"string or null","years_experience":"number or null"},
+  "salary_expectations": {"current_salary":"string or null","expected_salary":"string or null","currency":"string or null"},
+  "availability": {"available_to_start":"string or null","employment_status":"employed/unemployed or null","notice_period":"string or null"},
+  "job_preferences": {"preferred_titles":"string or null","preferred_countries":"string or null","preferred_work_type":"full_time/part_time/contract or null"}` : ''}
 }`;
 
     // Call Lovable AI with the document image
