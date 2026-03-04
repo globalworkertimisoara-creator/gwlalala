@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Check, CheckCheck, Users, FolderKanban, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,12 +20,29 @@ import {
   Notification,
 } from '@/hooks/useNotifications';
 
+function getNotificationRoute(notification: Notification): string | null {
+  const { related_entity_type, related_entity_id, project_id } = notification;
+  if (related_entity_type && related_entity_id) {
+    switch (related_entity_type) {
+      case 'candidate': return `/candidates/${related_entity_id}`;
+      case 'project': return `/projects/${related_entity_id}`;
+      case 'job': return `/jobs/${related_entity_id}`;
+      case 'task': return '/tasks';
+      case 'contract': return '/contracts';
+    }
+  }
+  if (project_id) return `/projects/${project_id}`;
+  return null;
+}
+
 function NotificationItem({
   notification,
   onMarkRead,
+  onNavigate,
 }: {
   notification: Notification;
   onMarkRead: (id: string) => void;
+  onNavigate: (route: string) => void;
 }) {
   const getIcon = () => {
     if (notification.team_id) return <Users className="h-4 w-4 text-primary" />;
@@ -38,11 +56,20 @@ function NotificationItem({
     return 'Personal';
   };
 
+  const route = getNotificationRoute(notification);
+
+  const handleClick = () => {
+    if (!notification.is_read) onMarkRead(notification.id);
+    if (route) onNavigate(route);
+  };
+
   return (
     <div
+      onClick={handleClick}
       className={cn(
         'flex items-start gap-3 p-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors',
-        !notification.is_read && 'bg-primary/5'
+        !notification.is_read && 'bg-primary/5',
+        route && 'cursor-pointer'
       )}
     >
       <div className="mt-1">{getIcon()}</div>
@@ -56,7 +83,7 @@ function NotificationItem({
               variant="ghost"
               size="icon"
               className="h-6 w-6 shrink-0"
-              onClick={() => onMarkRead(notification.id)}
+              onClick={(e) => { e.stopPropagation(); onMarkRead(notification.id); }}
             >
               <Check className="h-3 w-3" />
             </Button>
@@ -77,10 +104,16 @@ function NotificationItem({
 
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const { data: notifications = [], isLoading } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
+
+  const handleNavigate = (route: string) => {
+    setOpen(false);
+    navigate(route);
+  };
 
   const personalNotifications = notifications.filter(n => !n.team_id && !n.project_id);
   const teamNotifications = notifications.filter(n => n.team_id);
@@ -164,6 +197,7 @@ export function NotificationCenter() {
                     key={notification.id}
                     notification={notification}
                     onMarkRead={handleMarkRead}
+                    onNavigate={handleNavigate}
                   />
                 ))
               )}
@@ -180,6 +214,7 @@ export function NotificationCenter() {
                     key={notification.id}
                     notification={notification}
                     onMarkRead={handleMarkRead}
+                    onNavigate={handleNavigate}
                   />
                 ))
               )}
@@ -196,6 +231,7 @@ export function NotificationCenter() {
                     key={notification.id}
                     notification={notification}
                     onMarkRead={handleMarkRead}
+                    onNavigate={handleNavigate}
                   />
                 ))
               )}
@@ -212,6 +248,7 @@ export function NotificationCenter() {
                     key={notification.id}
                     notification={notification}
                     onMarkRead={handleMarkRead}
+                    onNavigate={handleNavigate}
                   />
                 ))
               )}
