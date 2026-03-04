@@ -327,7 +327,7 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
         </div>
 
         {/* Drag Overlay */}
-        <DragOverlay>
+        <DragOverlay dropAnimation={null}>
           {activeDragCandidate ? (
             <div className="opacity-90 shadow-lg rounded-lg">
               <CandidateCard
