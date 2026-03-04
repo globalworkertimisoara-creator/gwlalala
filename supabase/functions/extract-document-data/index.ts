@@ -215,17 +215,41 @@ serve(async (req) => {
       }
     }
 
-    // Only after authorization checks pass, use service key for signed URL
+    // Only after authorization checks pass, use service key to download file
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get signed URL for the file
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+    // Download the file directly to convert to base64
+    const { data: fileData, error: downloadError } = await supabase.storage
       .from(bucket)
-      .createSignedUrl(storage_path, 3600);
+      .download(storage_path);
 
-    if (signedUrlError || !signedUrlData?.signedUrl) {
-      throw new Error(`Failed to get file URL: ${signedUrlError?.message || 'Unknown error'}`);
+    if (downloadError || !fileData) {
+      throw new Error(`Failed to download file: ${downloadError?.message || 'Unknown error'}`);
     }
+
+    // Determine MIME type from file extension
+    const ext = storage_path.split('.').pop()?.toLowerCase() || '';
+    const mimeMap: Record<string, string> = {
+      pdf: 'application/pdf',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      webp: 'image/webp',
+      gif: 'image/gif',
+      doc: 'application/msword',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    };
+    const mimeType = mimeMap[ext] || 'application/octet-stream';
+
+    // Convert to base64 data URL
+    const arrayBuffer = await fileData.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < uint8Array.length; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    const base64 = btoa(binary);
+    const dataUrl = `data:${mimeType};base64,${base64}`;
 
     // Determine extraction prompt based on document type
     const extractionPrompts: Record<string, string> = {
