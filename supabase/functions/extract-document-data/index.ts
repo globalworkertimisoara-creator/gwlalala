@@ -441,7 +441,7 @@ Return ONLY a JSON object with these possible fields:
             ]
           }
         ],
-        max_tokens: 1000,
+        max_tokens: isFullCVExtraction ? 4000 : 1000,
       }),
     });
 
