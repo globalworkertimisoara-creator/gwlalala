@@ -401,7 +401,20 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     }
   };
 
-  const removeDocument = async (index: number) => {
+  const handleFileDrop = useCallback((files: FileList) => {
+    const file = files[0];
+    if (!file) return;
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({ variant: 'destructive', title: 'File too large', description: 'Maximum file size is 10MB' });
+      return;
+    }
+    const newDoc: PendingDocument = { file, docType: selectedDocType };
+    setPendingDocuments(prev => [...prev, newDoc]);
+    uploadAndExtract(newDoc, pendingDocuments.length);
+  }, [selectedDocType, pendingDocuments.length]);
+
+
     const doc = pendingDocuments[index];
     
     // Clean up uploaded file
