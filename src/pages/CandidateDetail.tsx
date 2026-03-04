@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useCandidate, useUpdateCandidateStage, useUpdateCandidate } from '@/hooks/useCandidates';
+import { useCandidate, useUpdateCandidateStage } from '@/hooks/useCandidates';
 import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useStageHistory } from '@/hooks/useStageHistory';
@@ -11,7 +11,6 @@ import { CandidateActivityLog } from '@/components/candidates/CandidateActivityL
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
 import { CandidateCVTab } from '@/components/candidates/CandidateCVTab';
 import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
-import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline';
 import DocumentChecklist from '@/components/workflow/DocumentChecklist';
@@ -138,7 +137,6 @@ export default function CandidateDetail() {
 
   // Mutation hooks
   const updateStage = useUpdateCandidateStage();
-  const updateCandidate = useUpdateCandidate();
   const createNote = useCreateNote();
   const deleteNote = useDeleteNote();
 
@@ -146,8 +144,6 @@ export default function CandidateDetail() {
   const [noteContent, setNoteContent] = useState('');
   const [selectedStage, setSelectedStage] = useState<string>('');
   const [stageNote, setStageNote] = useState('');
-  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
-  const [isApplyingData, setIsApplyingData] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
 
   // ─── Loading / Not Found ───────────────────────────────────────────────────
@@ -230,66 +226,6 @@ export default function CandidateDetail() {
     });
   };
 
-  const handleDataExtracted = (data: ExtractedData) => {
-    setExtractedData(data);
-  };
-
-  const applyExtractedData = async () => {
-    if (!extractedData || !candidate || !id) return;
-    
-    setIsApplyingData(true);
-    try {
-      const updates: Record<string, any> = {};
-      
-      // Map extracted data to candidate fields (only fill empty fields)
-      if (extractedData.full_name && !candidate.full_name) {
-        updates.full_name = extractedData.full_name;
-      }
-      if (extractedData.email && !candidate.email) {
-        updates.email = extractedData.email;
-      }
-      if (extractedData.phone && !candidate.phone) {
-        updates.phone = extractedData.phone;
-      }
-      if (extractedData.nationality && !candidate.nationality) {
-        updates.nationality = extractedData.nationality;
-      }
-      if (extractedData.current_country && !candidate.current_country) {
-        updates.current_country = extractedData.current_country;
-      }
-      if (extractedData.linkedin && !candidate.linkedin) {
-        updates.linkedin = extractedData.linkedin;
-      }
-      
-      if (Object.keys(updates).length > 0) {
-        await updateCandidate.mutateAsync({ id, ...updates });
-        toast({
-          title: 'Data applied',
-          description: 'Extracted information has been saved to the candidate profile.',
-        });
-      } else {
-        toast({
-          title: 'No new data to apply',
-          description: 'All extracted fields already have values.',
-        });
-      }
-      
-      setExtractedData(null);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to apply data',
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    } finally {
-      setIsApplyingData(false);
-    }
-  };
-
-  const dismissExtractedData = () => {
-    setExtractedData(null);
-  };
-
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -301,89 +237,6 @@ export default function CandidateDetail() {
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
-
-        {/* Extracted Data Banner */}
-        {extractedData && (
-          <Card className="border-primary/50 bg-primary/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Data Extracted from Document
-              </CardTitle>
-              <CardDescription>
-                Review the extracted information and apply it to the candidate profile
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 text-sm mb-4">
-                {extractedData.full_name && (
-                  <div>
-                    <span className="text-muted-foreground">Name:</span>{' '}
-                    <span className="font-medium">{extractedData.full_name}</span>
-                  </div>
-                )}
-                {extractedData.email && (
-                  <div>
-                    <span className="text-muted-foreground">Email:</span>{' '}
-                    <span className="font-medium">{extractedData.email}</span>
-                  </div>
-                )}
-                {extractedData.phone && (
-                  <div>
-                    <span className="text-muted-foreground">Phone:</span>{' '}
-                    <span className="font-medium">{extractedData.phone}</span>
-                  </div>
-                )}
-                {extractedData.nationality && (
-                  <div>
-                    <span className="text-muted-foreground">Nationality:</span>{' '}
-                    <span className="font-medium">{extractedData.nationality}</span>
-                  </div>
-                )}
-                {extractedData.current_country && (
-                  <div>
-                    <span className="text-muted-foreground">Location:</span>{' '}
-                    <span className="font-medium">{extractedData.current_country}</span>
-                  </div>
-                )}
-                {extractedData.linkedin && (
-                  <div>
-                    <span className="text-muted-foreground">LinkedIn:</span>{' '}
-                    <span className="font-medium">{extractedData.linkedin}</span>
-                  </div>
-                )}
-                {extractedData.confidence && (
-                  <div>
-                    <span className="text-muted-foreground">Confidence:</span>{' '}
-                    <span className="font-medium">{extractedData.confidence}%</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={applyExtractedData}
-                  disabled={isApplyingData}
-                  className="gap-2"
-                >
-                  {isApplyingData ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Apply to Profile
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={dismissExtractedData}
-                  className="gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  Dismiss
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* ── Header Card ──────────────────────────────────────────────────── */}
         <Card>
@@ -750,7 +603,10 @@ export default function CandidateDetail() {
             {id && can('uploadDocuments') && (
               <CandidateDocumentUpload 
                 candidateId={id}
-                onDataExtracted={handleDataExtracted}
+                candidate={candidate}
+                onDataApplied={() => {
+                  // Queries auto-invalidate via hooks
+                }}
               />
             )}
           </TabsContent>
