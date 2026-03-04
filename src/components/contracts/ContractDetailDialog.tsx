@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Upload, Trash2, FileText, Download, DollarSign } from 'lucide-react';
+import { Loader2, Upload, Trash2, FileText, Download, DollarSign, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import { useContractDocuments, useUploadContractDocument, useDeleteContractDocument } from '@/hooks/useContractDocuments';
 import { useSalesCommissions, useCreateCommission, useSalesStaff, type SalesCommission } from '@/hooks/useSalesCommissions';
@@ -15,6 +15,7 @@ import { useUpdateContract, type Contract } from '@/hooks/useContracts';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useContractActivityLog } from '@/hooks/useContractActivityLog';
 
 const fileTypeLabels: Record<string, string> = {
   main_contract: 'Main Contract',
@@ -55,6 +56,7 @@ export function ContractDetailDialog({ contract, open, onOpenChange }: ContractD
           <SalesPersonSection contract={contract} />
           <CommissionSection contract={contract} />
           <DocumentsSection contractId={contract.id} />
+          <ContractActivitySection contractId={contract.id} />
         </div>
       </DialogContent>
     </Dialog>
@@ -62,10 +64,30 @@ export function ContractDetailDialog({ contract, open, onOpenChange }: ContractD
 }
 
 function ContractMetadata({ contract }: { contract: Contract }) {
+  const updateContract = useUpdateContract();
+  const { toast } = useToast();
+
+  const handleStatusChange = async (newStatus: string) => {
+    await updateContract.mutateAsync({ id: contract.id, status: newStatus, _oldContract: contract } as any);
+    toast({ title: 'Status updated' });
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4 text-sm">
       <div><span className="text-muted-foreground">Type:</span> <span className="font-medium">{contract.contract_type}</span></div>
-      <div><span className="text-muted-foreground">Status:</span> <Badge variant="outline">{contract.status}</Badge></div>
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground">Status:</span>
+        <Select value={contract.status} onValueChange={handleStatusChange}>
+          <SelectTrigger className="h-7 w-[130px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {['draft', 'sent', 'signed', 'active', 'expired', 'terminated'].map(s => (
+              <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div><span className="text-muted-foreground">Party:</span> <span className="font-medium">{contract.party_type}</span></div>
       <div><span className="text-muted-foreground">Value:</span> <span className="font-medium">{contract.total_value ? `${contract.total_value.toLocaleString()} ${contract.currency}` : '—'}</span></div>
       <div><span className="text-muted-foreground">Start:</span> <span>{contract.start_date ? format(new Date(contract.start_date), 'MMM d, yyyy') : '—'}</span></div>
@@ -84,7 +106,7 @@ function SalesPersonSection({ contract }: { contract: Contract }) {
 
   const handleChange = async (salesPersonId: string) => {
     const value = salesPersonId === 'none' ? null : salesPersonId;
-    await updateContract.mutateAsync({ id: contract.id, sales_person_id: value } as any);
+    await updateContract.mutateAsync({ id: contract.id, sales_person_id: value, _oldContract: contract } as any);
     toast({ title: 'Sales person updated' });
   };
 
@@ -333,6 +355,70 @@ function DocumentsSection({ contractId }: { contractId: string }) {
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ContractActivitySection({ contractId }: { contractId: string }) {
+  const { data: entries = [], isLoading } = useContractActivityLog(contractId);
+
+  const actionColors: Record<string, string> = {
+    status_change: 'bg-blue-100 text-blue-800',
+    field_update: 'bg-teal-100 text-teal-800',
+    document_upload: 'bg-purple-100 text-purple-800',
+    document_delete: 'bg-red-100 text-red-800',
+    commission_added: 'bg-emerald-100 text-emerald-800',
+    created: 'bg-green-100 text-green-800',
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          Activity Log
+          {entries.length > 0 && (
+            <span className="text-xs text-muted-foreground font-normal">({entries.length})</span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : entries.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-2">No activity recorded yet.</p>
+        ) : (
+          <div className="relative space-y-0">
+            <div className="absolute left-[11px] top-2 bottom-2 w-px bg-border" />
+            {entries.map((entry) => (
+              <div key={entry.id} className="relative flex gap-3 py-2.5">
+                <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-card border border-border shrink-0 mt-0.5">
+                  <div className="h-2 w-2 rounded-full bg-primary/60" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge
+                      variant="secondary"
+                      className={`text-[10px] px-1.5 py-0 ${actionColors[entry.action] || 'bg-gray-100 text-gray-800'}`}
+                    >
+                      {entry.action.replace('_', ' ')}
+                    </Badge>
+                    {entry.actor_name && (
+                      <span className="text-[11px] font-medium text-foreground">{entry.actor_name}</span>
+                    )}
+                    <span className="text-[11px] text-muted-foreground ml-auto whitespace-nowrap">
+                      {format(new Date(entry.created_at), 'MMM d, yyyy · HH:mm')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground mt-0.5">{entry.summary}</p>
                 </div>
               </div>
             ))}

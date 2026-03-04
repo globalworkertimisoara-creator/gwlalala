@@ -1326,6 +1326,53 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_activity_log: {
+        Row: {
+          action: string
+          actor_id: string
+          contract_id: string
+          created_at: string
+          details: Json | null
+          field_changed: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          summary: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          contract_id: string
+          created_at?: string
+          details?: Json | null
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          summary: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          contract_id?: string
+          created_at?: string
+          details?: Json | null
+          field_changed?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_activity_log_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_documents: {
         Row: {
           contract_id: string
