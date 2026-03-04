@@ -39,11 +39,13 @@ interface Props {
     passport_issued_by: string | null;
     national_id_number: string | null;
   };
-  driverLicense: {
+    driverLicense: {
     has_license: boolean;
     license_type: string;
     license_categories?: string[];
     years_experience: number | null;
+    issue_date?: string;
+    expiry_date?: string;
     other_licenses?: OtherLicense[];
   };
   onSave: (data: any) => void;
@@ -57,6 +59,8 @@ export function CVDocumentsPassport({ passportData, driverLicense: initDL, onSav
     license_type: initDL.license_type ?? '',
     license_categories: initDL.license_categories ?? [],
     years_experience: initDL.years_experience ?? null,
+    issue_date: initDL.issue_date ?? '',
+    expiry_date: initDL.expiry_date ?? '',
     other_licenses: initDL.other_licenses ?? [],
   });
 
@@ -67,6 +71,8 @@ export function CVDocumentsPassport({ passportData, driverLicense: initDL, onSav
       license_type: initDL.license_type ?? '',
       license_categories: initDL.license_categories ?? [],
       years_experience: initDL.years_experience ?? null,
+      issue_date: initDL.issue_date ?? '',
+      expiry_date: initDL.expiry_date ?? '',
       other_licenses: initDL.other_licenses ?? [],
     });
   }, [initDL]);
@@ -160,10 +166,20 @@ export function CVDocumentsPassport({ passportData, driverLicense: initDL, onSav
               </Select>
             </div>
             {dl.has_license && (
-              <div>
-                <Label>Years of Driving</Label>
-                <Input type="number" min={0} value={dl.years_experience ?? ''} onChange={e => setDl(d => ({ ...d, years_experience: parseInt(e.target.value) || null }))} />
-              </div>
+              <>
+                <div>
+                  <Label>Issue Date</Label>
+                  <Input type="date" value={dl.issue_date || ''} onChange={e => setDl(d => ({ ...d, issue_date: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Expiry Date</Label>
+                  <Input type="date" value={dl.expiry_date || ''} onChange={e => setDl(d => ({ ...d, expiry_date: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Years of Driving</Label>
+                  <Input type="number" min={0} value={dl.years_experience ?? ''} onChange={e => setDl(d => ({ ...d, years_experience: parseInt(e.target.value) || null }))} />
+                </div>
+              </>
             )}
           </div>
 
