@@ -106,8 +106,13 @@ function getInitials(fullName: string): string {
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { can } = usePermissions();
+
+  // Pipeline context from URL params
+  const fromPipeline = searchParams.get('from') === 'pipeline';
+  const pipelineProjectId = searchParams.get('project') || undefined;
 
   // Data hooks
   const { data: candidate, isLoading: candidateLoading } = useCandidate(id);
@@ -116,6 +121,10 @@ export default function CandidateDetail() {
   const { data: stageHistory, isLoading: historyLoading } = useStageHistory(id);
   const { data: activityLog = [], isLoading: activityLoading } = useCandidateActivityLog(id);
   const logCandidateActivity = useLogCandidateActivity();
+
+  // Pipeline stage for this project (if coming from pipeline)
+  const { data: pipelineWorkflows = [] } = usePipelineCandidates(pipelineProjectId);
+  const pipelineEntry = fromPipeline ? pipelineWorkflows.find(w => w.candidate_id === id) : undefined;
 
   // Mutation hooks
   const updateStage = useUpdateCandidateStage();
