@@ -729,16 +729,21 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
           {/* ── Salary & Availability ── */}
           <Section title="Salary & Availability" icon={<DollarSign className="h-4 w-4" />}>
             <p className="text-xs font-medium text-muted-foreground mb-1">Salary Expectations</p>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div><Label className="text-xs">Current Salary</Label>
                 <Input value={salary.current_salary} onChange={e => setSalary(s => ({ ...s, current_salary: e.target.value }))} /></div>
               <div><Label className="text-xs">Expected Salary</Label>
                 <Input value={salary.expected_salary} onChange={e => setSalary(s => ({ ...s, expected_salary: e.target.value }))} /></div>
               <div><Label className="text-xs">Currency</Label>
                 <Input value={salary.currency} onChange={e => setSalary(s => ({ ...s, currency: e.target.value }))} placeholder="EUR, USD..." /></div>
+              <div><Label className="text-xs">Negotiable?</Label>
+                <Select value={salary.negotiable ? 'yes' : 'no'} onValueChange={v => setSalary(s => ({ ...s, negotiable: v === 'yes' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                </Select></div>
             </div>
             <p className="text-xs font-medium text-muted-foreground mb-1 mt-3">Availability</p>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div><Label className="text-xs">Available to Start</Label>
                 <Select value={availability.available_to_start || '_none'} onValueChange={v => setAvailability(a => ({ ...a, available_to_start: v === '_none' ? '' : v }))}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
@@ -762,6 +767,29 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
                 </Select></div>
               <div><Label className="text-xs">Notice Period</Label>
                 <Input value={availability.notice_period} onChange={e => setAvailability(a => ({ ...a, notice_period: e.target.value }))} placeholder="e.g. 30 days" /></div>
+              <div><Label className="text-xs">Willing to Relocate?</Label>
+                <Select value={availability.willing_to_relocate ? 'yes' : 'no'} onValueChange={v => setAvailability(a => ({ ...a, willing_to_relocate: v === 'yes' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                </Select></div>
+            </div>
+          </Section>
+
+          {/* ── Family ── */}
+          <Section title="Family" icon={<span>👨‍👩‍👧‍👦</span>}>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div><Label className="text-xs">Spouse?</Label>
+                <Select value={family.has_spouse ? 'yes' : 'no'} onValueChange={v => setFamily(f => ({ ...f, has_spouse: v === 'yes' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="no">No</SelectItem><SelectItem value="yes">Yes</SelectItem></SelectContent>
+                </Select></div>
+              <div><Label className="text-xs">Children Ages</Label>
+                <Input value={family.children_ages} onChange={e => setFamily(f => ({ ...f, children_ages: e.target.value }))} placeholder="e.g. 5, 8, 12" /></div>
+              <div><Label className="text-xs">Family Willing to Relocate?</Label>
+                <Select value={family.family_willing_to_relocate ? 'yes' : 'no'} onValueChange={v => setFamily(f => ({ ...f, family_willing_to_relocate: v === 'yes' }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                </Select></div>
             </div>
           </Section>
 
