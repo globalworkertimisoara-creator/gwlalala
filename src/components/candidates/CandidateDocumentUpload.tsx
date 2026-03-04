@@ -691,7 +691,7 @@ export function CandidateDocumentUpload({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleDeleteDoc(doc.id, doc.storage_path)}
+                      onClick={() => handleDeleteDoc(doc.id, doc.storage_path, doc.file_name)}
                       title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
