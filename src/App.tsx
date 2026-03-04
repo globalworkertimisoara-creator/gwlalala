@@ -180,7 +180,7 @@ const App = () => (
             } />
             <Route path="/agency/jobs" element={
               <ProtectedRoute requireAgency>
-                <AgencyJobs />
+                <Jobs />
               </ProtectedRoute>
             } />
             <Route path="/my-analytics" element={
