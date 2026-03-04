@@ -1,0 +1,1 @@
+DELETE FROM user_roles WHERE user_id = '3ba41995-c610-474d-b4ec-acce721e34a9' AND role = 'sales_manager';
