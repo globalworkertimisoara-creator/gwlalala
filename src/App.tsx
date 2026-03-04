@@ -25,7 +25,7 @@ import AgencyDashboard from "./pages/AgencyDashboard";
 import AgencyWorkerDetail from "./pages/AgencyWorkerDetail";
 import AgencyWorkers from "./pages/AgencyWorkers";
 import AgencyAuth from "./pages/AgencyAuth";
-import AgencyJobs from "./pages/AgencyJobs";
+// AgencyJobs removed - unified into Jobs page
 import Upload from "./pages/Upload";
 import ProjectWorkflowPhase from "./pages/ProjectWorkflowPhase";
 import AcceptInvitation from "./pages/AcceptInvitation";
