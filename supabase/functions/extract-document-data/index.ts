@@ -21,12 +21,17 @@ interface ExtractedData {
   nationality?: string;
   current_country?: string;
   parents_names?: string;
+  gender?: string;
+  marital_status?: string;
+  current_city?: string;
+  whatsapp?: string;
   
   // Passport specific
   passport_number?: string;
   passport_expiry?: string;
   passport_issue_date?: string;
   passport_issued_by?: string;
+  national_id_number?: string;
   
   // CV/Resume specific
   skills?: string;
@@ -42,6 +47,58 @@ interface ExtractedData {
   visa_expiry?: string;
   residence_permit_number?: string;
   residence_permit_expiry?: string;
+  
+  // Structured CV data
+  education?: Array<{
+    education_level: string;
+    field_of_study?: string;
+    institution_name?: string;
+    graduation_year?: number;
+    degree_obtained?: string;
+  }>;
+  work_experience?: Array<{
+    job_title: string;
+    company_name?: string;
+    country?: string;
+    start_date?: string;
+    end_date?: string;
+    job_description?: string;
+  }>;
+  languages?: Array<{
+    language_name: string;
+    proficiency_level: string;
+  }>;
+  skills_list?: Array<{
+    skill_name: string;
+    years_experience?: number;
+  }>;
+  references?: Array<{
+    reference_name: string;
+    position_title?: string;
+    phone?: string;
+    email?: string;
+    relationship?: string;
+  }>;
+  driver_license?: {
+    has_license: boolean;
+    license_type?: string;
+    years_experience?: number;
+  };
+  salary_expectations?: {
+    current_salary?: string;
+    expected_salary?: string;
+    currency?: string;
+  };
+  availability?: {
+    available_to_start?: string;
+    employment_status?: string;
+    notice_period?: string;
+  };
+  job_preferences?: {
+    preferred_titles?: string;
+    preferred_countries?: string;
+    preferred_work_type?: string;
+  };
   
   // General
   document_type?: string;
@@ -87,9 +144,9 @@ serve(async (req) => {
 
     // SECURITY: Validate doc_type against allowed enum values
     const allowedDocTypes = [
-      'cv', 'passport', 'photo', 'working_video', 'presentation_video',
+      'cv', 'cv_profile', 'passport', 'photo', 'working_video', 'presentation_video',
       'trade_certificate', 'medical_clearance', 'training_doc', 'plane_ticket',
-      'visa_document', 'residence_permit', 'resume', 'contract', 'other'
+      'visa_document', 'residence_permit', 'resume', 'contract', 'certificate', 'other'
     ];
     if (doc_type && !allowedDocTypes.includes(doc_type)) {
       console.error(`Security: Invalid doc_type attempted: ${doc_type}`);
@@ -170,6 +227,44 @@ serve(async (req) => {
 
     // Determine extraction prompt based on document type
     const extractionPrompts: Record<string, string> = {
+      cv_profile: `Extract ALL available information from this CV/Resume document comprehensively:
+
+PERSONAL INFO: Full name, email, phone, date of birth, nationality, current country, current city, gender, marital status, WhatsApp number, LinkedIn URL
+
+EDUCATION (for each entry, max 3):
+- Education level (High School, Bachelor's, Master's, PhD, Vocational, Certificate)
+- Field of study
+- Institution name
+- Graduation year
+- Degree/certificate obtained
+
+WORK EXPERIENCE (for each entry, max 5):
+- Job title
+- Company name
+- Country
+- Start date (YYYY-MM-DD)
+- End date (YYYY-MM-DD, or null if current)
+- Brief job description
+
+LANGUAGES (for each):
+- Language name
+- Proficiency level (basic, intermediate, advanced, fluent, native)
+
+SKILLS (list of skills with estimated years of experience per skill)
+
+REFERENCES (if listed):
+- Name, position, phone, email, relationship
+
+DRIVER'S LICENSE: Has license? Type? Years of driving?
+
+SALARY: Current salary, expected salary, currency
+
+AVAILABILITY: Available to start, employment status, notice period
+
+JOB PREFERENCES: Preferred job titles, preferred countries, preferred work type (full_time, part_time, contract)
+
+Extract everything visible. Translate all text to English.`,
+
       cv: `Extract the following from this CV/Resume:
 - Full name
 - Email address
@@ -203,6 +298,13 @@ serve(async (req) => {
 - Skills/trade qualification
 - Date of issue
 - Issuing organization`,
+
+      certificate: `Extract from this certificate:
+- Full name
+- Certificate/qualification name
+- Skills covered
+- Date of issue
+- Issuing organization`,
       
       medical_clearance: `Extract from this medical document:
 - Full name
@@ -234,7 +336,6 @@ serve(async (req) => {
 - Any dates (issue dates, expiry dates)
 - Any identification numbers (passport, visa, permit)`,
       
-      // For candidate documents (internal staff)
       residence_permit: `Extract from this residence permit:
 - Full name
 - Nationality
@@ -261,6 +362,8 @@ serve(async (req) => {
 
     const basePrompt = extractionPrompts[doc_type] || extractionPrompts.other;
     
+    const isFullCVExtraction = doc_type === 'cv_profile';
+
     const systemPrompt = `You are a multilingual document data extraction AI with OCR capabilities. Analyze the provided document image and extract structured information.
 
 LANGUAGE SUPPORT:
@@ -284,13 +387,18 @@ Return ONLY a JSON object with these possible fields:
   "email": "string or null", 
   "phone": "string or null",
   "date_of_birth": "YYYY-MM-DD or null",
+  "gender": "male/female/other or null",
   "nationality": "string or null (in English)",
   "current_country": "string or null (in English)",
+  "current_city": "string or null",
+  "marital_status": "single/married/divorced/widowed or null",
+  "whatsapp": "string or null",
   "parents_names": "string or null (format: 'Father: Name, Mother: Name')",
   "passport_number": "string or null",
   "passport_expiry": "YYYY-MM-DD or null",
   "passport_issue_date": "YYYY-MM-DD or null",
   "passport_issued_by": "string or null (issuing authority/country)",
+  "national_id_number": "string or null",
   "skills": "comma-separated string in English or null",
   "experience_years": "number or null",
   "linkedin": "URL string or null",
@@ -302,7 +410,16 @@ Return ONLY a JSON object with these possible fields:
   "residence_permit_expiry": "YYYY-MM-DD or null",
   "document_type": "detected type",
   "confidence": "0-100 percentage",
-  "original_language": "detected language of the document"
+  "original_language": "detected language of the document"${isFullCVExtraction ? `,
+  "education": [{"education_level":"string","field_of_study":"string or null","institution_name":"string or null","graduation_year":"number or null","degree_obtained":"string or null"}],
+  "work_experience": [{"job_title":"string","company_name":"string or null","country":"string or null","start_date":"YYYY-MM-DD or null","end_date":"YYYY-MM-DD or null","job_description":"string or null"}],
+  "languages": [{"language_name":"string","proficiency_level":"basic/intermediate/advanced/fluent/native"}],
+  "skills_list": [{"skill_name":"string","years_experience":"number or null"}],
+  "references": [{"reference_name":"string","position_title":"string or null","phone":"string or null","email":"string or null","relationship":"string or null"}],
+  "driver_license": {"has_license":"boolean","license_type":"string or null","years_experience":"number or null"},
+  "salary_expectations": {"current_salary":"string or null","expected_salary":"string or null","currency":"string or null"},
+  "availability": {"available_to_start":"string or null","employment_status":"employed/unemployed or null","notice_period":"string or null"},
+  "job_preferences": {"preferred_titles":"string or null","preferred_countries":"string or null","preferred_work_type":"full_time/part_time/contract or null"}` : ''}
 }`;
 
     // Call Lovable AI with the document image
@@ -324,7 +441,7 @@ Return ONLY a JSON object with these possible fields:
             ]
           }
         ],
-        max_tokens: 1000,
+        max_tokens: isFullCVExtraction ? 4000 : 1000,
       }),
     });
 
