@@ -81,6 +81,7 @@ export default function ProjectDetail() {
   const addToPipeline = useAddCandidateToPipeline();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState('');
+  const [pipelineWorkflowType, setPipelineWorkflowType] = useState<WorkflowType | ''>('');
 
   // Job linking & creation state
   const { data: allJobs = [] } = useJobs();
