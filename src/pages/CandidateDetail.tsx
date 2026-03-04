@@ -12,6 +12,7 @@ import { CandidateActivityLog } from '@/components/candidates/CandidateActivityL
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
 import { CandidateCVTab } from '@/components/candidates/CandidateCVTab';
 import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
+import { DownloadCVDialog } from '@/components/candidates/DownloadCVDialog';
 import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline';
 import DocumentChecklist from '@/components/workflow/DocumentChecklist';
@@ -57,6 +58,7 @@ import {
   Save,
   X,
   FolderSymlink,
+  Download,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -147,6 +149,7 @@ export default function CandidateDetail() {
   const [selectedStage, setSelectedStage] = useState<string>('');
   const [stageNote, setStageNote] = useState('');
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isCVDialogOpen, setIsCVDialogOpen] = useState(false);
 
   // ─── Loading / Not Found ───────────────────────────────────────────────────
 
@@ -290,7 +293,7 @@ export default function CandidateDetail() {
                 </div>
               </div>
 
-              {/* Current Stage Badge + Days */}
+              {/* Current Stage Badge + Days + Download */}
               <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
                 <Badge
                   variant="secondary"
@@ -302,6 +305,10 @@ export default function CandidateDetail() {
                   <Clock className="h-3 w-3" />
                   {daysInStage}d in stage
                 </span>
+                <Button variant="outline" size="sm" className="gap-2 mt-1" onClick={() => setIsCVDialogOpen(true)}>
+                  <Download className="h-4 w-4" />
+                  Download CV
+                </Button>
               </div>
             </div>
 
@@ -703,6 +710,13 @@ export default function CandidateDetail() {
           onOpenChange={setIsLinkDialogOpen}
           candidate={candidate}
           onLinked={handleProjectLinked}
+        />
+
+        {/* Download CV Dialog */}
+        <DownloadCVDialog
+          candidateId={id!}
+          open={isCVDialogOpen}
+          onOpenChange={setIsCVDialogOpen}
         />
       </div>
     </AppLayout>
