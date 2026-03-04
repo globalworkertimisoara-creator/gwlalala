@@ -142,7 +142,12 @@ export function PipelineBoard({ candidates, isLoading }: PipelineBoardProps) {
     const candidate = filtered.find(c => c.workflow_id === workflowId);
 
     if (candidate && candidate.pipeline_stage !== newStage) {
-      updateStage.mutate({ workflowId, stage: newStage });
+      updateStage.mutate({
+        workflowId,
+        candidateId: candidate.candidate_id,
+        fromStage: candidate.pipeline_stage,
+        stage: newStage,
+      });
     }
   }
 
