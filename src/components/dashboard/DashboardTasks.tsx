@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,13 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, CheckCircle, Clock, Circle, AlertTriangle, Loader2, LayoutList, LayoutGrid, ExternalLink } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Plus, CheckCircle, Clock, Circle, AlertTriangle, Loader2, LayoutList, LayoutGrid, ExternalLink, FileText, Bell } from 'lucide-react';
 import { useTasks, useTeamTasks, useCreateTask, useUpdateTask, type CreateTaskInput } from '@/hooks/useTasks';
+import { useNotifications, useMarkNotificationRead } from '@/hooks/useNotifications';
 import { useStaffProfiles } from '@/hooks/useStaffProfiles';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, isPast, isToday, addDays, isBefore } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { format, isPast, isToday, addDays, isBefore, formatDistanceToNow } from 'date-fns';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const priorityColors: Record<string, string> = {
   low: 'bg-muted text-muted-foreground',
@@ -156,13 +158,24 @@ export function DashboardTasks() {
   const { user } = useAuth();
   const { can } = usePermissions();
   const isManager = can('viewAllUsers');
+  const [searchParams] = useSearchParams();
 
   const { data: myTasks = [], isLoading: myLoading } = useTasks(user ? { assigned_to: user.id } : undefined);
   const { data: teamTasks = [], isLoading: teamLoading } = useTeamTasks();
+  const { data: notifications = [] } = useNotifications();
+  const markRead = useMarkNotificationRead();
+
+  const digestNotifications = notifications.filter(n =>
+    n.type === 'task_digest' || n.type === 'task_escalation' || n.type === 'task_overdue'
+  );
+  const unreadDigestCount = digestNotifications.filter(n => !n.is_read).length;
 
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const { data: staffProfiles = [] } = useStaffProfiles();
+
+  // Allow deep-linking to digest tab via ?tab=digest
+  const defaultTab = searchParams.get('tab') === 'digest' && isManager ? 'digest' : 'my';
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
@@ -378,11 +391,20 @@ export function DashboardTasks() {
       </CardHeader>
 
       <CardContent className="pt-0">
-        <Tabs defaultValue="my" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="w-full h-8">
             <TabsTrigger value="my" className="text-xs flex-1">My Tasks ({myActive.length})</TabsTrigger>
             {isManager && (
               <TabsTrigger value="team" className="text-xs flex-1">Team ({teamActive.length})</TabsTrigger>
+            )}
+            {isManager && (
+              <TabsTrigger value="digest" className="text-xs flex-1 gap-1">
+                <FileText className="h-3 w-3" />
+                Digest
+                {unreadDigestCount > 0 && (
+                  <Badge variant="destructive" className="h-4 px-1 text-[10px] ml-0.5">{unreadDigestCount}</Badge>
+                )}
+              </TabsTrigger>
             )}
             <TabsTrigger value="done" className="text-xs flex-1">Done ({myDone.length})</TabsTrigger>
           </TabsList>
@@ -416,6 +438,53 @@ export function DashboardTasks() {
                 </Select>
               </div>
               {renderTaskList(teamActive, teamLoading, 'No team tasks')}
+            </TabsContent>
+          )}
+
+          {isManager && (
+            <TabsContent value="digest" className="mt-3">
+              {digestNotifications.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No digest notifications yet</p>
+                  <p className="text-xs mt-1">Daily summaries of overdue and escalated tasks will appear here.</p>
+                </div>
+              ) : (
+                <ScrollArea className="max-h-[340px]">
+                  <div className="space-y-2">
+                    {digestNotifications.map(n => (
+                      <div
+                        key={n.id}
+                        className={`p-3 rounded-lg border text-sm transition-colors ${!n.is_read ? 'bg-primary/5 border-primary/20' : 'bg-card'}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            {n.type === 'task_escalation' ? (
+                              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                            ) : n.type === 'task_overdue' ? (
+                              <Clock className="h-4 w-4 text-amber-600 shrink-0" />
+                            ) : (
+                              <FileText className="h-4 w-4 text-primary shrink-0" />
+                            )}
+                            <span className="font-medium">{n.title}</span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                            {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1.5 whitespace-pre-line pl-6">{n.message}</p>
+                        {!n.is_read && (
+                          <div className="flex justify-end mt-2">
+                            <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => markRead.mutate(n.id)}>
+                              Mark read
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
             </TabsContent>
           )}
 
