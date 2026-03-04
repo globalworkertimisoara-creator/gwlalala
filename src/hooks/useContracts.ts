@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLogContractActivity } from '@/hooks/useContractActivityLog';
 
 export interface Contract {
   id: string;
@@ -102,13 +103,45 @@ export function useCreateContract() {
 
 export function useUpdateContract() {
   const qc = useQueryClient();
+  const logActivity = useLogContractActivity();
 
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Contract> & { id: string }) => {
+    mutationFn: async ({ id, _oldContract, ...updates }: Partial<Contract> & { id: string; _oldContract?: Contract }) => {
       const { data, error } = await supabase.from('contracts' as any).update(updates).eq('id', id).select().single();
       if (error) throw error;
-      return data as unknown as Contract;
+      return { updated: data as unknown as Contract, oldContract: _oldContract, changedFields: updates };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['contracts'] }),
+    onSuccess: ({ updated, oldContract, changedFields }) => {
+      qc.invalidateQueries({ queryKey: ['contracts'] });
+
+      // Log each changed field
+      const fieldLabels: Record<string, string> = {
+        status: 'Status',
+        title: 'Title',
+        start_date: 'Start Date',
+        end_date: 'End Date',
+        total_value: 'Total Value',
+        notes: 'Notes',
+        sales_person_id: 'Sales Person',
+        auto_renew: 'Auto Renew',
+        renewal_date: 'Renewal Date',
+      };
+
+      for (const [key, newVal] of Object.entries(changedFields)) {
+        if (key === 'id' || key === '_oldContract') continue;
+        const label = fieldLabels[key] || key;
+        const oldVal = oldContract ? String((oldContract as any)[key] ?? '—') : '—';
+        const newValStr = String(newVal ?? '—');
+
+        logActivity.mutate({
+          contract_id: updated.id,
+          action: key === 'status' ? 'status_change' : 'field_update',
+          summary: `${label} changed from "${oldVal}" to "${newValStr}"`,
+          field_changed: key,
+          old_value: oldVal,
+          new_value: newValStr,
+        });
+      }
+    },
   });
 }
