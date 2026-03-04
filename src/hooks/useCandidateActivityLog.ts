@@ -14,7 +14,7 @@ export interface CandidateActivityEntry {
   summary: string;
   details: Record<string, any> | null;
   created_at: string;
-  actor_name?: string;
+  actor_name?: string | null;
 }
 
 export function useCandidateActivityLog(candidateId: string | undefined) {
@@ -25,15 +25,28 @@ export function useCandidateActivityLog(candidateId: string | undefined) {
 
       const { data, error } = await supabase
         .from('candidate_activity_log')
-        .select('*, profiles!candidate_activity_log_actor_id_fkey(full_name)')
+        .select('*')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false })
         .limit(200);
 
       if (error) throw error;
-      return (data || []).map((e: any) => ({
+      if (!data || data.length === 0) return [];
+
+      // Batch fetch actor names
+      const actorIds = [...new Set(data.map(e => e.actor_id).filter(Boolean))];
+      let profileMap: Record<string, string> = {};
+      if (actorIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', actorIds);
+        profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p.full_name || '']));
+      }
+
+      return data.map(e => ({
         ...e,
-        actor_name: e.profiles?.full_name || null,
+        actor_name: e.actor_id ? profileMap[e.actor_id] || null : null,
       })) as unknown as CandidateActivityEntry[];
     },
     enabled: !!candidateId,
