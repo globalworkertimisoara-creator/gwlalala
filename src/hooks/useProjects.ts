@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Project, ProjectWithMetrics, ProjectStatus } from '@/types/project';
+import { Project, ProjectWithMetrics, ProjectStatus, WorkflowType } from '@/types/project';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInDays } from 'date-fns';
 
@@ -142,6 +142,7 @@ export interface CreateProjectInput {
   countries_in_contract: string[];
   sales_person_name?: string;
   status?: ProjectStatus;
+  default_workflow_type?: WorkflowType;
   contract_signed_at?: string;
   notes?: string;
 }

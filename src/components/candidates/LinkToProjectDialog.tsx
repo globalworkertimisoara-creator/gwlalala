@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WORKFLOW_TYPE_CONFIG } from '@/types/project';
 import { useProjects } from '@/hooks/useProjects';
 import { useCreateWorkflow } from '@/hooks/useWorkflow';
 import { Candidate } from '@/types/database';
@@ -36,6 +37,14 @@ export function LinkToProjectDialog({ open, onOpenChange, candidate, onLinked }:
   }, [projects, search]);
 
   const selectedProject = projects?.find(p => p.id === selectedProjectId);
+
+  const handleSelectProject = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    const proj = projects?.find(p => p.id === projectId);
+    if (proj?.default_workflow_type) {
+      setWorkflowType(proj.default_workflow_type as 'full_immigration' | 'no_visa');
+    }
+  };
 
   const handleLink = () => {
     if (!candidate || !selectedProjectId || !selectedProject) return;
@@ -91,7 +100,7 @@ export function LinkToProjectDialog({ open, onOpenChange, candidate, onLinked }:
                 <button
                   key={project.id}
                   type="button"
-                  onClick={() => setSelectedProjectId(project.id)}
+                  onClick={() => handleSelectProject(project.id)}
                   className={`w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors ${
                     selectedProjectId === project.id ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''
                   }`}
@@ -119,8 +128,11 @@ export function LinkToProjectDialog({ open, onOpenChange, candidate, onLinked }:
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full_immigration">Full Immigration</SelectItem>
-                  <SelectItem value="no_visa">No Visa Required</SelectItem>
+                  {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
+                    <SelectItem key={value} value={value}>
+                      {config.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

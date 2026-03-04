@@ -60,10 +60,11 @@ import {
   GitBranchPlus,
   Search,
   Link2,
+  Route,
 } from 'lucide-react';
 import WorkflowPhaseTracker from '@/components/projects/WorkflowPhaseTracker';
 import { format } from 'date-fns';
-import { getProjectStatusColor, getProjectStatusLabel, PROJECT_STATUS_CONFIG, ProjectStatus } from '@/types/project';
+import { getProjectStatusColor, getProjectStatusLabel, PROJECT_STATUS_CONFIG, ProjectStatus, WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
 import { useState, useMemo } from 'react';
 
 export default function ProjectDetail() {
@@ -80,6 +81,7 @@ export default function ProjectDetail() {
   const addToPipeline = useAddCandidateToPipeline();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState('');
+  const [pipelineWorkflowType, setPipelineWorkflowType] = useState<WorkflowType | ''>('');
 
   // Job linking & creation state
   const { data: allJobs = [] } = useJobs();
@@ -118,9 +120,11 @@ export default function ProjectDetail() {
 
   const handleAddCandidate = async (candidateId: string) => {
     if (!id) return;
-    await addToPipeline.mutateAsync({ candidateId, projectId: id });
+    const wfType = (pipelineWorkflowType || project?.default_workflow_type || 'full_immigration') as 'full_immigration' | 'no_visa';
+    await addToPipeline.mutateAsync({ candidateId, projectId: id, workflowType: wfType });
     setAddDialogOpen(false);
     setCandidateSearch('');
+    setPipelineWorkflowType('');
   };
 
   const handleLinkJob = async (jobId: string) => {
@@ -285,6 +289,27 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                     )}
+                    <div className="flex items-center gap-3">
+                      <Route className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Workflow Type</p>
+                        <Select
+                          value={project.default_workflow_type || 'full_immigration'}
+                          onValueChange={(v) => updateProject.mutate({ id: project.id, default_workflow_type: v } as any)}
+                        >
+                          <SelectTrigger className="h-8 w-[180px] mt-0.5">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
+                              <SelectItem key={value} value={value}>
+                                {config.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -547,6 +572,27 @@ export default function ProjectDetail() {
                     <DialogTitle>Add Candidate to Pipeline</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
+                    <div>
+                      <Label>Workflow Type</Label>
+                      <Select
+                        value={pipelineWorkflowType || project.default_workflow_type || 'full_immigration'}
+                        onValueChange={(v) => setPipelineWorkflowType(v as WorkflowType)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
+                            <SelectItem key={value} value={value}>
+                              {config.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {WORKFLOW_TYPE_CONFIG[(pipelineWorkflowType || project.default_workflow_type || 'full_immigration') as WorkflowType]?.description}
+                      </p>
+                    </div>
                     <div>
                       <Label>Search candidates</Label>
                       <Input
