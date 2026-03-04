@@ -128,8 +128,11 @@ export function LinkToProjectDialog({ open, onOpenChange, candidate, onLinked }:
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full_immigration">Full Immigration</SelectItem>
-                  <SelectItem value="no_visa">No Visa Required</SelectItem>
+                  {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
+                    <SelectItem key={value} value={value}>
+                      {config.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
