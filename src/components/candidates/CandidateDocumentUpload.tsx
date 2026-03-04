@@ -15,9 +15,11 @@ import {
   FileText, 
   Trash2, 
   Loader2,
-  Sparkles
+  Sparkles,
+  Download
 } from 'lucide-react';
 import { useDocuments, useUploadDocumentWithOCR, useDeleteDocument } from '@/hooks/useDocuments';
+import { supabase } from '@/integrations/supabase/client';
 import { DocType } from '@/types/database';
 import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { format } from 'date-fns';
@@ -77,6 +79,23 @@ export function CandidateDocumentUpload({
   const handleDeleteDoc = async (docId: string, storagePath: string) => {
     if (!candidateId) return;
     await deleteDoc.mutateAsync({ id: docId, storagePath, candidateId });
+  };
+
+  const handleDownload = async (storagePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage.from('candidate-documents').download(storagePath);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download error:', err);
+    }
   };
 
   const isUploading = uploadDoc.isPending || uploadDoc.isExtracting;
@@ -172,14 +191,26 @@ export function CandidateDocumentUpload({
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                    onClick={() => handleDeleteDoc(doc.id, doc.storage_path)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => handleDownload(doc.storage_path, doc.file_name)}
+                      title="Download"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDeleteDoc(doc.id, doc.storage_path)}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
