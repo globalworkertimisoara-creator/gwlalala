@@ -90,6 +90,13 @@ export function useUpdatePipelineStage() {
         .eq('id', workflowId);
       if (error) throw error;
 
+      // 1b. Sync candidate's global current_stage
+      const { error: syncErr } = await supabase
+        .from('candidates')
+        .update({ current_stage: stage, updated_at: new Date().toISOString() })
+        .eq('id', candidateId);
+      if (syncErr) console.error('candidate sync error:', syncErr);
+
       // 2. Get current user for attribution
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -124,6 +131,8 @@ export function useUpdatePipelineStage() {
       queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
       queryClient.invalidateQueries({ queryKey: ['stage-history'] });
       queryClient.invalidateQueries({ queryKey: ['candidate-activity-log'] });
+      queryClient.invalidateQueries({ queryKey: ['candidate'] });
+      queryClient.invalidateQueries({ queryKey: ['candidates'] });
       toast({
         title: 'Pipeline stage updated',
         description: 'The candidate has been moved to the new stage.',
