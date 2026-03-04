@@ -31,7 +31,7 @@ import { Plus, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useCreateProject } from '@/hooks/useProjects';
 import { usePermissions } from '@/hooks/usePermissions';
-import { ProjectStatus, PROJECT_STATUS_CONFIG } from '@/types/project';
+import { ProjectStatus, PROJECT_STATUS_CONFIG, WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
@@ -39,6 +39,7 @@ const formSchema = z.object({
   location: z.string().min(1, 'Location is required'),
   sales_person_name: z.string().optional(),
   status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled']).default('draft'),
+  default_workflow_type: z.enum(['full_immigration', 'no_visa']).default('full_immigration'),
   contract_signed_at: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -60,6 +61,7 @@ export function CreateProjectDialog() {
       location: '',
       sales_person_name: '',
       status: 'draft',
+      default_workflow_type: 'full_immigration',
       contract_signed_at: '',
       notes: '',
     },
@@ -85,6 +87,7 @@ export function CreateProjectDialog() {
       location: values.location,
       sales_person_name: values.sales_person_name,
       status: values.status,
+      default_workflow_type: values.default_workflow_type as WorkflowType,
       notes: values.notes,
       countries_in_contract: countries,
       contract_signed_at: values.contract_signed_at || undefined,
