@@ -144,9 +144,9 @@ serve(async (req) => {
 
     // SECURITY: Validate doc_type against allowed enum values
     const allowedDocTypes = [
-      'cv', 'passport', 'photo', 'working_video', 'presentation_video',
+      'cv', 'cv_profile', 'passport', 'photo', 'working_video', 'presentation_video',
       'trade_certificate', 'medical_clearance', 'training_doc', 'plane_ticket',
-      'visa_document', 'residence_permit', 'resume', 'contract', 'other'
+      'visa_document', 'residence_permit', 'resume', 'contract', 'certificate', 'other'
     ];
     if (doc_type && !allowedDocTypes.includes(doc_type)) {
       console.error(`Security: Invalid doc_type attempted: ${doc_type}`);
@@ -227,6 +227,44 @@ serve(async (req) => {
 
     // Determine extraction prompt based on document type
     const extractionPrompts: Record<string, string> = {
+      cv_profile: `Extract ALL available information from this CV/Resume document comprehensively:
+
+PERSONAL INFO: Full name, email, phone, date of birth, nationality, current country, current city, gender, marital status, WhatsApp number, LinkedIn URL
+
+EDUCATION (for each entry, max 3):
+- Education level (High School, Bachelor's, Master's, PhD, Vocational, Certificate)
+- Field of study
+- Institution name
+- Graduation year
+- Degree/certificate obtained
+
+WORK EXPERIENCE (for each entry, max 5):
+- Job title
+- Company name
+- Country
+- Start date (YYYY-MM-DD)
+- End date (YYYY-MM-DD, or null if current)
+- Brief job description
+
+LANGUAGES (for each):
+- Language name
+- Proficiency level (basic, intermediate, advanced, fluent, native)
+
+SKILLS (list of skills with estimated years of experience per skill)
+
+REFERENCES (if listed):
+- Name, position, phone, email, relationship
+
+DRIVER'S LICENSE: Has license? Type? Years of driving?
+
+SALARY: Current salary, expected salary, currency
+
+AVAILABILITY: Available to start, employment status, notice period
+
+JOB PREFERENCES: Preferred job titles, preferred countries, preferred work type (full_time, part_time, contract)
+
+Extract everything visible. Translate all text to English.`,
+
       cv: `Extract the following from this CV/Resume:
 - Full name
 - Email address
@@ -260,6 +298,13 @@ serve(async (req) => {
 - Skills/trade qualification
 - Date of issue
 - Issuing organization`,
+
+      certificate: `Extract from this certificate:
+- Full name
+- Certificate/qualification name
+- Skills covered
+- Date of issue
+- Issuing organization`,
       
       medical_clearance: `Extract from this medical document:
 - Full name
@@ -291,7 +336,6 @@ serve(async (req) => {
 - Any dates (issue dates, expiry dates)
 - Any identification numbers (passport, visa, permit)`,
       
-      // For candidate documents (internal staff)
       residence_permit: `Extract from this residence permit:
 - Full name
 - Nationality
