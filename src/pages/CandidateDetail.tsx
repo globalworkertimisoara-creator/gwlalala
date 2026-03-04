@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useCandidate, useUpdateCandidateStage, useUpdateCandidate } from '@/hooks/useCandidates';
 import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes';
