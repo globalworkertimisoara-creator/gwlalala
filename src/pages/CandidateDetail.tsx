@@ -146,8 +146,6 @@ export default function CandidateDetail() {
   const [noteContent, setNoteContent] = useState('');
   const [selectedStage, setSelectedStage] = useState<string>('');
   const [stageNote, setStageNote] = useState('');
-  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
-  const [isApplyingData, setIsApplyingData] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
 
   // ─── Loading / Not Found ───────────────────────────────────────────────────
@@ -228,66 +226,6 @@ export default function CandidateDetail() {
       is_shared_event: true,
       details: { project_id: projectId, project_name: projectName, workflow_type: workflowType },
     });
-  };
-
-  const handleDataExtracted = (data: ExtractedData) => {
-    setExtractedData(data);
-  };
-
-  const applyExtractedData = async () => {
-    if (!extractedData || !candidate || !id) return;
-    
-    setIsApplyingData(true);
-    try {
-      const updates: Record<string, any> = {};
-      
-      // Map extracted data to candidate fields (only fill empty fields)
-      if (extractedData.full_name && !candidate.full_name) {
-        updates.full_name = extractedData.full_name;
-      }
-      if (extractedData.email && !candidate.email) {
-        updates.email = extractedData.email;
-      }
-      if (extractedData.phone && !candidate.phone) {
-        updates.phone = extractedData.phone;
-      }
-      if (extractedData.nationality && !candidate.nationality) {
-        updates.nationality = extractedData.nationality;
-      }
-      if (extractedData.current_country && !candidate.current_country) {
-        updates.current_country = extractedData.current_country;
-      }
-      if (extractedData.linkedin && !candidate.linkedin) {
-        updates.linkedin = extractedData.linkedin;
-      }
-      
-      if (Object.keys(updates).length > 0) {
-        await updateCandidate.mutateAsync({ id, ...updates });
-        toast({
-          title: 'Data applied',
-          description: 'Extracted information has been saved to the candidate profile.',
-        });
-      } else {
-        toast({
-          title: 'No new data to apply',
-          description: 'All extracted fields already have values.',
-        });
-      }
-      
-      setExtractedData(null);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to apply data',
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    } finally {
-      setIsApplyingData(false);
-    }
-  };
-
-  const dismissExtractedData = () => {
-    setExtractedData(null);
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -750,7 +688,10 @@ export default function CandidateDetail() {
             {id && can('uploadDocuments') && (
               <CandidateDocumentUpload 
                 candidateId={id}
-                onDataExtracted={handleDataExtracted}
+                candidate={candidate}
+                onDataApplied={() => {
+                  // Queries auto-invalidate via hooks
+                }}
               />
             )}
           </TabsContent>
