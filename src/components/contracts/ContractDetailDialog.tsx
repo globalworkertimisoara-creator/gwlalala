@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Upload, Trash2, FileText, Download, DollarSign } from 'lucide-react';
+import { Loader2, Upload, Trash2, FileText, Download, DollarSign, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import { useContractDocuments, useUploadContractDocument, useDeleteContractDocument } from '@/hooks/useContractDocuments';
 import { useSalesCommissions, useCreateCommission, useSalesStaff, type SalesCommission } from '@/hooks/useSalesCommissions';
@@ -55,6 +55,7 @@ export function ContractDetailDialog({ contract, open, onOpenChange }: ContractD
           <SalesPersonSection contract={contract} />
           <CommissionSection contract={contract} />
           <DocumentsSection contractId={contract.id} />
+          <ContractActivitySection contractId={contract.id} />
         </div>
       </DialogContent>
     </Dialog>
@@ -84,7 +85,7 @@ function SalesPersonSection({ contract }: { contract: Contract }) {
 
   const handleChange = async (salesPersonId: string) => {
     const value = salesPersonId === 'none' ? null : salesPersonId;
-    await updateContract.mutateAsync({ id: contract.id, sales_person_id: value } as any);
+    await updateContract.mutateAsync({ id: contract.id, sales_person_id: value, _oldContract: contract } as any);
     toast({ title: 'Sales person updated' });
   };
 
