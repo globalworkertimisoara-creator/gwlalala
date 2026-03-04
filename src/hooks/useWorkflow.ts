@@ -70,6 +70,13 @@ export function useCreateWorkflow() {
       queryClient.invalidateQueries({
         queryKey: ['workflow', variables.candidateId, variables.projectId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ['candidate-workflows', variables.candidateId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['candidate-projects', variables.candidateId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
       toast({ title: 'Workflow created successfully' });
     },
     onError: (error) => {
@@ -82,6 +89,58 @@ export function useCreateWorkflow() {
         variant: 'destructive',
       });
     },
+  });
+}
+
+// ─── Delete Workflow (Unlink) ──────────────────────────────────────────────────
+
+export function useDeleteWorkflow() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ workflowId, candidateId }: { workflowId: string; candidateId: string }) => {
+      const { error } = await supabase
+        .from('candidate_workflow')
+        .delete()
+        .eq('id', workflowId);
+
+      if (error) throw error;
+      return { workflowId, candidateId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['workflow'] });
+      queryClient.invalidateQueries({ queryKey: ['candidate-workflows', variables.candidateId] });
+      queryClient.invalidateQueries({ queryKey: ['candidate-projects', variables.candidateId] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
+      toast({ title: 'Unlinked from project successfully' });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Failed to unlink',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+// ─── Fetch Candidate Workflows ────────────────────────────────────────────────
+
+export function useCandidateWorkflows(candidateId: string | undefined) {
+  return useQuery({
+    queryKey: ['candidate-workflows', candidateId],
+    queryFn: async () => {
+      if (!candidateId) return [];
+      const { data, error } = await supabase
+        .from('candidate_workflow')
+        .select('id, project_id, workflow_type, current_phase, pipeline_stage, created_at')
+        .eq('candidate_id', candidateId);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!candidateId,
   });
 }
 
