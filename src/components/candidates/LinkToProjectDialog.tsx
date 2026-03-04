@@ -100,7 +100,7 @@ export function LinkToProjectDialog({ open, onOpenChange, candidate, onLinked }:
                 <button
                   key={project.id}
                   type="button"
-                  onClick={() => setSelectedProjectId(project.id)}
+                  onClick={() => handleSelectProject(project.id)}
                   className={`w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors ${
                     selectedProjectId === project.id ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''
                   }`}
