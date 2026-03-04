@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useCandidate, useUpdateCandidateStage, useUpdateCandidate } from '@/hooks/useCandidates';
+import { useCandidate, useUpdateCandidateStage } from '@/hooks/useCandidates';
 import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useStageHistory } from '@/hooks/useStageHistory';
@@ -11,8 +11,7 @@ import { CandidateActivityLog } from '@/components/candidates/CandidateActivityL
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
 import { CandidateCVTab } from '@/components/candidates/CandidateCVTab';
 import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
-import { ExtractedData } from '@/hooks/useDocumentExtraction';
-import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
+import { STAGES, getStageLabel, getStageColor, RecruitmentStage } from '@/types/database';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline';
 import DocumentChecklist from '@/components/workflow/DocumentChecklist';
 import {
@@ -26,7 +25,7 @@ import {
   useReviewDocument,
 } from '@/hooks/useWorkflow';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
