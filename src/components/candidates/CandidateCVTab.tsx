@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { useUpdateCandidate } from '@/hooks/useCandidates';
 import {
@@ -21,6 +22,7 @@ import { CVDocumentsPassport } from './cv/CVDocumentsPassport';
 import { CVSalaryAvailability } from './cv/CVSalaryAvailability';
 import { CVReferences } from './cv/CVReferences';
 import { CVInternalNotes } from './cv/CVInternalNotes';
+import { CVDocumentUpload } from './cv/CVDocumentUpload';
 
 interface CandidateData {
   id: string;
@@ -54,6 +56,7 @@ interface Props {
 }
 
 export function CandidateCVTab({ candidate }: Props) {
+  const queryClient = useQueryClient();
   const updateCandidate = useUpdateCandidate();
 
   // Structured data hooks
@@ -108,8 +111,21 @@ export function CandidateCVTab({ candidate }: Props) {
     updateCandidate.mutate({ id: candidate.id, ...data });
   };
 
+  const handleDataApplied = () => {
+    // Refresh all CV data queries
+    queryClient.invalidateQueries({ queryKey: ['candidate', candidate.id] });
+    queryClient.invalidateQueries({ queryKey: ['candidate-education', candidate.id] });
+    queryClient.invalidateQueries({ queryKey: ['candidate-work-experience', candidate.id] });
+    queryClient.invalidateQueries({ queryKey: ['candidate-languages', candidate.id] });
+    queryClient.invalidateQueries({ queryKey: ['candidate-skills', candidate.id] });
+    queryClient.invalidateQueries({ queryKey: ['candidate-references', candidate.id] });
+  };
+
   return (
     <div className="space-y-8">
+      {/* Smart Document Upload with OCR */}
+      <CVDocumentUpload candidateId={candidate.id} onDataApplied={handleDataApplied} />
+
       {/* Personal Info + Contact */}
       <CVPersonalInfo
         data={{
