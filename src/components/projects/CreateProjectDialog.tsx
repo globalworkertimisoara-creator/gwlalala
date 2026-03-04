@@ -227,6 +227,34 @@ export function CreateProjectDialog() {
 
             <FormField
               control={form.control}
+              name="default_workflow_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Workflow Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select workflow type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
+                        <SelectItem key={value} value={value}>
+                          {config.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {WORKFLOW_TYPE_CONFIG[field.value as WorkflowType]?.description}
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="contract_signed_at"
               render={({ field }) => (
                 <FormItem>
