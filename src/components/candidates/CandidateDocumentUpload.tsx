@@ -107,6 +107,7 @@ export function CandidateDocumentUpload({
   const saveSkills = useSaveCandidateSkills();
   const saveReferences = useSaveCandidateReferences();
   const { toast } = useToast();
+  const logActivity = useLogCandidateActivity();
 
   // ── Process extraction: auto-fill empty, queue conflicts ──
   const processExtraction = useCallback(async (data: ExtractedData) => {
