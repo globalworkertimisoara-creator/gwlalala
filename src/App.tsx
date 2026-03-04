@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleOverrideBanner } from "@/components/layout/RoleOverrideBanner";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Pipeline from "./pages/Pipeline";
@@ -64,6 +65,7 @@ const App = () => (
         <Sonner />
         <RoleOverrideBanner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/agency-auth" element={<AgencyAuth />} />
