@@ -11,7 +11,7 @@ import { CandidateActivityLog } from '@/components/candidates/CandidateActivityL
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
 import { CandidateCVTab } from '@/components/candidates/CandidateCVTab';
 import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
-import { STAGES, getStageLabel, getStageColor, RecruitmentStage } from '@/types/database';
+import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline';
 import DocumentChecklist from '@/components/workflow/DocumentChecklist';
 import {
@@ -25,7 +25,7 @@ import {
   useReviewDocument,
 } from '@/hooks/useWorkflow';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
