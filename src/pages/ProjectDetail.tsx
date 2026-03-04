@@ -289,6 +289,27 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                     )}
+                    <div className="flex items-center gap-3">
+                      <Route className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Workflow Type</p>
+                        <Select
+                          value={project.default_workflow_type || 'full_immigration'}
+                          onValueChange={(v) => updateProject.mutate({ id: project.id, default_workflow_type: v } as any)}
+                        >
+                          <SelectTrigger className="h-8 w-[180px] mt-0.5">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
+                              <SelectItem key={value} value={value}>
+                                {config.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
