@@ -260,7 +260,7 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
                           key={pc.workflow_id}
                           id={pc.workflow_id}
                           candidate={buildCandidateForCard(pc)}
-                          onClick={() => navigate(`/candidates/${pc.candidate_id}`)}
+                          onClick={() => onCandidateClick ? onCandidateClick(pc.candidate_id) : navigate(`/candidates/${pc.candidate_id}`)}
                           compact={isCompact}
                         />
                       ))}
