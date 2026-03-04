@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Users, FolderLink } from 'lucide-react';
+import { Users, FolderSymlink } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CandidateTableProps {
