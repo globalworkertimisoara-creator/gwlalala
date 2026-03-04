@@ -8,7 +8,7 @@ import { Loader2, Search, LayoutGrid, List } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   DndContext,
@@ -90,10 +90,11 @@ function buildCandidateForCard(pc: PipelineCandidate) {
 interface PipelineBoardProps {
   candidates: PipelineCandidate[];
   isLoading: boolean;
+  projectId?: string;
   onCandidateClick?: (candidateId: string) => void;
 }
 
-export function PipelineBoard({ candidates, isLoading, onCandidateClick }: PipelineBoardProps) {
+export function PipelineBoard({ candidates, isLoading, projectId, onCandidateClick }: PipelineBoardProps) {
   const navigate = useNavigate();
   const updateStage = useUpdatePipelineStage();
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,6 +104,31 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
   const [activeDragCandidate, setActiveDragCandidate] = useState<PipelineCandidate | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const savedScrollLeft = useRef<number>(0);
+  const scrollKey = projectId ? `pipeline-scroll-${projectId}` : null;
+
+  // Persist scroll position to sessionStorage on scroll
+  const handleScroll = useCallback(() => {
+    if (scrollContainerRef.current && scrollKey) {
+      sessionStorage.setItem(scrollKey, String(scrollContainerRef.current.scrollLeft));
+    }
+  }, [scrollKey]);
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    if (scrollKey && scrollContainerRef.current) {
+      const saved = sessionStorage.getItem(scrollKey);
+      if (saved) {
+        const val = parseInt(saved, 10);
+        if (!isNaN(val) && val > 0) {
+          requestAnimationFrame(() => {
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollLeft = val;
+            }
+          });
+        }
+      }
+    }
+  }, [scrollKey, isLoading]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -261,7 +287,7 @@ export function PipelineBoard({ candidates, isLoading, onCandidateClick }: Pipel
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div ref={scrollContainerRef} className="overflow-x-auto pb-4">
+        <div ref={scrollContainerRef} className="overflow-x-auto pb-4" onScroll={handleScroll}>
           <div className={isCompact ? "flex gap-2 min-w-max" : "flex gap-4 min-w-max"}>
             {pipelineStages.map((stage) => {
               const stageCandidates = filtered.filter(c => c.pipeline_stage === stage);
