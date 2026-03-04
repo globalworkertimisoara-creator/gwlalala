@@ -89,9 +89,10 @@ function buildCandidateForCard(pc: PipelineCandidate) {
 interface PipelineBoardProps {
   candidates: PipelineCandidate[];
   isLoading: boolean;
+  onCandidateClick?: (candidateId: string) => void;
 }
 
-export function PipelineBoard({ candidates, isLoading }: PipelineBoardProps) {
+export function PipelineBoard({ candidates, isLoading, onCandidateClick }: PipelineBoardProps) {
   const navigate = useNavigate();
   const updateStage = useUpdatePipelineStage();
   const [searchTerm, setSearchTerm] = useState('');
