@@ -2,6 +2,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RecentCandidates } from '@/components/dashboard/RecentCandidates';
 import { StageChart } from '@/components/dashboard/StageChart';
+import { DashboardTasks } from '@/components/dashboard/DashboardTasks';
 import { useCandidates } from '@/hooks/useCandidates';
 import { useJobs } from '@/hooks/useJobs';
 import { Users, UserCheck, Clock, Briefcase, AlertTriangle, Loader2 } from 'lucide-react';
@@ -99,10 +100,11 @@ const Index = () => {
           />
         </div>
 
-        {/* Charts and Activity */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Charts, Activity & Tasks */}
+        <div className="grid gap-6 lg:grid-cols-3">
           <StageChart candidates={candidates || []} />
           <RecentCandidates candidates={candidates || []} onCandidateClick={(c) => navigate(`/candidates/${c.id}`)} />
+          <DashboardTasks />
         </div>
       </div>
     </AppLayout>
