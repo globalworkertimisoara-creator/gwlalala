@@ -134,11 +134,14 @@ export function useCandidateWorkflows(candidateId: string | undefined) {
       if (!candidateId) return [];
       const { data, error } = await supabase
         .from('candidate_workflow')
-        .select('id, project_id, workflow_type, current_phase, pipeline_stage, created_at')
+        .select('id, project_id, workflow_type, current_phase, pipeline_stage, created_at, projects(name)')
         .eq('candidate_id', candidateId);
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map((w: any) => ({
+        ...w,
+        project_name: w.projects?.name || 'Unknown Project',
+      }));
     },
     enabled: !!candidateId,
   });
