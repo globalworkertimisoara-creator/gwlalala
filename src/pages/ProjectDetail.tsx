@@ -1,6 +1,7 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { useProject, useUpdateProject, useDeleteProject } from '@/hooks/useProjects';
+import { useProject, useUpdateProject, useDeleteProject, useLinkJobToProject } from '@/hooks/useProjects';
+import { useJobs, useCreateJob } from '@/hooks/useJobs';
 import { usePipelineCandidates, useAddCandidateToPipeline } from '@/hooks/usePipelineCandidates';
 import { useCandidates } from '@/hooks/useCandidates';
 import { PipelineBoard } from '@/components/pipeline/PipelineBoard';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -56,6 +58,8 @@ import {
   Loader2,
   Plus,
   GitBranchPlus,
+  Search,
+  Link2,
 } from 'lucide-react';
 import WorkflowPhaseTracker from '@/components/projects/WorkflowPhaseTracker';
 import { format } from 'date-fns';
@@ -68,6 +72,7 @@ export default function ProjectDetail() {
   const { data: project, isLoading } = useProject(id!);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const linkJobToProject = useLinkJobToProject();
 
   // Pipeline data
   const { data: pipelineCandidates = [], isLoading: pipelineLoading } = usePipelineCandidates(id);
@@ -76,6 +81,14 @@ export default function ProjectDetail() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState('');
 
+  // Job linking & creation state
+  const { data: allJobs = [] } = useJobs();
+  const createJob = useCreateJob();
+  const [jobSearch, setJobSearch] = useState('');
+  const [linkedJobSearch, setLinkedJobSearch] = useState('');
+  const [linkJobDialogOpen, setLinkJobDialogOpen] = useState(false);
+  const [createJobDialogOpen, setCreateJobDialogOpen] = useState(false);
+
   const existingCandidateIds = new Set(pipelineCandidates.map(pc => pc.candidate_id));
   const availableCandidates = useMemo(() => {
     return allCandidates
@@ -83,11 +96,51 @@ export default function ProjectDetail() {
       .filter(c => !candidateSearch || c.full_name.toLowerCase().includes(candidateSearch.toLowerCase()) || c.email.toLowerCase().includes(candidateSearch.toLowerCase()));
   }, [allCandidates, existingCandidateIds, candidateSearch]);
 
+  // Jobs not yet linked to this project (for linking dialog)
+  const linkedJobIds = new Set(project?.jobs?.map(j => j.id) || []);
+  const availableJobs = useMemo(() => {
+    return allJobs
+      .filter(j => !linkedJobIds.has(j.id))
+      .filter(j => {
+        if (!jobSearch) return true;
+        const q = jobSearch.toLowerCase();
+        return j.title.toLowerCase().includes(q) || j.client_company.toLowerCase().includes(q);
+      });
+  }, [allJobs, linkedJobIds, jobSearch]);
+
+  // Filter linked jobs by search
+  const filteredLinkedJobs = useMemo(() => {
+    if (!project?.jobs) return [];
+    if (!linkedJobSearch) return project.jobs;
+    const q = linkedJobSearch.toLowerCase();
+    return project.jobs.filter(j => j.title.toLowerCase().includes(q));
+  }, [project?.jobs, linkedJobSearch]);
+
   const handleAddCandidate = async (candidateId: string) => {
     if (!id) return;
     await addToPipeline.mutateAsync({ candidateId, projectId: id });
     setAddDialogOpen(false);
     setCandidateSearch('');
+  };
+
+  const handleLinkJob = async (jobId: string) => {
+    if (!id) return;
+    await linkJobToProject.mutateAsync({ jobId, projectId: id });
+  };
+
+  const handleCreateJob = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    await createJob.mutateAsync({
+      title: formData.get('title') as string,
+      client_company: formData.get('client_company') as string,
+      country: formData.get('country') as string,
+      salary_range: formData.get('salary_range') as string || undefined,
+      required_skills: formData.get('required_skills') as string || undefined,
+      description: formData.get('description') as string || undefined,
+      project_id: id,
+    });
+    setCreateJobDialogOpen(false);
   };
 
   const handleStatusChange = (status: ProjectStatus) => {
@@ -291,58 +344,185 @@ export default function ProjectDetail() {
                       <Briefcase className="h-4 w-4" />
                       Linked Jobs ({project.jobs.length})
                     </CardTitle>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/jobs">Manage Jobs</Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {/* Link Existing Job Dialog */}
+                      <Dialog open={linkJobDialogOpen} onOpenChange={(open) => { setLinkJobDialogOpen(open); if (!open) setJobSearch(''); }}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-1.5">
+                            <Link2 className="h-4 w-4" />
+                            Link Job
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Link Existing Job</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Search active jobs..."
+                                value={jobSearch}
+                                onChange={e => setJobSearch(e.target.value)}
+                                className="pl-9"
+                              />
+                            </div>
+                            <div className="max-h-64 overflow-y-auto space-y-1">
+                              {availableJobs.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                  {jobSearch ? 'No matching jobs found' : 'All jobs are already linked'}
+                                </p>
+                              ) : (
+                                availableJobs.slice(0, 20).map(job => (
+                                  <button
+                                    key={job.id}
+                                    onClick={() => handleLinkJob(job.id)}
+                                    disabled={linkJobToProject.isPending}
+                                    className="w-full flex items-center justify-between p-2.5 rounded-lg border hover:bg-accent/50 transition-colors text-left"
+                                  >
+                                    <div>
+                                      <p className="text-sm font-medium">{job.title}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {job.client_company} · {job.country}
+                                        <Badge variant={job.status === 'open' ? 'default' : 'secondary'} className="ml-2 text-[10px] px-1.5 py-0">
+                                          {job.status}
+                                        </Badge>
+                                      </p>
+                                    </div>
+                                    <Link2 className="h-4 w-4 text-muted-foreground" />
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Add New Job Dialog */}
+                      <Dialog open={createJobDialogOpen} onOpenChange={setCreateJobDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" className="gap-1.5">
+                            <Plus className="h-4 w-4" />
+                            Add Job
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                          <DialogHeader>
+                            <DialogTitle>Create New Job</DialogTitle>
+                          </DialogHeader>
+                          <form onSubmit={handleCreateJob} className="space-y-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label htmlFor="pj-title">Job Title *</Label>
+                                <Input id="pj-title" name="title" required />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="pj-client_company">Client Company *</Label>
+                                <Input id="pj-client_company" name="client_company" defaultValue={project.employer_name} required />
+                              </div>
+                            </div>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label htmlFor="pj-country">Country *</Label>
+                                <Input id="pj-country" name="country" defaultValue={project.location} required />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="pj-salary_range">Salary Range</Label>
+                                <Input id="pj-salary_range" name="salary_range" placeholder="e.g., €50k-70k" />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="pj-required_skills">Required Skills</Label>
+                              <Input id="pj-required_skills" name="required_skills" placeholder="e.g., JavaScript, React, Node.js" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="pj-description">Description</Label>
+                              <Textarea id="pj-description" name="description" rows={3} />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button type="button" variant="outline" onClick={() => setCreateJobDialogOpen(false)}>Cancel</Button>
+                              <Button type="submit" disabled={createJob.isPending}>
+                                {createJob.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Create Job
+                              </Button>
+                            </div>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to="/jobs">Manage Jobs</Link>
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {project.jobs.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p>No jobs linked to this project yet</p>
-                        <p className="text-sm">Link jobs from the Jobs page</p>
+                        <p className="text-sm">Link existing jobs or create a new one</p>
                       </div>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-center">Total</TableHead>
-                            <TableHead className="text-center">Placed</TableHead>
-                            <TableHead className="text-right">Fill Rate</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {project.jobs.map(job => {
-                            const fillRate = job.total_candidates > 0
-                              ? Math.round((job.placed_candidates / job.total_candidates) * 100)
-                              : 0;
-                            return (
-                              <TableRow
-                                key={job.id}
-                                className="cursor-pointer hover:bg-muted/50"
-                                onClick={() => navigate(`/jobs/${job.id}`)}
-                              >
-                                <TableCell className="font-medium">{job.title}</TableCell>
-                                <TableCell>
-                                  <Badge variant={job.status === 'open' ? 'default' : 'secondary'}>
-                                    {job.status}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-center">{job.total_candidates}</TableCell>
-                                <TableCell className="text-center">{job.placed_candidates}</TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-2">
-                                    <Progress value={fillRate} className="w-16 h-2" />
-                                    <span className="text-sm w-10">{fillRate}%</span>
-                                  </div>
+                      <div className="space-y-4">
+                        {/* Search bar for linked jobs */}
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search linked jobs..."
+                            value={linkedJobSearch}
+                            onChange={e => setLinkedJobSearch(e.target.value)}
+                            className="pl-9"
+                          />
+                        </div>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Role</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-center">Total</TableHead>
+                              <TableHead className="text-center">Placed</TableHead>
+                              <TableHead className="text-right">Fill Rate</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredLinkedJobs.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                                  No jobs match your search
                                 </TableCell>
                               </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+                            ) : (
+                              filteredLinkedJobs.map(job => {
+                                const fillRate = job.total_candidates > 0
+                                  ? Math.round((job.placed_candidates / job.total_candidates) * 100)
+                                  : 0;
+                                return (
+                                  <TableRow
+                                    key={job.id}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => navigate(`/jobs/${job.id}`)}
+                                  >
+                                    <TableCell className="font-medium">{job.title}</TableCell>
+                                    <TableCell>
+                                      <Badge variant={job.status === 'open' ? 'default' : 'secondary'}>
+                                        {job.status}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-center">{job.total_candidates}</TableCell>
+                                    <TableCell className="text-center">{job.placed_candidates}</TableCell>
+                                    <TableCell className="text-right">
+                                      <div className="flex items-center justify-end gap-2">
+                                        <Progress value={fillRate} className="w-16 h-2" />
+                                        <span className="text-sm w-10">{fillRate}%</span>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
