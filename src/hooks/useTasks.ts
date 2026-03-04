@@ -18,6 +18,7 @@ export interface Task {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  assignee_name?: string | null;
 }
 
 export interface CreateTaskInput {
@@ -32,21 +33,55 @@ export interface CreateTaskInput {
   entity_id?: string;
 }
 
+async function fetchTasksWithProfiles(filters?: {
+  status?: string;
+  assigned_to?: string;
+  entity_type?: string;
+  entity_id?: string;
+}): Promise<Task[]> {
+  let query = supabase
+    .from('tasks' as any)
+    .select('*')
+    .order('due_date', { ascending: true, nullsFirst: false });
+
+  if (filters?.status) query = query.eq('status', filters.status);
+  if (filters?.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
+  if (filters?.entity_type) query = query.eq('entity_type', filters.entity_type);
+  if (filters?.entity_id) query = query.eq('entity_id', filters.entity_id);
+
+  const { data, error } = await query.limit(200);
+  if (error) throw error;
+
+  const tasks = (data ?? []) as unknown as Task[];
+
+  // Batch-fetch assignee names
+  const assigneeIds = [...new Set(tasks.map(t => t.assigned_to).filter(Boolean))] as string[];
+  if (assigneeIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, full_name')
+      .in('user_id', assigneeIds);
+
+    const nameMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p.full_name]));
+    for (const task of tasks) {
+      task.assignee_name = task.assigned_to ? nameMap.get(task.assigned_to) ?? null : null;
+    }
+  }
+
+  return tasks;
+}
+
 export function useTasks(filters?: { status?: string; assigned_to?: string; entity_type?: string; entity_id?: string }) {
   return useQuery({
     queryKey: ['tasks', filters],
-    queryFn: async () => {
-      let query = supabase.from('tasks' as any).select('*').order('due_date', { ascending: true, nullsFirst: false });
+    queryFn: () => fetchTasksWithProfiles(filters),
+  });
+}
 
-      if (filters?.status) query = query.eq('status', filters.status);
-      if (filters?.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
-      if (filters?.entity_type) query = query.eq('entity_type', filters.entity_type);
-      if (filters?.entity_id) query = query.eq('entity_id', filters.entity_id);
-
-      const { data, error } = await query.limit(100);
-      if (error) throw error;
-      return (data ?? []) as unknown as Task[];
-    },
+export function useTeamTasks() {
+  return useQuery({
+    queryKey: ['tasks', 'team'],
+    queryFn: () => fetchTasksWithProfiles(),
   });
 }
 
@@ -78,6 +113,7 @@ export function useUpdateTask() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string }) => {
       const payload: any = { ...updates };
+      delete payload.assignee_name; // Don't send computed field
       if (updates.status === 'done') payload.completed_at = new Date().toISOString();
       const { data, error } = await supabase.from('tasks' as any).update(payload).eq('id', id).select().single();
       if (error) throw error;
