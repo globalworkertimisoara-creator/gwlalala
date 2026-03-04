@@ -711,6 +711,13 @@ export default function CandidateDetail() {
           candidate={candidate}
           onLinked={handleProjectLinked}
         />
+
+        {/* Download CV Dialog */}
+        <DownloadCVDialog
+          candidateId={id!}
+          open={isCVDialogOpen}
+          onOpenChange={setIsCVDialogOpen}
+        />
       </div>
     </AppLayout>
   );
