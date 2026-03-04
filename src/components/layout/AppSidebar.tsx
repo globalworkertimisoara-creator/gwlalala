@@ -79,7 +79,7 @@ const navItems: NavItem[] = [
   { title: 'Candidates', url: '/candidates', icon: Users, requirePermission: 'viewAllCandidates' },
   { title: 'Jobs', url: '/jobs', icon: Briefcase },
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
-  { title: 'Tasks', url: '/tasks', icon: CheckSquare },
+  
   { title: 'Contracts', url: '/contracts', icon: FileText },
   { title: 'Reports', url: '/reports', icon: FileDown },
   { title: 'Sales Analytics', url: '/sales-analytics', icon: BarChart3, requirePermission: 'viewSalesAnalytics' },
