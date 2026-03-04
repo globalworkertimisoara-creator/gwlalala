@@ -158,13 +158,24 @@ export function DashboardTasks() {
   const { user } = useAuth();
   const { can } = usePermissions();
   const isManager = can('viewAllUsers');
+  const [searchParams] = useSearchParams();
 
   const { data: myTasks = [], isLoading: myLoading } = useTasks(user ? { assigned_to: user.id } : undefined);
   const { data: teamTasks = [], isLoading: teamLoading } = useTeamTasks();
+  const { data: notifications = [] } = useNotifications();
+  const markRead = useMarkNotificationRead();
+
+  const digestNotifications = notifications.filter(n =>
+    n.type === 'task_digest' || n.type === 'task_escalation' || n.type === 'task_overdue'
+  );
+  const unreadDigestCount = digestNotifications.filter(n => !n.is_read).length;
 
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const { data: staffProfiles = [] } = useStaffProfiles();
+
+  // Allow deep-linking to digest tab via ?tab=digest
+  const defaultTab = searchParams.get('tab') === 'digest' && isManager ? 'digest' : 'my';
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
