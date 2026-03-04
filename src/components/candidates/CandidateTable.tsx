@@ -121,7 +121,7 @@ export function CandidateTable({ candidates, onCandidateClick, onLinkToProject }
                             onLinkToProject(candidate);
                           }}
                         >
-                          <FolderLink className="h-4 w-4" />
+                          <FolderSymlink className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Link to Project</TooltipContent>
