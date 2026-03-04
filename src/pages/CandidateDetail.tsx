@@ -6,6 +6,7 @@ import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useStageHistory } from '@/hooks/useStageHistory';
 import { useCandidateActivityLog, useLogCandidateActivity } from '@/hooks/useCandidateActivityLog';
+import { usePipelineCandidates } from '@/hooks/usePipelineCandidates';
 import { CandidateActivityLog } from '@/components/candidates/CandidateActivityLog';
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
 import { ExtractedData } from '@/hooks/useDocumentExtraction';
