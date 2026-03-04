@@ -1,179 +1,211 @@
 
 
-# Self-Test Plan: Documentation Staff and Sales Manager Roles
+# Platform Scale-Up and Process Expansion Plan
 
-This is a comprehensive end-to-end test plan for two roles within the GlobalWorker platform. Use the admin "View as" feature to simulate each role, or create dedicated test accounts.
-
----
-
-## Prerequisites (for both roles)
-
-1. Log in as Admin
-2. Ensure test data exists: at least 1 project, 1 job, 2 candidates, and 1 agency
-3. Use the sidebar dropdown "View as Internal Role" to switch between roles, or create test user accounts with registration codes
+## Overview
+This plan addresses scalability for 50-100 concurrent users with hundreds of GB storage, then layers in the four missing process modules: task management, contract tracking, reporting/exports, and automated notifications.
 
 ---
 
-## PART A: Documentation Staff Test Plan
+## Phase 1: Scalability and Performance (First Priority)
 
-**Visible sidebar items:** Dashboard, Projects, Pipeline, Candidates, Jobs, Tasks, Contracts, Reports
+### 1.1 Database Query Optimization
+- Add database indexes on high-traffic columns:
+  - `candidates(email)`, `candidates(current_stage)`, `candidates(created_at)`
+  - `agency_workers(agency_id, current_stage)`, `agency_workers(email)`
+  - `candidate_workflow(candidate_id)`, `candidate_workflow(project_id, current_phase)`
+  - `jobs(status)`, `jobs(project_id)`
+  - `documents(candidate_id)`, `workflow_documents(workflow_id)`
+  - `stage_history(candidate_id, changed_at)`
+  - `notifications(user_id, is_read)`
+- Add composite indexes for common join patterns used in analytics views
 
-### A1. Login and Navigation
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 1 | Log in with documentation_staff credentials | Dashboard loads, sidebar shows only permitted items |
-| 2 | Verify sidebar does NOT show: Agency Workers, Sales Analytics, Billing, Organization, Settings | Items hidden based on permissions |
+### 1.2 React Query Tuning for Concurrent Users
+- Configure global `QueryClient` with production-ready defaults:
+  - `staleTime: 30000` (30s) to reduce redundant refetches
+  - `gcTime: 300000` (5min) for garbage collection
+  - `refetchOnWindowFocus: false` for heavy queries
+  - `retry: 2` with exponential backoff
+- Add pagination to all list views (candidates, workers, jobs, documents) using cursor-based or offset pagination with a default page size of 25
+- Implement virtual scrolling for the pipeline board when candidate counts exceed 50 per column
 
-### A2. Dashboard
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 3 | View dashboard stats and recent candidates | Data loads, no errors |
+### 1.3 Hybrid Storage Architecture
+- **Cloud storage buckets** (current `candidate-documents` and `agency-documents`): continue for all document files (PDFs, images, certificates) - these stay under direct database control with RLS
+- **Google Drive**: reserved for large video files (working demos, presentation videos) via the existing compression + upload pipeline
+- Create a new `storage_metadata` table to track all files regardless of storage backend:
 
-### A3. Candidates (view-only)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 4 | Navigate to Candidates | Candidate list displays |
-| 5 | Click a candidate to view details | Detail page opens with documents, notes, stage history |
-| 6 | Verify "Add Candidate" button is NOT shown or disabled | Cannot create candidates (createCandidates: false) |
-| 7 | Try exporting candidates | Export works (exportCandidates: true) |
+```text
+storage_metadata
+  id (uuid, PK)
+  entity_type (text) -- 'candidate', 'agency_worker', 'project', 'contract'
+  entity_id (uuid)
+  file_name (text)
+  file_size (bigint)
+  mime_type (text)
+  storage_backend (text) -- 'supabase' or 'google_drive'
+  storage_path (text) -- bucket path or Drive file ID
+  uploaded_by (uuid)
+  created_at (timestamptz)
+```
 
-### A4. Documents and Workflows (core responsibility)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 8 | Open a candidate detail page | Documents section visible |
-| 9 | Upload a document (passport, visa, contract) | Upload succeeds (uploadDocuments: true) |
-| 10 | Delete a document | Delete succeeds (deleteDocuments: true) |
-| 11 | Navigate to a project workflow phase | Workflow timeline and document checklist visible |
-| 12 | Advance a workflow phase | Phase advances successfully (advanceWorkflowPhases: true) |
-| 13 | Review and approve a document in the checklist | Approval recorded (reviewApproveDocuments: true) |
-| 14 | Create a workflow | Workflow creation works (createWorkflows: true) |
+- Add RLS policies matching entity-type access rules
+- Update `FileUploader` component to auto-route: videos over 10MB go to Google Drive, everything else to cloud storage
 
-### A5. Projects (view-only)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 15 | Navigate to Projects list | Projects display |
-| 16 | Click into a project detail | Detail page loads with workflow phases |
-| 17 | Verify cannot create/edit/delete projects | Create button hidden or disabled |
-
-### A6. Jobs (view-only)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 18 | Navigate to Jobs list | Jobs display |
-| 19 | Verify cannot create/edit jobs | Buttons hidden |
-
-### A7. Notes
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 20 | On a candidate detail, add a note | Note created successfully |
-| 21 | Edit own note | Edit works |
-| 22 | Verify cannot delete other users' notes | Delete button hidden on others' notes |
-
-### A8. Tasks and Contracts
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 23 | Navigate to Tasks | Task list loads |
-| 24 | Navigate to Contracts | Contracts page loads |
-
-### A9. Negative Tests (should be blocked)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 25 | Try navigating to /settings directly | Page not shown or redirected |
-| 26 | Try navigating to /organization directly | Page not shown |
-| 27 | Try navigating to /billing directly | Not accessible |
-| 28 | Try navigating to /sales-analytics | Not accessible |
+### 1.4 Connection and Concurrency Hardening
+- Add database connection pooling awareness: ensure no long-running transactions in hooks
+- Implement optimistic updates for frequently-used mutations (stage changes, note creation, document status updates) to reduce perceived latency
+- Add request deduplication in React Query for identical concurrent requests
+- Set up error boundaries at the route level to prevent one failing component from crashing the entire page
 
 ---
 
-## PART B: Sales Manager Test Plan
+## Phase 2: Task Assignments and Deadlines
 
-**Visible sidebar items:** Dashboard, Projects, Pipeline, Candidates, Jobs, Tasks, Contracts, Reports, Billing, Analytics
+### 2.1 Database Schema
+Create a `tasks` table:
 
-### B1. Login and Navigation
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 1 | Log in with sales_manager credentials | Dashboard loads |
-| 2 | Verify sidebar shows: Dashboard, Projects, Pipeline, Candidates, Jobs, Billing, Analytics, Tasks, Contracts, Reports | All permitted items visible |
-| 3 | Verify sidebar does NOT show: Agency Workers, Sales Analytics, Organization, Settings | Hidden items confirmed |
+```text
+tasks
+  id (uuid, PK)
+  title (text, NOT NULL)
+  description (text)
+  task_type (text) -- 'document_review', 'candidate_follow_up', 'visa_check', 'general'
+  priority (text) -- 'low', 'medium', 'high', 'urgent'
+  status (text) -- 'todo', 'in_progress', 'done', 'cancelled'
+  assigned_to (uuid) -- user_id
+  assigned_role (app_role) -- optional role-based assignment
+  due_date (timestamptz)
+  completed_at (timestamptz)
+  entity_type (text) -- 'candidate', 'job', 'project', 'workflow'
+  entity_id (uuid) -- links to relevant record
+  created_by (uuid)
+  created_at (timestamptz)
+  updated_at (timestamptz)
+```
 
-### B2. Dashboard
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 4 | View dashboard overview cards | Stats load correctly |
+- RLS: staff can view all tasks; agencies see only tasks linked to their workers; employers see tasks for their projects
 
-### B3. Jobs (create and edit)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 5 | Navigate to Jobs | Jobs list loads |
-| 6 | Create a new job (title, client company, country) | Job created successfully (createJobs: true) |
-| 7 | Edit the job details | Edit saves (editJobs: true) |
-| 8 | Verify cannot delete jobs | Delete button hidden (deleteJobs: false) |
-
-### B4. Projects (create and edit)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 9 | Navigate to Projects | Projects list loads |
-| 10 | Create a new project | Project created (createProjects: true) |
-| 11 | Edit project details | Edit saves (editProjects: true) |
-| 12 | Verify cannot delete projects | Delete hidden (deleteProjects: false) |
-
-### B5. Candidates (view and export only)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 13 | Navigate to Candidates | List displays |
-| 14 | View candidate detail | Detail page loads |
-| 15 | Export candidates | Export works (exportCandidates: true) |
-| 16 | Verify cannot create/edit/delete candidates | Buttons hidden |
-
-### B6. Pipeline
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 17 | Navigate to Pipeline (Kanban view) | Pipeline loads with stage columns |
-| 18 | Verify candidate cards are visible | Cards display candidate info |
-
-### B7. Billing (view only)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 19 | Navigate to Billing | Billing page loads (viewBilling: true) |
-| 20 | Verify cannot manage billing or payment methods | Management actions hidden |
-
-### B8. Agencies (view profiles)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 21 | View agency profiles where available | Agency data visible (viewAgencyProfiles: true) |
-| 22 | Verify cannot edit agency details or approve/reject | Edit buttons hidden |
-
-### B9. Documents (view only)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 23 | On a candidate detail, view documents | Documents section visible |
-| 24 | Verify cannot upload or delete documents | Upload/delete hidden |
-
-### B10. Notes
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 25 | Add a note on a candidate | Note created |
-| 26 | Edit own note | Works |
-
-### B11. Tasks, Contracts, Reports
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 27 | Navigate to Tasks | Page loads |
-| 28 | Navigate to Contracts | Page loads |
-| 29 | Navigate to Reports | Page loads |
-
-### B12. Negative Tests (should be blocked)
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 30 | Try navigating to /settings | Not accessible |
-| 31 | Try navigating to /organization | Not accessible |
-| 32 | Try navigating to /agency-workers | Not accessible |
-| 33 | Try navigating to /sales-analytics | Not accessible (viewSalesAnalytics: false for sales_manager) |
+### 2.2 UI Components
+- **Tasks sidebar panel**: slide-out panel accessible from any page showing "My Tasks" with due-date sorting
+- **Task creation**: quick-add from candidate detail, job detail, and project detail pages (contextually pre-fills entity linkage)
+- **Workload dashboard**: card view on the main dashboard showing task counts by assignee and overdue counts
+- **Due date indicators**: color-coded badges (green = on track, amber = due soon, red = overdue)
 
 ---
 
-## Test Execution Notes
+## Phase 3: Contract Management
 
-- **Quick method**: Log in as Admin and use the "View as" role switcher in the sidebar user menu. Note: this only affects UI visibility -- database-level RLS is not changed.
-- **Full method**: Create real test accounts with each role to validate both UI and database-level access.
-- Mark each test step as PASS / FAIL / BLOCKED and note any unexpected behavior.
+### 3.1 Database Schema
+Create a `contracts` table:
+
+```text
+contracts
+  id (uuid, PK)
+  contract_type (text) -- 'employer_agreement', 'agency_agreement', 'worker_contract', 'service_agreement'
+  party_type (text) -- 'employer', 'agency', 'worker'
+  party_id (uuid) -- company_id, agency_id, or candidate_id
+  title (text)
+  status (text) -- 'draft', 'sent', 'signed', 'active', 'expired', 'terminated'
+  start_date (date)
+  end_date (date)
+  renewal_date (date)
+  auto_renew (boolean, default false)
+  total_value (numeric)
+  currency (text, default 'EUR')
+  storage_path (text) -- link to uploaded contract PDF
+  signed_by_party_at (timestamptz)
+  signed_by_staff_at (timestamptz)
+  notes (text)
+  created_by (uuid)
+  created_at (timestamptz)
+  updated_at (timestamptz)
+```
+
+### 3.2 UI
+- **Contracts page** (`/contracts`): table with filters by type, status, and party
+- **Contract detail view**: shows terms, linked documents, renewal timeline, and change history
+- **Expiry dashboard widget**: cards showing contracts expiring in 30/60/90 days
+- **Link contracts to projects/jobs**: contract reference on project and job detail pages
+
+---
+
+## Phase 4: Reporting and Exports
+
+### 4.1 Export Engine
+- Create a backend function `generate-report` that accepts report type and filters, queries data, and returns CSV/Excel
+- Report types:
+  - **Candidate pipeline report**: all candidates with current stage, days in stage, assigned job/project
+  - **Agency performance report**: submissions, placements, success rates per agency
+  - **Project status report**: fill rates, workflow progress, timeline adherence
+  - **Compliance report**: document expiry dates, missing documents, workflow blockers
+  - **Billing summary**: payments by agency, outstanding amounts, milestone tracking
+
+### 4.2 UI
+- **Export button** on every analytics page and list view (candidates, jobs, projects)
+- **Report builder page** (`/reports`): select report type, date range, filters, and format (CSV or PDF)
+- **Scheduled reports**: allow admins to set up weekly/monthly auto-generated reports (stored in cloud storage, notification on completion)
+
+---
+
+## Phase 5: Automated Notifications and Alerts
+
+### 5.1 Notification Triggers (Database Triggers + Cron)
+- **Document expiry alerts**: daily cron checks for documents (passports, visas, contracts) expiring within 30/14/7 days
+- **Stalled workflow alerts**: cron checks for workflows stuck in a phase for more than N days (configurable per phase)
+- **Task deadline reminders**: cron sends notifications 24h before task due dates
+- **Stage change notifications**: database trigger on `candidates` and `agency_workers` stage changes notifies assigned staff
+- **Contract renewal reminders**: cron checks contracts expiring within 60/30/7 days
+
+### 5.2 Notification Channels
+- **In-app notifications**: extend existing notification system with new event types
+- **Email notifications**: create a backend function using a transactional email service for critical alerts (document expiry, overdue tasks)
+- User preferences table to control which notifications they receive and via which channel
+
+### 5.3 Cron Infrastructure
+- Enable `pg_cron` and `pg_net` extensions
+- Schedule a single "daily-checks" backend function that runs all expiry/deadline checks at 6 AM UTC
+- Schedule a "hourly-alerts" function for time-sensitive items (task deadlines, workflow stalls)
+
+---
+
+## Implementation Order
+
+```text
+Week 1-2: Phase 1 (Scalability)
+  - Database indexes + query optimization
+  - React Query tuning + pagination
+  - Storage metadata table + hybrid routing
+  - Error boundaries + optimistic updates
+
+Week 3: Phase 2 (Tasks)
+  - Tasks table + RLS
+  - Task UI components
+  - Integration with existing entity pages
+
+Week 4: Phase 3 (Contracts)
+  - Contracts table + RLS
+  - Contracts page + detail views
+  - Link to projects/agencies
+
+Week 5: Phase 4 (Reporting)
+  - Report generation backend function
+  - Export buttons on existing pages
+  - Report builder page
+
+Week 6: Phase 5 (Automated Notifications)
+  - Cron infrastructure
+  - Expiry/deadline check functions
+  - Email notification backend function
+  - User notification preferences
+```
+
+---
+
+## Technical Considerations
+
+- All new tables will have RLS enabled with policies matching the existing access patterns (staff see all, agencies see their own, employers see their projects)
+- All timestamps use `timestamptz` for timezone safety
+- New pages follow the existing `AppLayout` pattern for internal staff and tab-based navigation for agency/employer portals
+- Database migrations will be incremental - no destructive changes to existing tables
+- The hybrid storage approach keeps the existing Google Drive integration intact while routing smaller files through cloud storage for better RLS integration
 
