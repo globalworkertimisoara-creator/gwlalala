@@ -21,7 +21,9 @@ import {
 } from '@/hooks/useNotifications';
 
 function getNotificationRoute(notification: Notification): string | null {
-  const { related_entity_type, related_entity_id, project_id } = notification;
+  const { related_entity_type, related_entity_id, project_id, type } = notification;
+  // Digest notifications go to dashboard with digest tab
+  if (type === 'task_digest' || type === 'task_escalation') return '/?tab=digest';
   if (related_entity_type && related_entity_id) {
     switch (related_entity_type) {
       case 'candidate': return `/candidates/${related_entity_id}`;
