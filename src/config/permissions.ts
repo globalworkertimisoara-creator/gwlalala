@@ -308,7 +308,7 @@ const OPERATIONS_MANAGER_PERMISSIONS: RolePermissions = {
 
 const DOCUMENTATION_STAFF_PERMISSIONS: RolePermissions = {
   createUsers: false,
-  viewAllUsers: true,
+  viewAllUsers: false,
   modifyUserRoles: false,
   viewAllCandidates: true,
   createCandidates: false,
@@ -642,7 +642,7 @@ const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
 
 const DOCUMENTATION_LEAD_PERMISSIONS: RolePermissions = {
   createUsers: false,
-  viewAllUsers: true,
+  viewAllUsers: false,
   modifyUserRoles: false,
   viewAllCandidates: true,
   createCandidates: false,
@@ -710,7 +710,7 @@ const DOCUMENTATION_LEAD_PERMISSIONS: RolePermissions = {
 
 const SALES_MANAGER_PERMISSIONS: RolePermissions = {
   createUsers: false,
-  viewAllUsers: true,
+  viewAllUsers: false,
   modifyUserRoles: false,
   viewAllCandidates: true,
   createCandidates: false,
