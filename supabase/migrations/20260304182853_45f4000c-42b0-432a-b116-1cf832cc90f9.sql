@@ -1,0 +1,1 @@
+ALTER TABLE public.candidates ALTER COLUMN email DROP NOT NULL;

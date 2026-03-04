@@ -1379,7 +1379,7 @@ export type Database = {
           current_stage: Database["public"]["Enums"]["recruitment_stage"]
           date_of_birth: string | null
           driver_license: Json | null
-          email: string
+          email: string | null
           expected_start_date: string | null
           family_info: Json | null
           full_name: string
@@ -1413,7 +1413,7 @@ export type Database = {
           current_stage?: Database["public"]["Enums"]["recruitment_stage"]
           date_of_birth?: string | null
           driver_license?: Json | null
-          email: string
+          email?: string | null
           expected_start_date?: string | null
           family_info?: Json | null
           full_name: string
@@ -1447,7 +1447,7 @@ export type Database = {
           current_stage?: Database["public"]["Enums"]["recruitment_stage"]
           date_of_birth?: string | null
           driver_license?: Json | null
-          email?: string
+          email?: string | null
           expected_start_date?: string | null
           family_info?: Json | null
           full_name?: string
