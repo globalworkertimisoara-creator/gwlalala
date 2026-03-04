@@ -186,7 +186,7 @@ export interface StageHistory {
 // Input types for mutations
 export interface CreateCandidateInput {
   full_name: string;
-  email: string;
+  email?: string;
   phone?: string;
   nationality?: string;
   current_country?: string;
@@ -198,12 +198,20 @@ export interface CreateCandidateInput {
   gender?: string;
   marital_status?: string;
   whatsapp?: string;
+  number_of_children?: number;
   // Passport fields
   passport_number?: string;
   passport_expiry?: string;
   passport_issue_date?: string;
   passport_issued_by?: string;
+  national_id_number?: string;
   parents_names?: string;
+  // JSON fields
+  driver_license?: any;
+  salary_expectations?: any;
+  availability?: any;
+  job_preferences?: any;
+  family_info?: any;
 }
 
 export interface UpdateCandidateInput extends Partial<CreateCandidateInput> {
