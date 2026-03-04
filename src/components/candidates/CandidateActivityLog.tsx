@@ -90,6 +90,11 @@ export function CandidateActivityLog({
                           {ACTOR_LABELS[entry.actor_type] || entry.actor_type}
                         </Badge>
                       )}
+                      {entry.actor_name && (
+                        <span className="text-[11px] font-medium text-foreground">
+                          {entry.actor_name}
+                        </span>
+                      )}
                       <span className="text-[11px] text-muted-foreground ml-auto whitespace-nowrap">
                         {format(new Date(entry.created_at), 'MMM d, yyyy · HH:mm')}
                       </span>

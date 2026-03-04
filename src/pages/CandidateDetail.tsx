@@ -662,6 +662,8 @@ export default function CandidateDetail() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
+                        {note.author_name && <span className="font-medium text-foreground">{note.author_name}</span>}
+                        {note.author_name && ' · '}
                         {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
                       </p>
                     </CardContent>

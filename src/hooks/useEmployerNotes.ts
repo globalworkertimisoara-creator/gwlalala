@@ -9,12 +9,13 @@ export interface EmployerNote {
   content: string;
   created_by: string;
   created_at: string;
+  author_name?: string | null;
 }
 
 export function useEmployerNotes(candidateId: string | undefined) {
   return useQuery({
     queryKey: ['employer-notes', candidateId],
-    queryFn: async () => {
+    queryFn: async (): Promise<EmployerNote[]> => {
       if (!candidateId) return [];
       const { data, error } = await supabase
         .from('employer_notes')
@@ -22,7 +23,22 @@ export function useEmployerNotes(candidateId: string | undefined) {
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as EmployerNote[];
+      if (!data || data.length === 0) return [];
+
+      const userIds = [...new Set(data.map(n => n.created_by).filter(Boolean))];
+      let profileMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', userIds);
+        profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p.full_name || '']));
+      }
+
+      return data.map(n => ({
+        ...n,
+        author_name: n.created_by ? profileMap[n.created_by] || null : null,
+      })) as EmployerNote[];
     },
     enabled: !!candidateId,
   });

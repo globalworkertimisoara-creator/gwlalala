@@ -402,6 +402,8 @@ export default function EmployerCandidateDetail() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
+                    {note.author_name && <span className="font-medium text-foreground">{note.author_name}</span>}
+                    {note.author_name && ' · '}
                     {format(new Date(note.created_at), 'MMM d, yyyy HH:mm')}
                   </p>
                 </div>

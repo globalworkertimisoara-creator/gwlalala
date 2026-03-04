@@ -3,10 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Note, CreateNoteInput } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 
+export type NoteWithAuthor = Note & { author_name: string | null };
+
 export function useNotes(candidateId: string | undefined) {
   return useQuery({
     queryKey: ['notes', candidateId],
-    queryFn: async () => {
+    queryFn: async (): Promise<NoteWithAuthor[]> => {
       if (!candidateId) return [];
 
       const { data, error } = await supabase
@@ -16,7 +18,23 @@ export function useNotes(candidateId: string | undefined) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Note[];
+      if (!data || data.length === 0) return [];
+
+      // Batch fetch author names
+      const userIds = [...new Set(data.map(n => n.created_by).filter(Boolean))] as string[];
+      let profileMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', userIds);
+        profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p.full_name || '']));
+      }
+
+      return data.map(n => ({
+        ...n,
+        author_name: n.created_by ? profileMap[n.created_by] || null : null,
+      })) as NoteWithAuthor[];
     },
     enabled: !!candidateId,
   });
