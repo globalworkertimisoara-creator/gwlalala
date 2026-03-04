@@ -18,6 +18,17 @@ export default function ResetPassword() {
 
   useEffect(() => {
     let sub: ReturnType<typeof supabase.auth.onAuthStateChange>['data']['subscription'] | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    // Set up the auth state listener FIRST, before getSession, so we don't miss events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && s)) {
+        setIsValidSession(true);
+        setIsCheckingSession(false);
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+    });
+    sub = subscription;
 
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -26,27 +37,24 @@ export default function ResetPassword() {
         setIsValidSession(true);
         setIsCheckingSession(false);
       } else {
-        // Listen for the PASSWORD_RECOVERY event that arrives after the URL hash is consumed
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
-          if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && s)) {
-            setIsValidSession(true);
-            setIsCheckingSession(false);
-          }
-        });
-        sub = subscription;
+        // Check if URL has recovery tokens (hash fragment or query params)
+        const hasRecoveryParams = window.location.hash.includes('type=recovery') ||
+          window.location.search.includes('type=recovery') ||
+          window.location.hash.includes('access_token');
 
-        // Fallback: stop the spinner after 2 s even if no event fires
-        setTimeout(() => {
+        // Give more time if we detect recovery params in the URL
+        const timeout = hasRecoveryParams ? 8000 : 3000;
+        timeoutId = setTimeout(() => {
           setIsCheckingSession(false);
-        }, 2000);
+        }, timeout);
       }
     };
 
     checkSession();
 
-    // Real cleanup — runs when the component unmounts
     return () => {
       sub?.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
