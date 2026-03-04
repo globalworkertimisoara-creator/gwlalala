@@ -9,6 +9,7 @@ import { useCandidateActivityLog, useLogCandidateActivity } from '@/hooks/useCan
 import { usePipelineCandidates } from '@/hooks/usePipelineCandidates';
 import { CandidateActivityLog } from '@/components/candidates/CandidateActivityLog';
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
+import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
 import { ExtractedData } from '@/hooks/useDocumentExtraction';
 import { STAGES, getStageLabel, getStageColor, RecruitmentStage, DocType } from '@/types/database';
 import WorkflowTimeline from '@/components/workflow/WorkflowTimeline';
@@ -52,6 +53,7 @@ import {
   Sparkles,
   Save,
   X,
+  FolderSymlink,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
