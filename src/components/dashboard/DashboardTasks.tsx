@@ -293,10 +293,10 @@ export function DashboardTasks() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Assign to User</Label>
-                        <Select value={form.assigned_to || ''} onValueChange={v => setForm(p => ({ ...p, assigned_to: v || undefined }))}>
+                        <Select value={form.assigned_to || '__none__'} onValueChange={v => setForm(p => ({ ...p, assigned_to: v === '__none__' ? undefined : v }))}>
                           <SelectTrigger><SelectValue placeholder="Select user" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Unassigned</SelectItem>
+                            <SelectItem value="__none__">Unassigned</SelectItem>
                             {staffProfiles.map(p => (
                               <SelectItem key={p.user_id} value={p.user_id}>
                                 {p.full_name || 'Unnamed'}
@@ -307,10 +307,10 @@ export function DashboardTasks() {
                       </div>
                       <div>
                         <Label>Assign to Role</Label>
-                        <Select value={form.assigned_role || ''} onValueChange={v => setForm(p => ({ ...p, assigned_role: v || undefined }))}>
+                        <Select value={form.assigned_role || '__none__'} onValueChange={v => setForm(p => ({ ...p, assigned_role: v === '__none__' ? undefined : v }))}>
                           <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="__none__">None</SelectItem>
                             {INTERNAL_ROLES.map(r => (
                               <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                             ))}
@@ -324,10 +324,10 @@ export function DashboardTasks() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Link to</Label>
-                      <Select value={form.entity_type || ''} onValueChange={v => setForm(p => ({ ...p, entity_type: v || undefined, entity_id: v ? p.entity_id : undefined }))}>
+                      <Select value={form.entity_type || '__none__'} onValueChange={v => setForm(p => ({ ...p, entity_type: v === '__none__' ? undefined : v, entity_id: v === '__none__' ? undefined : p.entity_id }))}>
                         <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="__none__">None</SelectItem>
                           <SelectItem value="candidate">Candidate</SelectItem>
                           <SelectItem value="project">Project</SelectItem>
                           <SelectItem value="job">Job</SelectItem>
@@ -395,19 +395,19 @@ export function DashboardTasks() {
             <TabsContent value="team" className="mt-3">
               {/* Team filters */}
               <div className="flex gap-2 mb-3">
-                <Select value={teamFilter.assignee || ''} onValueChange={v => setTeamFilter(f => ({ ...f, assignee: v || undefined }))}>
+                <Select value={teamFilter.assignee || '__all__'} onValueChange={v => setTeamFilter(f => ({ ...f, assignee: v === '__all__' ? undefined : v }))}>
                   <SelectTrigger className="h-7 text-xs w-[140px]"><SelectValue placeholder="All assignees" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All assignees</SelectItem>
+                    <SelectItem value="__all__">All assignees</SelectItem>
                     {staffProfiles.map(p => (
                       <SelectItem key={p.user_id} value={p.user_id}>{p.full_name || 'Unnamed'}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={teamFilter.priority || ''} onValueChange={v => setTeamFilter(f => ({ ...f, priority: v || undefined }))}>
+                <Select value={teamFilter.priority || '__all__'} onValueChange={v => setTeamFilter(f => ({ ...f, priority: v === '__all__' ? undefined : v }))}>
                   <SelectTrigger className="h-7 text-xs w-[110px]"><SelectValue placeholder="All priorities" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All priorities</SelectItem>
+                    <SelectItem value="__all__">All priorities</SelectItem>
                     <SelectItem value="low">Low</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="high">High</SelectItem>
