@@ -174,14 +174,16 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Get user info to verify they're authenticated
-    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
-    if (userError || !user) {
+    // Verify JWT claims
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid authentication', data: null }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    const userId = claimsData.claims.sub;
 
     // Check if user has access to the storage path via RLS
     // For agency-documents, verify the path starts with their agency folder
