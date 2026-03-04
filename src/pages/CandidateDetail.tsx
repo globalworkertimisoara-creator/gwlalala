@@ -407,12 +407,28 @@ export default function CandidateDetail() {
 
               {/* Current Stage Badge + Days */}
               <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
-                <Badge
-                  variant="secondary"
-                  className={cn('text-sm px-3 py-1', getStageColor(candidate.current_stage))}
-                >
-                  {getStageLabel(candidate.current_stage)}
-                </Badge>
+                {pipelineEntry && (
+                  <div className="flex flex-col items-start sm:items-end gap-1">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Pipeline Stage</span>
+                    <Badge
+                      variant="secondary"
+                      className={cn('text-sm px-3 py-1', getStageColor(pipelineEntry.pipeline_stage))}
+                    >
+                      {getStageLabel(pipelineEntry.pipeline_stage)}
+                    </Badge>
+                  </div>
+                )}
+                <div className="flex flex-col items-start sm:items-end gap-0.5">
+                  {pipelineEntry && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Global Stage</span>
+                  )}
+                  <Badge
+                    variant="secondary"
+                    className={cn('text-sm px-3 py-1', getStageColor(candidate.current_stage))}
+                  >
+                    {getStageLabel(candidate.current_stage)}
+                  </Badge>
+                </div>
                 <span className={cn('text-xs flex items-center gap-1', daysInStage > 14 ? 'text-warning font-medium' : 'text-muted-foreground')}>
                   <Clock className="h-3 w-3" />
                   {daysInStage}d in stage
