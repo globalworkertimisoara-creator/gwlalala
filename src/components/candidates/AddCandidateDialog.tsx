@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -356,88 +356,18 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Document Upload Section */}
-          <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="font-medium text-sm">Quick Fill with Documents</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Upload a resume, passport, or other documents to automatically extract candidate information
-            </p>
-
-            <div className="flex gap-2">
-              <Select value={selectedDocType} onValueChange={(v) => setSelectedDocType(v as DocType)}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DOC_TYPES.map(dt => (
-                    <SelectItem key={dt.value} value={dt.value}>{dt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2 flex-1"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading || isExtracting}
-              >
-                {isUploading || isExtracting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                {isExtracting ? 'Extracting data...' : isUploading ? 'Uploading...' : 'Upload & Extract'}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                onChange={handleFileSelect}
-              />
-            </div>
-
-            {uploadProgress > 0 && (
-              <Progress value={uploadProgress} className="h-1" />
-            )}
-
-            {/* Pending documents list */}
-            {pendingDocuments.length > 0 && (
-              <div className="space-y-2">
-                {pendingDocuments.map((doc, idx) => (
-                  <div 
-                    key={idx} 
-                    className="flex items-center gap-2 p-2 rounded-md bg-background border"
-                  >
-                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{doc.file.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {DOC_TYPES.find(d => d.value === doc.docType)?.label}
-                      </p>
-                    </div>
-                    {doc.uploaded ? (
-                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    ) : (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
-                    )}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0"
-                      onClick={() => removeDocument(idx)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <QuickFillDropZone
+            selectedDocType={selectedDocType}
+            setSelectedDocType={setSelectedDocType}
+            isUploading={isUploading}
+            isExtracting={isExtracting}
+            uploadProgress={uploadProgress}
+            pendingDocuments={pendingDocuments}
+            fileInputRef={fileInputRef}
+            onFileSelect={handleFileSelect}
+            onFileDrop={handleFileDrop}
+            onRemoveDocument={removeDocument}
+          />
 
           {/* Form Fields */}
           <div className="grid gap-4 sm:grid-cols-2">
