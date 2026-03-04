@@ -248,6 +248,7 @@ export function NotificationCenter() {
                     key={notification.id}
                     notification={notification}
                     onMarkRead={handleMarkRead}
+                    onNavigate={handleNavigate}
                   />
                 ))
               )}
