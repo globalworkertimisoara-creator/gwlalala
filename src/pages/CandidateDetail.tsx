@@ -580,6 +580,26 @@ export default function CandidateDetail() {
                 </CardContent>
               </Card>
               )}
+
+              {/* Link to Project */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Link to Project</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Link this candidate to a project to start their recruitment workflow.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => setIsLinkDialogOpen(true)}
+                  >
+                    <FolderSymlink className="h-4 w-4" />
+                    Link to Project
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
