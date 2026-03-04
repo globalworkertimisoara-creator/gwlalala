@@ -87,6 +87,7 @@ export function useExpiringContracts(daysAhead: number = 30) {
 export function useCreateContract() {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const logActivity = useLogContractActivity();
 
   return useMutation({
     mutationFn: async (input: CreateContractInput) => {
@@ -97,7 +98,14 @@ export function useCreateContract() {
       if (error) throw error;
       return data as unknown as Contract;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['contracts'] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['contracts'] });
+      logActivity.mutate({
+        contract_id: data.id,
+        action: 'created',
+        summary: `Contract "${data.title}" created with status "${data.status}"`,
+      });
+    },
   });
 }
 
