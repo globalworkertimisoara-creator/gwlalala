@@ -605,7 +605,14 @@ export default function CandidateDetail() {
                 candidateId={id}
                 candidate={candidate}
                 onDataApplied={() => {
-                  // Queries auto-invalidate via hooks
+                  // Refresh all candidate and CV data queries
+                  queryClient.invalidateQueries({ queryKey: ['candidate', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-education', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-work-experience', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-languages', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-skills', id] });
+                  queryClient.invalidateQueries({ queryKey: ['candidate-references', id] });
+                  queryClient.invalidateQueries({ queryKey: ['documents', id] });
                 }}
               />
             )}
