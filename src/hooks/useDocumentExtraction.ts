@@ -11,12 +11,17 @@ export interface ExtractedData {
   nationality?: string;
   current_country?: string;
   parents_names?: string;
+  gender?: string;
+  marital_status?: string;
+  current_city?: string;
+  whatsapp?: string;
   
   // Passport specific
   passport_number?: string;
   passport_expiry?: string;
   passport_issue_date?: string;
   passport_issued_by?: string;
+  national_id_number?: string;
   
   // CV/Resume specific
   skills?: string;
@@ -32,6 +37,58 @@ export interface ExtractedData {
   visa_expiry?: string;
   residence_permit_number?: string;
   residence_permit_expiry?: string;
+  
+  // Structured CV data
+  education?: Array<{
+    education_level: string;
+    field_of_study?: string;
+    institution_name?: string;
+    graduation_year?: number;
+    degree_obtained?: string;
+  }>;
+  work_experience?: Array<{
+    job_title: string;
+    company_name?: string;
+    country?: string;
+    start_date?: string;
+    end_date?: string;
+    job_description?: string;
+  }>;
+  languages?: Array<{
+    language_name: string;
+    proficiency_level: string;
+  }>;
+  skills_list?: Array<{
+    skill_name: string;
+    years_experience?: number;
+  }>;
+  references?: Array<{
+    reference_name: string;
+    position_title?: string;
+    phone?: string;
+    email?: string;
+    relationship?: string;
+  }>;
+  driver_license?: {
+    has_license: boolean;
+    license_type?: string;
+    years_experience?: number;
+  };
+  salary_expectations?: {
+    current_salary?: string;
+    expected_salary?: string;
+    currency?: string;
+  };
+  availability?: {
+    available_to_start?: string;
+    employment_status?: string;
+    notice_period?: string;
+  };
+  job_preferences?: {
+    preferred_titles?: string;
+    preferred_countries?: string;
+    preferred_work_type?: string;
+  };
   
   // General
   document_type?: string;
