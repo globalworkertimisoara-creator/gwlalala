@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useCandidate, useUpdateCandidateStage, useUpdateCandidate } from '@/hooks/useCandidates';
 import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useStageHistory } from '@/hooks/useStageHistory';
 import { useCandidateActivityLog, useLogCandidateActivity } from '@/hooks/useCandidateActivityLog';
+import { usePipelineCandidates } from '@/hooks/usePipelineCandidates';
 import { CandidateActivityLog } from '@/components/candidates/CandidateActivityLog';
 import { CandidateDocumentUpload } from '@/components/candidates/CandidateDocumentUpload';
 import { ExtractedData } from '@/hooks/useDocumentExtraction';
@@ -106,8 +107,13 @@ function getInitials(fullName: string): string {
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { can } = usePermissions();
+
+  // Pipeline context from URL params
+  const fromPipeline = searchParams.get('from') === 'pipeline';
+  const pipelineProjectId = searchParams.get('project') || undefined;
 
   // Data hooks
   const { data: candidate, isLoading: candidateLoading } = useCandidate(id);
@@ -116,6 +122,10 @@ export default function CandidateDetail() {
   const { data: stageHistory, isLoading: historyLoading } = useStageHistory(id);
   const { data: activityLog = [], isLoading: activityLoading } = useCandidateActivityLog(id);
   const logCandidateActivity = useLogCandidateActivity();
+
+  // Pipeline stage for this project (if coming from pipeline)
+  const { data: pipelineWorkflows = [] } = usePipelineCandidates(pipelineProjectId);
+  const pipelineEntry = fromPipeline ? pipelineWorkflows.find(w => w.candidate_id === id) : undefined;
 
   // Mutation hooks
   const updateStage = useUpdateCandidateStage();
@@ -397,12 +407,28 @@ export default function CandidateDetail() {
 
               {/* Current Stage Badge + Days */}
               <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
-                <Badge
-                  variant="secondary"
-                  className={cn('text-sm px-3 py-1', getStageColor(candidate.current_stage))}
-                >
-                  {getStageLabel(candidate.current_stage)}
-                </Badge>
+                {pipelineEntry && (
+                  <div className="flex flex-col items-start sm:items-end gap-1">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Pipeline Stage</span>
+                    <Badge
+                      variant="secondary"
+                      className={cn('text-sm px-3 py-1', getStageColor(pipelineEntry.pipeline_stage))}
+                    >
+                      {getStageLabel(pipelineEntry.pipeline_stage)}
+                    </Badge>
+                  </div>
+                )}
+                <div className="flex flex-col items-start sm:items-end gap-0.5">
+                  {pipelineEntry && (
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Global Stage</span>
+                  )}
+                  <Badge
+                    variant="secondary"
+                    className={cn('text-sm px-3 py-1', getStageColor(candidate.current_stage))}
+                  >
+                    {getStageLabel(candidate.current_stage)}
+                  </Badge>
+                </div>
                 <span className={cn('text-xs flex items-center gap-1', daysInStage > 14 ? 'text-warning font-medium' : 'text-muted-foreground')}>
                   <Clock className="h-3 w-3" />
                   {daysInStage}d in stage

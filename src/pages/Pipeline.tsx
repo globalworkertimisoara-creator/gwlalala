@@ -9,20 +9,40 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Plus, Loader2, FolderKanban } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const Pipeline = () => {
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-  const { data: pipelineCandidates = [], isLoading: pipelineLoading } = usePipelineCandidates(selectedProjectId || undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Read project from URL, fallback to first project
+  const projectFromUrl = searchParams.get('project') || '';
+  const activeProjectId = projectFromUrl || (projects.length > 0 ? projects[0].id : '');
+
+  const { data: pipelineCandidates = [], isLoading: pipelineLoading } = usePipelineCandidates(activeProjectId || undefined);
   const { data: allCandidates = [] } = useCandidates();
   const addToPipeline = useAddCandidateToPipeline();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState('');
 
-  // Auto-select first project
-  const activeProjectId = selectedProjectId || (projects.length > 0 ? projects[0].id : '');
+  // Auto-set URL param to first project if none selected
+  useEffect(() => {
+    if (!projectFromUrl && projects.length > 0) {
+      setSearchParams({ project: projects[0].id }, { replace: true });
+    }
+  }, [projectFromUrl, projects, setSearchParams]);
+
+  const handleProjectChange = useCallback((projectId: string) => {
+    setSearchParams({ project: projectId }, { replace: true });
+  }, [setSearchParams]);
+
+  // Navigate to candidate with pipeline context
+  const handleCandidateClick = useCallback((candidateId: string) => {
+    navigate(`/candidates/${candidateId}?from=pipeline&project=${activeProjectId}`);
+  }, [navigate, activeProjectId]);
 
   // Candidates not yet in this pipeline
   const existingCandidateIds = new Set(pipelineCandidates.map(pc => pc.candidate_id));
@@ -56,7 +76,7 @@ const Pipeline = () => {
             {/* Project Selector */}
             <Select
               value={activeProjectId}
-              onValueChange={v => setSelectedProjectId(v)}
+              onValueChange={handleProjectChange}
             >
               <SelectTrigger className="w-[260px]">
                 <div className="flex items-center gap-2">
@@ -145,7 +165,11 @@ const Pipeline = () => {
                 <span>{pipelineCandidates.length} candidates</span>
               </div>
             )}
-            <PipelineBoard candidates={pipelineCandidates} isLoading={pipelineLoading} />
+            <PipelineBoard
+              candidates={pipelineCandidates}
+              isLoading={pipelineLoading}
+              onCandidateClick={handleCandidateClick}
+            />
           </>
         )}
       </div>

@@ -89,9 +89,10 @@ function buildCandidateForCard(pc: PipelineCandidate) {
 interface PipelineBoardProps {
   candidates: PipelineCandidate[];
   isLoading: boolean;
+  onCandidateClick?: (candidateId: string) => void;
 }
 
-export function PipelineBoard({ candidates, isLoading }: PipelineBoardProps) {
+export function PipelineBoard({ candidates, isLoading, onCandidateClick }: PipelineBoardProps) {
   const navigate = useNavigate();
   const updateStage = useUpdatePipelineStage();
   const [searchTerm, setSearchTerm] = useState('');
@@ -259,7 +260,7 @@ export function PipelineBoard({ candidates, isLoading }: PipelineBoardProps) {
                           key={pc.workflow_id}
                           id={pc.workflow_id}
                           candidate={buildCandidateForCard(pc)}
-                          onClick={() => navigate(`/candidates/${pc.candidate_id}`)}
+                          onClick={() => onCandidateClick ? onCandidateClick(pc.candidate_id) : navigate(`/candidates/${pc.candidate_id}`)}
                           compact={isCompact}
                         />
                       ))}
