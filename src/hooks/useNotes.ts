@@ -11,12 +11,15 @@ export function useNotes(candidateId: string | undefined) {
 
       const { data, error } = await supabase
         .from('notes')
-        .select('*')
+        .select('*, profiles!notes_created_by_fkey(full_name)')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Note[];
+      return (data || []).map((n: any) => ({
+        ...n,
+        author_name: n.profiles?.full_name || null,
+      })) as (Note & { author_name: string | null })[];
     },
     enabled: !!candidateId,
   });

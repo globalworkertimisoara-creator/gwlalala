@@ -18,11 +18,14 @@ export function useEmployerNotes(candidateId: string | undefined) {
       if (!candidateId) return [];
       const { data, error } = await supabase
         .from('employer_notes')
-        .select('*')
+        .select('*, profiles!employer_notes_created_by_fkey(full_name)')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as EmployerNote[];
+      return (data || []).map((n: any) => ({
+        ...n,
+        author_name: n.profiles?.full_name || null,
+      })) as (EmployerNote & { author_name: string | null })[];
     },
     enabled: !!candidateId,
   });

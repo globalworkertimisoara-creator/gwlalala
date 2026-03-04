@@ -25,13 +25,16 @@ export function useCandidateActivityLog(candidateId: string | undefined) {
 
       const { data, error } = await supabase
         .from('candidate_activity_log')
-        .select('*')
+        .select('*, profiles!candidate_activity_log_actor_id_fkey(full_name)')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false })
         .limit(200);
 
       if (error) throw error;
-      return (data || []) as unknown as CandidateActivityEntry[];
+      return (data || []).map((e: any) => ({
+        ...e,
+        actor_name: e.profiles?.full_name || null,
+      })) as unknown as CandidateActivityEntry[];
     },
     enabled: !!candidateId,
   });
