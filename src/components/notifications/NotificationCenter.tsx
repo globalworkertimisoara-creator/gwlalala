@@ -104,10 +104,16 @@ function NotificationItem({
 
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const { data: notifications = [], isLoading } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
+
+  const handleNavigate = (route: string) => {
+    setOpen(false);
+    navigate(route);
+  };
 
   const personalNotifications = notifications.filter(n => !n.team_id && !n.project_id);
   const teamNotifications = notifications.filter(n => n.team_id);
