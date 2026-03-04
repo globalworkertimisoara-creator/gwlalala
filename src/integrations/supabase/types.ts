@@ -2162,6 +2162,7 @@ export type Database = {
           countries_in_contract: string[]
           created_at: string
           created_by: string | null
+          default_workflow_type: string
           employer_name: string
           id: string
           location: string
@@ -2178,6 +2179,7 @@ export type Database = {
           countries_in_contract?: string[]
           created_at?: string
           created_by?: string | null
+          default_workflow_type?: string
           employer_name: string
           id?: string
           location: string
@@ -2194,6 +2196,7 @@ export type Database = {
           countries_in_contract?: string[]
           created_at?: string
           created_by?: string | null
+          default_workflow_type?: string
           employer_name?: string
           id?: string
           location?: string
