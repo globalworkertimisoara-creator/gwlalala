@@ -417,17 +417,16 @@ export function CandidateDocumentUpload({
     try {
       const { data, error } = await supabase.storage
         .from('candidate-documents')
-        .createSignedUrl(storagePath, 3600);
+        .download(storagePath);
       if (error) throw error;
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
-      }
+      const url = URL.createObjectURL(data);
+      window.open(url, '_blank');
     } catch (err) {
       console.error('View error:', err);
       toast({
         variant: 'destructive',
         title: 'Failed to open document',
-        description: 'Could not generate a preview link.',
+        description: 'Could not load the document for preview.',
       });
     }
   };
