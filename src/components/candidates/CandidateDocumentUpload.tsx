@@ -702,6 +702,15 @@ export function CandidateDocumentUpload({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => handleView(doc.storage_path)}
+                      title="View"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
                       onClick={() => handleDownload(doc.storage_path, doc.file_name)}
                       title="Download"
                     >
