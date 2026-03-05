@@ -19,6 +19,7 @@ import {
   Loader2,
   Sparkles,
   Download,
+  Eye,
   Check,
   X,
   Globe,
@@ -412,6 +413,25 @@ export function CandidateDocumentUpload({
     });
   };
 
+  const handleView = async (storagePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('candidate-documents')
+        .createSignedUrl(storagePath, 3600);
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (err) {
+      console.error('View error:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to open document',
+        description: 'Could not generate a preview link.',
+      });
+    }
+  };
+
   const handleDownload = async (storagePath: string, fileName: string) => {
     try {
       const { data, error } = await supabase.storage.from('candidate-documents').download(storagePath);
@@ -678,6 +698,15 @@ export function CandidateDocumentUpload({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => handleView(doc.storage_path)}
+                      title="View"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
