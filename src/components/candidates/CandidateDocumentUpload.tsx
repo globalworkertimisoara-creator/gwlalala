@@ -413,6 +413,25 @@ export function CandidateDocumentUpload({
     });
   };
 
+  const handleView = async (storagePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('candidate-documents')
+        .createSignedUrl(storagePath, 3600);
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (err) {
+      console.error('View error:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Failed to open document',
+        description: 'Could not generate a preview link.',
+      });
+    }
+  };
+
   const handleDownload = async (storagePath: string, fileName: string) => {
     try {
       const { data, error } = await supabase.storage.from('candidate-documents').download(storagePath);
