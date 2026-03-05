@@ -19,6 +19,7 @@ import {
   Loader2,
   Sparkles,
   Download,
+  Eye,
   Check,
   X,
   Globe,
