@@ -94,6 +94,7 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
         canvas.style.height = `${viewport.height}px`;
 
         const renderTask = page.render({
+          canvas,
           canvasContext: context,
           viewport,
           transform: pixelRatio > 1 ? [pixelRatio, 0, 0, pixelRatio, 0, 0] : undefined,

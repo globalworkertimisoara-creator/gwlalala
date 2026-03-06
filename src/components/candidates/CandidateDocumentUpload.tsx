@@ -44,6 +44,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { compressFileForUpload } from '@/utils/fileCompression';
+import { PdfPreview } from '@/components/documents/PdfPreview';
 
 const DOC_TYPE_LABELS: Record<DocType, string> = {
   resume: 'Resume/CV',
