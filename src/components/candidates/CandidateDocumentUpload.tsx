@@ -98,6 +98,8 @@ export function CandidateDocumentUpload({
   const [autoAppliedCount, setAutoAppliedCount] = useState(0);
   const [isApplying, setIsApplying] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewFileName, setPreviewFileName] = useState<string>('');
 
   const { data: documents, isLoading: docsLoading } = useDocuments(candidateId);
   const deleteDoc = useDeleteDocument();
