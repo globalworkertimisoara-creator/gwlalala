@@ -73,6 +73,27 @@ const FIELD_LABELS: Record<string, string> = {
   national_id_number: 'National ID', parents_names: 'Parents Names',
 };
 
+const getPreviewMimeType = (fileName: string, fallbackType?: string) => {
+  if (fallbackType && fallbackType !== 'application/octet-stream') return fallbackType;
+
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf':
+      return 'application/pdf';
+    case 'png':
+      return 'image/png';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'webp':
+      return 'image/webp';
+    case 'gif':
+      return 'image/gif';
+    default:
+      return fallbackType || 'application/octet-stream';
+  }
+};
+
 interface ConflictItem {
   field: string;
   label: string;
@@ -100,6 +121,8 @@ export function CandidateDocumentUpload({
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string>('');
+  const [previewMimeType, setPreviewMimeType] = useState<string>('');
+  const [previewStoragePath, setPreviewStoragePath] = useState<string>('');
 
   const { data: documents, isLoading: docsLoading } = useDocuments(candidateId);
   const deleteDoc = useDeleteDocument();
@@ -422,9 +445,15 @@ export function CandidateDocumentUpload({
         .from('candidate-documents')
         .download(storagePath);
       if (error) throw error;
-      const url = URL.createObjectURL(data);
+
+      const mimeType = getPreviewMimeType(fileName, data.type);
+      const blob = data.type ? data : new Blob([data], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+
       setPreviewUrl(url);
       setPreviewFileName(fileName);
+      setPreviewMimeType(mimeType);
+      setPreviewStoragePath(storagePath);
     } catch (err) {
       console.error('View error:', err);
       toast({
@@ -439,6 +468,8 @@ export function CandidateDocumentUpload({
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setPreviewFileName('');
+    setPreviewMimeType('');
+    setPreviewStoragePath('');
   };
 
   const handleDownload = async (storagePath: string, fileName: string) => {
@@ -757,12 +788,48 @@ export function CandidateDocumentUpload({
             <DialogTitle className="truncate">{previewFileName}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0 px-6 pb-6">
-            {previewUrl && (
-              <iframe
-                src={previewUrl}
+            {previewUrl && previewMimeType === 'application/pdf' && (
+              <object
+                data={previewUrl}
+                type="application/pdf"
                 className="w-full h-full rounded-md border"
-                title={previewFileName}
-              />
+              >
+                <div className="h-full w-full rounded-md border border-dashed flex flex-col items-center justify-center gap-3 text-center p-6">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">This PDF cannot be previewed in your browser.</p>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => previewStoragePath && handleDownload(previewStoragePath, previewFileName)}
+                  >
+                    <Download className="h-4 w-4" /> Download file
+                  </Button>
+                </div>
+              </object>
+            )}
+
+            {previewUrl && previewMimeType.startsWith('image/') && (
+              <div className="w-full h-full rounded-md border bg-muted/20 flex items-center justify-center overflow-hidden">
+                <img
+                  src={previewUrl}
+                  alt={previewFileName}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            )}
+
+            {previewUrl && previewMimeType !== 'application/pdf' && !previewMimeType.startsWith('image/') && (
+              <div className="h-full w-full rounded-md border border-dashed flex flex-col items-center justify-center gap-3 text-center p-6">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Preview not supported for this file type.</p>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => previewStoragePath && handleDownload(previewStoragePath, previewFileName)}
+                >
+                  <Download className="h-4 w-4" /> Download file
+                </Button>
+              </div>
             )}
           </div>
         </DialogContent>
