@@ -711,7 +711,7 @@ export function CandidateDocumentUpload({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-primary"
-                      onClick={() => handleView(doc.storage_path)}
+                      onClick={() => handleView(doc.storage_path, doc.file_name)}
                       title="View"
                     >
                       <Eye className="h-4 w-4" />
@@ -749,6 +749,24 @@ export function CandidateDocumentUpload({
           </CardContent>
         </Card>
       )}
+
+      {/* Document Preview Dialog */}
+      <Dialog open={!!previewUrl} onOpenChange={(open) => { if (!open) closePreview(); }}>
+        <DialogContent className="max-w-4xl w-[90vw] h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="truncate">{previewFileName}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 px-6 pb-6">
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                className="w-full h-full rounded-md border"
+                title={previewFileName}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
