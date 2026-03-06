@@ -121,6 +121,8 @@ export function CandidateDocumentUpload({
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string>('');
+  const [previewMimeType, setPreviewMimeType] = useState<string>('');
+  const [previewStoragePath, setPreviewStoragePath] = useState<string>('');
 
   const { data: documents, isLoading: docsLoading } = useDocuments(candidateId);
   const deleteDoc = useDeleteDocument();
