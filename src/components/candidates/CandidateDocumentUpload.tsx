@@ -43,6 +43,7 @@ import { DocType } from '@/types/database';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { compressFileForUpload } from '@/utils/fileCompression';
 
 const DOC_TYPE_LABELS: Record<DocType, string> = {
   resume: 'Resume/CV',
@@ -205,7 +206,7 @@ export function CandidateDocumentUpload({
 
   // ── Drag & Drop ──
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
+    let file = acceptedFiles[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
       toast({ variant: 'destructive', title: 'File too large', description: 'Maximum 10MB' });
@@ -214,6 +215,9 @@ export function CandidateDocumentUpload({
 
     setUploading(true);
     try {
+      // Compress before upload
+      file = await compressFileForUpload(file);
+
       const ext = file.name.split('.').pop();
       const storagePath = `${candidateId}/${Date.now()}-${file.name}`;
 

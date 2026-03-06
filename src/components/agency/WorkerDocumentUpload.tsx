@@ -37,6 +37,7 @@ import {
   AgencyWorkerDocument 
 } from '@/types/agency';
 import { RecruitmentStage } from '@/types/database';
+import { compressFileForUpload } from '@/utils/fileCompression';
 
 interface WorkerDocumentUploadProps {
   workerId: string;
@@ -60,8 +61,11 @@ export function WorkerDocumentUpload({
   const { extractData, isExtracting } = useDocumentExtraction();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
+
+    // Compress before upload
+    const file = await compressFileForUpload(rawFile);
 
     // Upload the document first
     const uploadedDoc = await uploadDocument.mutateAsync({

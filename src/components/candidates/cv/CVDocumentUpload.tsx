@@ -11,6 +11,7 @@ import {
   useSaveCandidateReferences,
 } from '@/hooks/useCandidateCV';
 import { useToast } from '@/hooks/use-toast';
+import { compressFileForUpload } from '@/utils/fileCompression';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,11 +36,14 @@ export function CVDocumentUpload({ candidateId, onDataApplied }: Props) {
   const { toast } = useToast();
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
+    let file = acceptedFiles[0];
     if (!file) return;
 
     setUploading(true);
     try {
+      // Compress before upload
+      file = await compressFileForUpload(file);
+
       // Upload to storage
       const ext = file.name.split('.').pop();
       const storagePath = `${candidateId}/cv-upload-${Date.now()}.${ext}`;
