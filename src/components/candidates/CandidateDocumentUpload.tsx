@@ -44,6 +44,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { compressFileForUpload } from '@/utils/fileCompression';
+import { PdfPreview } from '@/components/documents/PdfPreview';
 
 const DOC_TYPE_LABELS: Record<DocType, string> = {
   resume: 'Resume/CV',
@@ -793,23 +794,11 @@ export function CandidateDocumentUpload({
           </DialogHeader>
           <div className="flex-1 min-h-0 px-6 pb-6">
             {previewUrl && previewMimeType === 'application/pdf' && (
-              <object
-                data={previewUrl}
-                type="application/pdf"
-                className="w-full h-full rounded-md border"
-              >
-                <div className="h-full w-full rounded-md border border-dashed flex flex-col items-center justify-center gap-3 text-center p-6">
-                  <FileText className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">This PDF cannot be previewed in your browser.</p>
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => previewStoragePath && handleDownload(previewStoragePath, previewFileName)}
-                  >
-                    <Download className="h-4 w-4" /> Download file
-                  </Button>
-                </div>
-              </object>
+              <PdfPreview
+                fileUrl={previewUrl}
+                fileName={previewFileName}
+                onDownload={() => previewStoragePath && handleDownload(previewStoragePath, previewFileName)}
+              />
             )}
 
             {previewUrl && previewMimeType.startsWith('image/') && (
