@@ -73,6 +73,27 @@ const FIELD_LABELS: Record<string, string> = {
   national_id_number: 'National ID', parents_names: 'Parents Names',
 };
 
+const getPreviewMimeType = (fileName: string, fallbackType?: string) => {
+  if (fallbackType && fallbackType !== 'application/octet-stream') return fallbackType;
+
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'pdf':
+      return 'application/pdf';
+    case 'png':
+      return 'image/png';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'webp':
+      return 'image/webp';
+    case 'gif':
+      return 'image/gif';
+    default:
+      return fallbackType || 'application/octet-stream';
+  }
+};
+
 interface ConflictItem {
   field: string;
   label: string;
