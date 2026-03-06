@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -97,6 +98,8 @@ export function CandidateDocumentUpload({
   const [autoAppliedCount, setAutoAppliedCount] = useState(0);
   const [isApplying, setIsApplying] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewFileName, setPreviewFileName] = useState<string>('');
 
   const { data: documents, isLoading: docsLoading } = useDocuments(candidateId);
   const deleteDoc = useDeleteDocument();
@@ -413,14 +416,15 @@ export function CandidateDocumentUpload({
     });
   };
 
-  const handleView = async (storagePath: string) => {
+  const handleView = async (storagePath: string, fileName: string) => {
     try {
       const { data, error } = await supabase.storage
         .from('candidate-documents')
         .download(storagePath);
       if (error) throw error;
       const url = URL.createObjectURL(data);
-      window.open(url, '_blank');
+      setPreviewUrl(url);
+      setPreviewFileName(fileName);
     } catch (err) {
       console.error('View error:', err);
       toast({
@@ -429,6 +433,12 @@ export function CandidateDocumentUpload({
         description: 'Could not load the document for preview.',
       });
     }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewFileName('');
   };
 
   const handleDownload = async (storagePath: string, fileName: string) => {
@@ -701,7 +711,7 @@ export function CandidateDocumentUpload({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-primary"
-                      onClick={() => handleView(doc.storage_path)}
+                      onClick={() => handleView(doc.storage_path, doc.file_name)}
                       title="View"
                     >
                       <Eye className="h-4 w-4" />
@@ -739,6 +749,24 @@ export function CandidateDocumentUpload({
           </CardContent>
         </Card>
       )}
+
+      {/* Document Preview Dialog */}
+      <Dialog open={!!previewUrl} onOpenChange={(open) => { if (!open) closePreview(); }}>
+        <DialogContent className="max-w-4xl w-[90vw] h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="truncate">{previewFileName}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 px-6 pb-6">
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                className="w-full h-full rounded-md border"
+                title={previewFileName}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
