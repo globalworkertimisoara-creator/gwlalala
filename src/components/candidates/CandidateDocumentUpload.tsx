@@ -788,12 +788,48 @@ export function CandidateDocumentUpload({
             <DialogTitle className="truncate">{previewFileName}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0 px-6 pb-6">
-            {previewUrl && (
-              <iframe
-                src={previewUrl}
+            {previewUrl && previewMimeType === 'application/pdf' && (
+              <object
+                data={previewUrl}
+                type="application/pdf"
                 className="w-full h-full rounded-md border"
-                title={previewFileName}
-              />
+              >
+                <div className="h-full w-full rounded-md border border-dashed flex flex-col items-center justify-center gap-3 text-center p-6">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">This PDF cannot be previewed in your browser.</p>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => previewStoragePath && handleDownload(previewStoragePath, previewFileName)}
+                  >
+                    <Download className="h-4 w-4" /> Download file
+                  </Button>
+                </div>
+              </object>
+            )}
+
+            {previewUrl && previewMimeType.startsWith('image/') && (
+              <div className="w-full h-full rounded-md border bg-muted/20 flex items-center justify-center overflow-hidden">
+                <img
+                  src={previewUrl}
+                  alt={previewFileName}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            )}
+
+            {previewUrl && previewMimeType !== 'application/pdf' && !previewMimeType.startsWith('image/') && (
+              <div className="h-full w-full rounded-md border border-dashed flex flex-col items-center justify-center gap-3 text-center p-6">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Preview not supported for this file type.</p>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => previewStoragePath && handleDownload(previewStoragePath, previewFileName)}
+                >
+                  <Download className="h-4 w-4" /> Download file
+                </Button>
+              </div>
             )}
           </div>
         </DialogContent>
