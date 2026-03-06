@@ -445,9 +445,15 @@ export function CandidateDocumentUpload({
         .from('candidate-documents')
         .download(storagePath);
       if (error) throw error;
-      const url = URL.createObjectURL(data);
+
+      const mimeType = getPreviewMimeType(fileName, data.type);
+      const blob = data.type ? data : new Blob([data], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+
       setPreviewUrl(url);
       setPreviewFileName(fileName);
+      setPreviewMimeType(mimeType);
+      setPreviewStoragePath(storagePath);
     } catch (err) {
       console.error('View error:', err);
       toast({
@@ -462,6 +468,8 @@ export function CandidateDocumentUpload({
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setPreviewFileName('');
+    setPreviewMimeType('');
+    setPreviewStoragePath('');
   };
 
   const handleDownload = async (storagePath: string, fileName: string) => {
