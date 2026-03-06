@@ -8,10 +8,11 @@ import {
   FileText,
   Loader2,
 } from 'lucide-react';
-import { GlobalWorkerOptions, getDocument, version, type PDFDocumentProxy } from 'pdfjs-dist';
+import { GlobalWorkerOptions, getDocument, type PDFDocumentProxy } from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 if (typeof window !== 'undefined') {
-  GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
+  GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 }
 
 interface PdfPreviewProps {
