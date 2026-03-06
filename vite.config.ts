@@ -12,6 +12,9 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+  build: {
+    target: "es2022",
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
@@ -21,6 +24,9 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ["react", "react-dom"],
-    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/core'],
+    exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/core"],
+    esbuildOptions: {
+      target: "es2022",
+    },
   },
 }));
