@@ -416,14 +416,15 @@ export function CandidateDocumentUpload({
     });
   };
 
-  const handleView = async (storagePath: string) => {
+  const handleView = async (storagePath: string, fileName: string) => {
     try {
       const { data, error } = await supabase.storage
         .from('candidate-documents')
         .download(storagePath);
       if (error) throw error;
       const url = URL.createObjectURL(data);
-      window.open(url, '_blank');
+      setPreviewUrl(url);
+      setPreviewFileName(fileName);
     } catch (err) {
       console.error('View error:', err);
       toast({
@@ -432,6 +433,12 @@ export function CandidateDocumentUpload({
         description: 'Could not load the document for preview.',
       });
     }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewFileName('');
   };
 
   const handleDownload = async (storagePath: string, fileName: string) => {
