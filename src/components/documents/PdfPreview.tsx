@@ -176,14 +176,14 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}
-          >
-            <ExternalLink className="h-4 w-4" /> Open
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleOpenInNewTab}
+            >
+              <ExternalLink className="h-4 w-4" /> Open
           </Button>
           <Button type="button" variant="outline" size="sm" className="gap-2" onClick={onDownload}>
             <Download className="h-4 w-4" /> Download
