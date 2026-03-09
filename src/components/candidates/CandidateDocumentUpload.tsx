@@ -802,6 +802,7 @@ export function CandidateDocumentUpload({
             {previewUrl && previewMimeType === 'application/pdf' && (
               <PdfPreview
                 fileUrl={previewUrl}
+                openUrl={previewOpenUrl || undefined}
                 fileName={previewFileName}
                 onDownload={() => previewStoragePath && handleDownload(previewStoragePath, previewFileName)}
               />
