@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
@@ -132,6 +132,19 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
     return fileName.length > 40 ? `${fileName.slice(0, 37)}...` : fileName;
   }, [fileName]);
 
+  const handleOpenInNewTab = useCallback(() => {
+    const popup = window.open(fileUrl, '_blank');
+    if (popup) return;
+
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [fileUrl]);
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-muted/20">
       <div className="flex items-center justify-between border-b bg-background/90 px-3 py-2">
@@ -163,14 +176,14 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}
-          >
-            <ExternalLink className="h-4 w-4" /> Open
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleOpenInNewTab}
+            >
+              <ExternalLink className="h-4 w-4" /> Open
           </Button>
           <Button type="button" variant="outline" size="sm" className="gap-2" onClick={onDownload}>
             <Download className="h-4 w-4" /> Download
@@ -188,7 +201,7 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
                 type="button"
                 variant="outline"
                 className="gap-2"
-                onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}
+                onClick={handleOpenInNewTab}
               >
                 <ExternalLink className="h-4 w-4" /> Open in new tab
               </Button>
