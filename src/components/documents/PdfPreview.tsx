@@ -135,17 +135,51 @@ export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPrevie
 
   const handleOpenInNewTab = useCallback(() => {
     const targetUrl = fileUrl || openUrl;
-    const popup = window.open(targetUrl, '_blank');
-    if (popup) return;
 
-    const link = document.createElement('a');
-    link.href = targetUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }, [fileUrl, openUrl]);
+    if (!targetUrl) return;
+
+    const popup = window.open('', '_blank');
+    if (!popup) {
+      const link = document.createElement('a');
+      link.href = targetUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    popup.document.title = fileName;
+    popup.document.body.style.margin = '0';
+    popup.document.body.style.background = '#111';
+
+    const iframe = popup.document.createElement('iframe');
+    iframe.src = targetUrl;
+    iframe.style.width = '100vw';
+    iframe.style.height = '100vh';
+    iframe.style.border = '0';
+    popup.document.body.appendChild(iframe);
+
+    if (openUrl && openUrl !== targetUrl) {
+      const fallback = popup.document.createElement('a');
+      fallback.href = openUrl;
+      fallback.target = '_blank';
+      fallback.rel = 'noopener noreferrer';
+      fallback.textContent = 'Open direct file URL';
+      fallback.style.position = 'fixed';
+      fallback.style.right = '12px';
+      fallback.style.top = '12px';
+      fallback.style.padding = '6px 10px';
+      fallback.style.borderRadius = '8px';
+      fallback.style.background = '#fff';
+      fallback.style.color = '#111';
+      fallback.style.fontFamily = 'system-ui, sans-serif';
+      fallback.style.fontSize = '12px';
+      fallback.style.textDecoration = 'none';
+      popup.document.body.appendChild(fallback);
+    }
+  }, [fileName, fileUrl, openUrl]);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-muted/20">
