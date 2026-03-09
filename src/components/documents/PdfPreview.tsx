@@ -178,15 +178,8 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
-        {isBusy && (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-sm">Rendering PDF preview…</p>
-          </div>
-        )}
-
-        {!isBusy && error && (
+      <div className="relative flex-1 overflow-auto">
+        {error ? (
           <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center">
             <FileText className="h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">{error}</p>
@@ -204,11 +197,16 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
               </Button>
             </div>
           </div>
-        )}
-
-        {!isBusy && !error && (
+        ) : (
           <div className="flex justify-center p-4">
             <canvas ref={canvasRef} className="h-auto max-w-full rounded bg-background shadow-sm" />
+          </div>
+        )}
+
+        {!error && isBusy && (
+          <div className="absolute inset-0 flex h-full w-full flex-col items-center justify-center gap-2 bg-background/70 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <p className="text-sm">Rendering PDF preview…</p>
           </div>
         )}
       </div>
