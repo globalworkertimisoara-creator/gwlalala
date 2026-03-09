@@ -201,7 +201,7 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
                 type="button"
                 variant="outline"
                 className="gap-2"
-                onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}
+                onClick={handleOpenInNewTab}
               >
                 <ExternalLink className="h-4 w-4" /> Open in new tab
               </Button>
