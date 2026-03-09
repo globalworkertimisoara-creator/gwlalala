@@ -447,11 +447,14 @@ export function CandidateDocumentUpload({
 
   const handleView = async (storagePath: string, fileName: string) => {
     try {
-      const { data, error } = await supabase.storage
-        .from('candidate-documents')
-        .download(storagePath);
-      if (error) throw error;
+      const [downloadResult, signedUrlResult] = await Promise.all([
+        supabase.storage.from('candidate-documents').download(storagePath),
+        supabase.storage.from('candidate-documents').createSignedUrl(storagePath, 60 * 60),
+      ]);
 
+      if (downloadResult.error) throw downloadResult.error;
+
+      const { data } = downloadResult;
       const mimeType = getPreviewMimeType(fileName, data.type);
       const blob = data.type ? data : new Blob([data], { type: mimeType });
       const url = URL.createObjectURL(blob);
@@ -460,6 +463,7 @@ export function CandidateDocumentUpload({
       setPreviewFileName(fileName);
       setPreviewMimeType(mimeType);
       setPreviewStoragePath(storagePath);
+      setPreviewOpenUrl(signedUrlResult.error ? '' : (signedUrlResult.data?.signedUrl ?? ''));
     } catch (err) {
       console.error('View error:', err);
       toast({
@@ -476,6 +480,7 @@ export function CandidateDocumentUpload({
     setPreviewFileName('');
     setPreviewMimeType('');
     setPreviewStoragePath('');
+    setPreviewOpenUrl('');
   };
 
   const handleDownload = async (storagePath: string, fileName: string) => {
