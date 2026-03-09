@@ -134,7 +134,7 @@ export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPrevie
   }, [fileName]);
 
   const handleOpenInNewTab = useCallback(() => {
-    const targetUrl = openUrl || fileUrl;
+    const targetUrl = fileUrl || openUrl;
     const popup = window.open(targetUrl, '_blank');
     if (popup) return;
 
