@@ -17,13 +17,14 @@ if (typeof window !== 'undefined') {
 
 interface PdfPreviewProps {
   fileUrl: string;
+  openUrl?: string;
   fileName: string;
   onDownload: () => void;
 }
 
 const PDF_SCALE = 1.3;
 
-export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
+export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -133,17 +134,18 @@ export function PdfPreview({ fileUrl, fileName, onDownload }: PdfPreviewProps) {
   }, [fileName]);
 
   const handleOpenInNewTab = useCallback(() => {
-    const popup = window.open(fileUrl, '_blank');
+    const targetUrl = openUrl || fileUrl;
+    const popup = window.open(targetUrl, '_blank');
     if (popup) return;
 
     const link = document.createElement('a');
-    link.href = fileUrl;
+    link.href = targetUrl;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [fileUrl]);
+  }, [fileUrl, openUrl]);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-muted/20">
