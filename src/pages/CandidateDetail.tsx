@@ -235,7 +235,7 @@ export default function CandidateDetail() {
 
   return (
     <AppLayout>
-      <div className="p-4 lg:p-6 space-y-6">
+      <div className="p-6 lg:p-8 space-y-8">
 
         {/* Back Button */}
         <Button variant="ghost" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => navigate(-1)}>
@@ -256,7 +256,7 @@ export default function CandidateDetail() {
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-2xl font-bold text-foreground">{candidate.full_name}</h1>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{candidate.full_name}</h1>
                     <span className="text-xl" title={candidate.nationality || undefined}>
                       {getFlag(candidate.nationality)}
                     </span>

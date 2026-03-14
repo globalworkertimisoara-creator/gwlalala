@@ -69,7 +69,7 @@ export default function AgencyWorkers() {
 
   return (
     <AppLayout>
-      <div className="p-6 lg:p-8 space-y-6">
+      <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
         <div className="space-y-1">
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Agency Workers</h1>

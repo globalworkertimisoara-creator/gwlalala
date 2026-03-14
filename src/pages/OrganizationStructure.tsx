@@ -30,7 +30,7 @@ const OrganizationStructure = () => {
 
   return (
     <AppLayout>
-      <div className="p-6 lg:p-8 space-y-6 max-w-6xl">
+      <div className="p-6 lg:p-8 space-y-8 max-w-6xl">
         {/* Header */}
         <div className="space-y-1">
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Organization Structure</h1>

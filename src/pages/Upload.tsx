@@ -36,18 +36,18 @@ export default function Upload() {
 
   return (
     <AppLayout>
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
+      <div className="p-6 lg:p-8 space-y-8 max-w-4xl">
         <Button
           variant="ghost"
-          className="gap-2 -ml-2 mb-4 text-muted-foreground hover:text-foreground"
+          className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
           onClick={() => navigate(`/candidates/${id}`)}
         >
           <ArrowLeft className="h-4 w-4" />
           Back to {candidate.full_name}
         </Button>
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Upload Files</h1>
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Upload Files</h1>
           <p className="text-muted-foreground mt-1">
             Upload documents for <span className="font-medium text-foreground">{candidate.full_name}</span>
           </p>

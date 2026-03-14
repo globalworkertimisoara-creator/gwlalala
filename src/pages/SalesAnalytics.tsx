@@ -61,7 +61,7 @@ export default function SalesAnalytics() {
 
   return (
     <AppLayout>
-      <div className="p-6 lg:p-8 space-y-6">
+      <div className="p-6 lg:p-8 space-y-8">
         <div className="space-y-1">
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Sales Analytics</h1>
           <p className="text-muted-foreground">Commission tracking and performance overview</p>

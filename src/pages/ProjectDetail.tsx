@@ -183,14 +183,14 @@ export default function ProjectDetail() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/projects')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">{project.name}</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold">{project.name}</h1>
             <p className="text-muted-foreground">{project.employer_name}</p>
           </div>
           <Select value={project.status} onValueChange={handleStatusChange}>

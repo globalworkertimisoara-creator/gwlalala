@@ -75,7 +75,7 @@ export default function Billing() {
 
   return (
     <AppLayout>
-      <div className="p-6 lg:p-8 space-y-6">
+      <div className="p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-2">

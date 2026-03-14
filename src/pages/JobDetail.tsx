@@ -145,7 +145,7 @@ export default function JobDetail() {
 
   return (
     <AppLayout>
-      <div className="p-4 lg:p-6 space-y-6">
+      <div className="p-6 lg:p-8 space-y-8">
 
         {/* Back */}
         <Button variant="ghost" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => navigate(-1)}>
@@ -159,7 +159,7 @@ export default function JobDetail() {
             <div className="flex flex-col sm:flex-row sm:items-start gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-2xl font-bold text-foreground">{job.title}</h1>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{job.title}</h1>
                   <Badge className={cn('text-xs', STATUS_COLORS[job.status])}>
                     {job.status}
                   </Badge>

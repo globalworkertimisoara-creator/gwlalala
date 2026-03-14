@@ -29,9 +29,9 @@ export default function AgencyJobs() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="p-6 lg:p-8 space-y-8">
         <div>
-          <h1 className="text-2xl font-bold">Available Jobs</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Available Jobs</h1>
           <p className="text-muted-foreground">
             View jobs you've been invited to and submit workers
           </p>
