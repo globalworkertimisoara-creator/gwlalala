@@ -87,30 +87,6 @@ export function ContractTemplatesView() {
     );
   };
 
-  const handleUpload = () => {
-    if (!uploadFile || !uploadTemplateId) return;
-    // Find next version number
-    const tpl = templates.find(t => t.id === uploadTemplateId);
-    // We'll query versions count for this template
-    uploadVersion.mutate(
-      { templateId: uploadTemplateId, file: uploadFile, notes: uploadNotes.trim() || undefined, nextVersion: 0 },
-      {
-        onMutate: async () => {
-          // Get current max version
-          const { data } = await (supabase as any)
-            .from('contract_template_versions')
-            .select('version_number')
-            .eq('template_id', uploadTemplateId)
-            .order('version_number', { ascending: false })
-            .limit(1);
-          const next = (data?.[0]?.version_number ?? 0) + 1;
-          // Patch the variables - mutationFn will use input directly
-          return next;
-        },
-      }
-    );
-  };
-
   // Fix: proper upload with version detection
   const handleUploadWithVersion = async () => {
     if (!uploadFile || !uploadTemplateId) return;
