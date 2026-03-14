@@ -349,8 +349,15 @@ function ClientsContractsTab({
                 .sort(([, a], [, b]) => b.revenue - a.revenue)
                 .slice(0, 15)
                 .map(([name, data]) => (
-                  <TableRow key={name} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium">{name}</TableCell>
+                  <TableRow
+                    key={name}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => data.project_id ? navigate(`/projects/${data.project_id}`) : null}
+                  >
+                    <TableCell className="font-medium flex items-center gap-2">
+                      {name}
+                      {data.project_id && <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                    </TableCell>
                     <TableCell>€{data.revenue.toLocaleString()}</TableCell>
                     <TableCell>€{data.commissions.toLocaleString()}</TableCell>
                     <TableCell>{data.contracts}</TableCell>
