@@ -294,14 +294,14 @@ function ClientsContractsTab({
               <p className="text-sm text-muted-foreground text-center py-8">No data</p>
             ) : (
               <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie data={typeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                    {typeData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Legend />
+                <BarChart data={typeData} layout="vertical" margin={{ left: 20 }}>
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `€${(v / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
-                </PieChart>
+                  <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                    {typeData.map((_, i) => <Cell key={i} fill={PASTEL_COLORS[i % PASTEL_COLORS.length]} />)}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
