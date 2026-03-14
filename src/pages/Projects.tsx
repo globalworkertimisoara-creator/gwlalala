@@ -41,10 +41,12 @@ import {
 import { ProjectStatus, PROJECT_STATUS_CONFIG, ProjectWithMetrics } from '@/types/project';
 import { useTasks } from '@/hooks/useTasks';
 import { cn } from '@/lib/utils';
+import { getProjectStatusColor, getProjectStatusLabel } from '@/types/project';
 
 type ViewMode = 'table' | 'cards';
 type SortField = 'name' | 'employer_name' | 'status' | 'fill_percentage' | 'days_since_contract' | 'jobs_count';
 type SortDirection = 'asc' | 'desc';
+type DrilldownType = 'total' | 'active' | 'placed' | 'fill' | null;
 
 export default function Projects() {
   const { data: projects, isLoading } = useProjects();
