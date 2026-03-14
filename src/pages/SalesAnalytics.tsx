@@ -500,7 +500,7 @@ function SalesTeamTab({
         })}
       </div>
 
-      {/* Leaderboard & Comparison */}
+      {/* Leaderboard & Portfolio side-by-side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Leaderboard */}
         <Card>
@@ -548,7 +548,61 @@ function SalesTeamTab({
           </CardContent>
         </Card>
 
-        {/* Team Comparison */}
+        {/* Individual Portfolio (right beside leaderboard) */}
+        {selectedPerson ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4" /> {selectedPerson}'s Portfolio
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Contract</TableHead>
+                      <TableHead>Employer</TableHead>
+                      <TableHead>Commission</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedData.map(c => (
+                      <TableRow
+                        key={c.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/contracts?highlight=${c.contract_id}`)}
+                      >
+                        <TableCell className="font-medium">{c.contract_title || '—'}</TableCell>
+                        <TableCell>{c.employer_name || '—'}</TableCell>
+                        <TableCell>
+                          <span className="font-semibold">€{c.commission_amount.toLocaleString()}</span>
+                          {c.original_amount != null && c.original_amount !== c.commission_amount && (
+                            <span className="text-xs text-muted-foreground ml-1">(was €{c.original_amount.toLocaleString()})</span>
+                          )}
+                        </TableCell>
+                        <TableCell><Badge className={STATUS_COLORS[c.commission_status] || 'bg-muted'}>{c.commission_status}</Badge></TableCell>
+                        <TableCell>{format(new Date(c.created_at), 'MMM d, yyyy')}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="flex items-center justify-center h-full min-h-[200px]">
+              <p className="text-sm text-muted-foreground">Click a team member to view their portfolio</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Team Comparison & Timeline */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Team Comparison</CardTitle></CardHeader>
           <CardContent>
@@ -568,76 +622,26 @@ function SalesTeamTab({
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Commission Timeline */}
-      {timelineData.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-base">Commission Payment Timeline</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={timelineData}>
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `€${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
-                <Legend />
-                {allNames.map((name, i) => (
-                  <Bar key={name} dataKey={name} stackId="a" fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Individual Portfolio */}
-      {selectedPerson && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4" /> {selectedPerson}'s Portfolio
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Contract</TableHead>
-                    <TableHead>Employer</TableHead>
-                    <TableHead>Contract Value</TableHead>
-                    <TableHead>Commission</TableHead>
-                    <TableHead>Original</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {selectedData.map(c => (
-                    <TableRow
-                      key={c.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/contracts?highlight=${c.contract_id}`)}
-                    >
-                      <TableCell className="font-medium">{c.contract_title || '—'}</TableCell>
-                      <TableCell>{c.employer_name || '—'}</TableCell>
-                      <TableCell>{c.contract_value ? `€${c.contract_value.toLocaleString()}` : '—'}</TableCell>
-                      <TableCell className="font-semibold">€{c.commission_amount.toLocaleString()}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {c.original_amount != null && c.original_amount !== c.commission_amount
-                          ? `€${c.original_amount.toLocaleString()}`
-                          : '—'}
-                      </TableCell>
-                      <TableCell><Badge className={STATUS_COLORS[c.commission_status] || 'bg-muted'}>{c.commission_status}</Badge></TableCell>
-                      <TableCell>{format(new Date(c.created_at), 'MMM d, yyyy')}</TableCell>
-                    </TableRow>
+        {timelineData.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-base">Commission Payment Timeline</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={timelineData}>
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `€${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
+                  <Legend />
+                  {allNames.map((name, i) => (
+                    <Bar key={name} dataKey={name} stackId="a" fill={PIE_COLORS[i % PIE_COLORS.length]} />
                   ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* All Commissions Table */}
       <Card>
