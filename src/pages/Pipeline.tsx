@@ -60,8 +60,8 @@ const Pipeline = () => {
   const selectedProject = projects.find(p => p.id === activeProjectId);
 
   // Group projects by status for the picker
-  const activeProjects = useMemo(() => projects.filter(p => p.status === 'active' || p.status === 'in_progress'), [projects]);
-  const otherProjects = useMemo(() => projects.filter(p => p.status !== 'active' && p.status !== 'in_progress'), [projects]);
+  const activeProjects = useMemo(() => projects.filter(p => p.status === 'active'), [projects]);
+  const otherProjects = useMemo(() => projects.filter(p => p.status !== 'active'), [projects]);
 
   const handleAddCandidate = async (candidateId: string) => {
     if (!activeProjectId) return;
