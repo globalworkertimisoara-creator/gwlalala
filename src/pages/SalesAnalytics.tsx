@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
   frozen: 'bg-sky-100 text-sky-800',
   forfeited: 'bg-red-100 text-red-800',
 };
-const PIE_COLORS = ['#f59e0b', '#10b981', '#3b82f6', '#0ea5e9', '#ef4444', '#8b5cf6', '#ec4899'];
+const PASTEL_COLORS = ['hsl(215, 60%, 75%)', 'hsl(170, 50%, 72%)', 'hsl(280, 45%, 75%)', 'hsl(35, 60%, 75%)', 'hsl(340, 50%, 75%)', 'hsl(200, 55%, 70%)', 'hsl(140, 40%, 70%)'];
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   sent: 'bg-blue-100 text-blue-800',
