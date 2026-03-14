@@ -116,7 +116,13 @@ export function ContractTable({ contracts, isLoading, highlightId, selectedIds, 
                 </TableCell>
                 <TableCell className="text-sm">{typeLabels[c.contract_type] || c.contract_type}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="capitalize">{c.party_type}</Badge>
+                  <div>
+                    <p className="text-sm font-medium">{partyLookup.get(c.party_id) || c.party_id.slice(0, 8)}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{c.party_type}</p>
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm">
+                  {c.sales_person_id ? (salesLookup.get(c.sales_person_id) || '—') : '—'}
                 </TableCell>
                 <TableCell>
                   <Badge className={statusColors[c.status] || 'bg-muted'}>{c.status}</Badge>
