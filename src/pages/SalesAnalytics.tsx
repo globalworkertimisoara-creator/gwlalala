@@ -302,7 +302,7 @@ function ClientsContractsTab({
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
                   <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                    {typeData.map((_, i) => <Cell key={i} fill={PASTEL_COLORS[i % PASTEL_COLORS.length]} />)}
+                    {typeData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
