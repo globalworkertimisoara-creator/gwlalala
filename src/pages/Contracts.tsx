@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,11 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, FileText, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, FileText, AlertTriangle, Loader2, ArrowLeft } from 'lucide-react';
 import { useContracts, useExpiringContracts, useCreateContract, type CreateContractInput, type Contract } from '@/hooks/useContracts';
 import { useSalesStaff } from '@/hooks/useSalesCommissions';
 import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -32,6 +34,9 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function Contracts() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const highlightId = searchParams.get('highlight');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const filters: any = {};
@@ -52,6 +57,17 @@ export default function Contracts() {
     title: '',
   });
 
+  // Auto-open highlighted contract from query param
+  useEffect(() => {
+    if (highlightId && contracts.length > 0 && !detailOpen) {
+      const found = contracts.find(c => c.id === highlightId);
+      if (found) {
+        setSelectedContract(found);
+        setDetailOpen(true);
+      }
+    }
+  }, [highlightId, contracts]);
+
   const handleCreate = async () => {
     if (!form.title.trim() || !form.party_id.trim()) return;
     await createContract.mutateAsync(form);
@@ -59,9 +75,28 @@ export default function Contracts() {
     setDialogOpen(false);
   };
 
+  const handleDetailClose = (open: boolean) => {
+    setDetailOpen(open);
+    if (!open && highlightId) {
+      setSearchParams({}, { replace: true });
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-6 lg:p-8 space-y-8">
+        {/* Back link when coming from Sales Analytics */}
+        {highlightId && (
+          <Button
+            variant="ghost"
+            className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate('/sales-analytics')}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Sales Analytics
+          </Button>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -239,7 +274,7 @@ export default function Contracts() {
                   </TableHeader>
                   <TableBody>
                     {contracts.map(c => (
-                      <TableRow key={c.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => { setSelectedContract(c); setDetailOpen(true); }}>
+                      <TableRow key={c.id} className={cn("hover:bg-muted/50 cursor-pointer", highlightId === c.id && "ring-2 ring-primary/50 bg-primary/5")} onClick={() => { setSelectedContract(c); setDetailOpen(true); }}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -264,7 +299,7 @@ export default function Contracts() {
             )}
           </CardContent>
         </Card>
-        <ContractDetailDialog contract={selectedContract} open={detailOpen} onOpenChange={setDetailOpen} />
+        <ContractDetailDialog contract={selectedContract} open={detailOpen} onOpenChange={handleDetailClose} />
       </div>
     </AppLayout>
   );
