@@ -391,6 +391,7 @@ export function ContractTemplatesView() {
                   <TableHead>Size</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead>Uploaded</TableHead>
+                  <TableHead className="text-right">View</TableHead>
                   <TableHead className="text-right">Download</TableHead>
                 </TableRow>
               </TableHeader>
