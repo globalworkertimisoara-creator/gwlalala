@@ -34,6 +34,9 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function Contracts() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const highlightId = searchParams.get('highlight');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const filters: any = {};
@@ -53,6 +56,17 @@ export default function Contracts() {
     party_id: '',
     title: '',
   });
+
+  // Auto-open highlighted contract from query param
+  useEffect(() => {
+    if (highlightId && contracts.length > 0 && !detailOpen) {
+      const found = contracts.find(c => c.id === highlightId);
+      if (found) {
+        setSelectedContract(found);
+        setDetailOpen(true);
+      }
+    }
+  }, [highlightId, contracts]);
 
   const handleCreate = async () => {
     if (!form.title.trim() || !form.party_id.trim()) return;
