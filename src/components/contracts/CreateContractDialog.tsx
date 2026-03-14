@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useCreateContract, type CreateContractInput } from '@/hooks/useContracts';
 import { useSalesStaff } from '@/hooks/useSalesCommissions';
+import { useCompanies, useAgencies, useCandidatesList } from '@/hooks/useContractParties';
 
 interface CreateContractDialogProps {
   open: boolean;
@@ -17,12 +18,25 @@ interface CreateContractDialogProps {
 export function CreateContractDialog({ open, onOpenChange }: CreateContractDialogProps) {
   const createContract = useCreateContract();
   const { data: salesStaff = [] } = useSalesStaff();
+  const { data: companies = [] } = useCompanies();
+  const { data: agencies = [] } = useAgencies();
+  const { data: candidates = [] } = useCandidatesList();
+
   const [form, setForm] = useState<CreateContractInput>({
     contract_type: 'employer_agreement',
     party_type: 'employer',
     party_id: '',
     title: '',
   });
+
+  const partyOptions = useMemo(() => {
+    switch (form.party_type) {
+      case 'employer': return companies;
+      case 'agency': return agencies;
+      case 'worker': return candidates;
+      default: return [];
+    }
+  }, [form.party_type, companies, agencies, candidates]);
 
   const handleCreate = async () => {
     if (!form.title.trim() || !form.party_id.trim()) return;
@@ -57,7 +71,7 @@ export function CreateContractDialog({ open, onOpenChange }: CreateContractDialo
             </div>
             <div>
               <Label>Party Type</Label>
-              <Select value={form.party_type} onValueChange={v => setForm(p => ({ ...p, party_type: v }))}>
+              <Select value={form.party_type} onValueChange={v => setForm(p => ({ ...p, party_type: v, party_id: '' }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="employer">Employer</SelectItem>
@@ -68,8 +82,16 @@ export function CreateContractDialog({ open, onOpenChange }: CreateContractDialo
             </div>
           </div>
           <div>
-            <Label>Party ID</Label>
-            <Input value={form.party_id} onChange={e => setForm(p => ({ ...p, party_id: e.target.value }))} placeholder="UUID of the company, agency, or candidate" />
+            <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : 'Worker'}</Label>
+            <Select value={form.party_id || 'none'} onValueChange={v => setForm(p => ({ ...p, party_id: v === 'none' ? '' : v }))}>
+              <SelectTrigger><SelectValue placeholder={`Select ${form.party_type}`} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Select —</SelectItem>
+                {partyOptions.map(o => (
+                  <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -109,7 +131,7 @@ export function CreateContractDialog({ open, onOpenChange }: CreateContractDialo
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={createContract.isPending}>
+            <Button onClick={handleCreate} disabled={createContract.isPending || !form.party_id}>
               {createContract.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Contract
             </Button>

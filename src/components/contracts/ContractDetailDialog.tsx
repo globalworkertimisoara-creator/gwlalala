@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { useContractDocuments, useUploadContractDocument, useDeleteContractDocument } from '@/hooks/useContractDocuments';
 import { useSalesCommissions, useCreateCommission, useSalesStaff, type SalesCommission } from '@/hooks/useSalesCommissions';
 import { useUpdateContract, type Contract } from '@/hooks/useContracts';
+import { usePartyNameLookup, useSalesPersonLookup } from '@/hooks/useContractParties';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
