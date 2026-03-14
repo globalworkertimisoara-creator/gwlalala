@@ -192,8 +192,9 @@ export function OrganizationOverview() {
     const permKey = getRolePermissionKey(role.value);
     const isExpanded = expandedRole === role.value;
     const perms = permKey ? permissionsMap[permKey] : null;
-    const enabledCount = perms ? Object.values(perms).filter(Boolean).length : 0;
-    const totalCount = perms ? Object.keys(perms).length : 0;
+    const displayedKeys = PERMISSION_ROWS.map(r => r.key);
+    const enabledCount = perms ? displayedKeys.filter(k => perms[k]).length : 0;
+    const totalCount = displayedKeys.length;
 
     return (
       <div key={role.value} className="rounded-lg border bg-card overflow-hidden">
