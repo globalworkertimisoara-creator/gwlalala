@@ -186,7 +186,7 @@ export default function Projects() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDrilldown('total')}>
             <CardContent className="pt-4 pb-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
@@ -199,7 +199,7 @@ export default function Projects() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDrilldown('active')}>
             <CardContent className="pt-4 pb-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-accent rounded-lg">
@@ -212,7 +212,7 @@ export default function Projects() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDrilldown('placed')}>
             <CardContent className="pt-4 pb-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-secondary rounded-lg">
@@ -225,7 +225,7 @@ export default function Projects() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDrilldown('fill')}>
             <CardContent className="pt-4 pb-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-muted rounded-lg">
