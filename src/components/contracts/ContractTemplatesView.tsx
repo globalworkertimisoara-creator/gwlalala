@@ -44,6 +44,7 @@ export function ContractTemplatesView() {
   const [historyTemplateId, setHistoryTemplateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [previewFile, setPreviewFile] = useState<{ url: string; fileName: string; isPdf: boolean } | null>(null);
 
   // Create form
   const [newName, setNewName] = useState('');
