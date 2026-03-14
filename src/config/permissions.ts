@@ -182,6 +182,14 @@ const ADMIN_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: true,
+  viewContracts: true,
+  createDraftContracts: true,
+  editOwnDraftContracts: true,
+  editAllContracts: true,
+  deleteContracts: true,
+  uploadContractDocuments: true,
+  approveContracts: true,
+  changeContractStatus: true,
 };
 
 const RECRUITER_PERMISSIONS: RolePermissions = {
