@@ -352,7 +352,7 @@ function ClientsContractsTab({
                   <TableRow
                     key={name}
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => data.project_id ? navigate(`/projects/${data.project_id}`) : null}
+                    onClick={() => data.project_id ? navigate(`/projects/${data.project_id}?from=sales-analytics`) : null}
                   >
                     <TableCell className="font-medium flex items-center gap-2">
                       {name}

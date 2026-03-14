@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useProject, useUpdateProject, useDeleteProject, useLinkJobToProject } from '@/hooks/useProjects';
 import { useJobs, useCreateJob } from '@/hooks/useJobs';
