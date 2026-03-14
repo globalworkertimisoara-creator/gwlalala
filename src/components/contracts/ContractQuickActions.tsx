@@ -6,10 +6,11 @@ import { useToast } from '@/hooks/use-toast';
 interface ContractQuickActionsProps {
   onNewContract: () => void;
   onShowAnalytics: () => void;
+  onShowTemplates?: () => void;
   selectedCount?: number;
 }
 
-export function ContractQuickActions({ onNewContract, onShowAnalytics, selectedCount = 0 }: ContractQuickActionsProps) {
+export function ContractQuickActions({ onNewContract, onShowAnalytics, onShowTemplates, selectedCount = 0 }: ContractQuickActionsProps) {
   const { toast } = useToast();
 
   return (
