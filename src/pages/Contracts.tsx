@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,11 +10,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, FileText, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, FileText, AlertTriangle, Loader2, ArrowLeft } from 'lucide-react';
 import { useContracts, useExpiringContracts, useCreateContract, type CreateContractInput, type Contract } from '@/hooks/useContracts';
 import { useSalesStaff } from '@/hooks/useSalesCommissions';
 import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
