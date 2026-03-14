@@ -70,6 +70,14 @@ const PERMISSION_ROWS: PermissionRow[] = [
   { section: 'Billing', action: 'View invoices', key: 'viewInvoices' },
   { section: 'Billing', action: 'Manage payment methods', key: 'managePaymentMethods' },
   { section: 'Sales', action: 'View sales analytics', key: 'viewSalesAnalytics' },
+  { section: 'Contracts', action: 'View contracts', key: 'viewContracts' },
+  { section: 'Contracts', action: 'Create draft contracts', key: 'createDraftContracts' },
+  { section: 'Contracts', action: 'Edit own draft contracts', key: 'editOwnDraftContracts' },
+  { section: 'Contracts', action: 'Edit all contracts', key: 'editAllContracts' },
+  { section: 'Contracts', action: 'Delete contracts', key: 'deleteContracts' },
+  { section: 'Contracts', action: 'Upload contract documents', key: 'uploadContractDocuments' },
+  { section: 'Contracts', action: 'Approve contracts', key: 'approveContracts' },
+  { section: 'Contracts', action: 'Change contract status', key: 'changeContractStatus' },
 ];
 
 function RolePermissionsPanel({
