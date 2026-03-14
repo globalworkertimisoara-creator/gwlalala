@@ -299,7 +299,7 @@ export default function Contracts() {
             )}
           </CardContent>
         </Card>
-        <ContractDetailDialog contract={selectedContract} open={detailOpen} onOpenChange={setDetailOpen} />
+        <ContractDetailDialog contract={selectedContract} open={detailOpen} onOpenChange={handleDetailClose} />
       </div>
     </AppLayout>
   );
