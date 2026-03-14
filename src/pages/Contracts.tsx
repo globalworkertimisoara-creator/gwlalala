@@ -29,7 +29,7 @@ export default function Contracts() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
+  const [activeTab, setActiveTab] = useState('contracts');
   const filters: any = {};
   if (typeFilter !== 'all') filters.contract_type = typeFilter;
   if (statusFilter !== 'all') filters.status = statusFilter;
