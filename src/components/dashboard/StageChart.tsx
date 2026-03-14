@@ -56,13 +56,13 @@ export function StageChart({ candidates }: StageChartProps) {
       <h3 className="text-lg font-semibold text-foreground mb-4">Pipeline Overview</h3>
       <div className="h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 20 }}>
-            <XAxis type="number" />
+           <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
+            <XAxis type="number" allowDecimals={false} />
             <YAxis 
               type="category" 
               dataKey="name" 
-              width={120}
-              tick={{ fontSize: 12 }}
+              width={160}
+              tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
             />
             <Tooltip 
               formatter={(value, name, props) => [value, props.payload.fullName]}
