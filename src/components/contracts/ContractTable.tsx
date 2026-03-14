@@ -35,6 +35,9 @@ interface ContractTableProps {
 }
 
 export function ContractTable({ contracts, isLoading, highlightId, selectedIds, onSelect, onSelectAll, onRowClick }: ContractTableProps) {
+  const partyLookup = usePartyNameLookup();
+  const salesLookup = useSalesPersonLookup();
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -68,7 +71,8 @@ export function ContractTable({ contracts, isLoading, highlightId, selectedIds, 
             </TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead>Party</TableHead>
+            <TableHead>Party Name</TableHead>
+            <TableHead>Sales Person</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Value</TableHead>
             <TableHead>Duration</TableHead>
