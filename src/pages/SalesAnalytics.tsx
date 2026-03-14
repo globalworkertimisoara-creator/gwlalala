@@ -18,7 +18,7 @@ import {
 import { useSalesCommissionsSummary, type SalesCommissionSummary } from '@/hooks/useSalesCommissions';
 import { useContracts, useExpiringContracts, type Contract } from '@/hooks/useContracts';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend,
 } from 'recharts';
 import { format, isWithinInterval, startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
   frozen: 'bg-sky-100 text-sky-800',
   forfeited: 'bg-red-100 text-red-800',
 };
-const PIE_COLORS = ['#f59e0b', '#10b981', '#3b82f6', '#0ea5e9', '#ef4444', '#8b5cf6', '#ec4899'];
+const PASTEL_COLORS = ['hsl(215, 60%, 75%)', 'hsl(170, 50%, 72%)', 'hsl(280, 45%, 75%)', 'hsl(35, 60%, 75%)', 'hsl(340, 50%, 75%)', 'hsl(200, 55%, 70%)', 'hsl(140, 40%, 70%)'];
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   sent: 'bg-blue-100 text-blue-800',
@@ -294,14 +294,14 @@ function ClientsContractsTab({
               <p className="text-sm text-muted-foreground text-center py-8">No data</p>
             ) : (
               <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie data={typeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                    {typeData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Legend />
+                <BarChart data={typeData} layout="vertical" margin={{ left: 20 }}>
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `€${(v / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
-                </PieChart>
+                  <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                    {typeData.map((_, i) => <Cell key={i} fill={PASTEL_COLORS[i % PASTEL_COLORS.length]} />)}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
@@ -634,7 +634,7 @@ function SalesTeamTab({
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
                   <Legend />
                   {allNames.map((name, i) => (
-                    <Bar key={name} dataKey={name} stackId="a" fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    <Bar key={name} dataKey={name} stackId="a" fill={PASTEL_COLORS[i % PASTEL_COLORS.length]} />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
