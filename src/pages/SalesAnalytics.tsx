@@ -637,7 +637,7 @@ function SalesTeamTab({
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
                   <Legend />
                   {allNames.map((name, i) => (
-                    <Bar key={name} dataKey={name} stackId="a" fill={PASTEL_COLORS[i % PASTEL_COLORS.length]} />
+                    <Bar key={name} dataKey={name} stackId="a" fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
