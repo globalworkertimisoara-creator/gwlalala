@@ -30,6 +30,7 @@ const Pipeline = () => {
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState('');
+  const [projectPickerOpen, setProjectPickerOpen] = useState(false);
 
   // Auto-set URL param to first project if none selected
   useEffect(() => {
@@ -40,6 +41,7 @@ const Pipeline = () => {
 
   const handleProjectChange = useCallback((projectId: string) => {
     setSearchParams({ project: projectId }, { replace: true });
+    setProjectPickerOpen(false);
   }, [setSearchParams]);
 
   // Navigate to candidate with pipeline context
@@ -56,6 +58,10 @@ const Pipeline = () => {
   }, [allCandidates, existingCandidateIds, candidateSearch]);
 
   const selectedProject = projects.find(p => p.id === activeProjectId);
+
+  // Group projects by status for the picker
+  const activeProjects = useMemo(() => projects.filter(p => p.status === 'active' || p.status === 'in_progress'), [projects]);
+  const otherProjects = useMemo(() => projects.filter(p => p.status !== 'active' && p.status !== 'in_progress'), [projects]);
 
   const handleAddCandidate = async (candidateId: string) => {
     if (!activeProjectId) return;
@@ -76,25 +82,71 @@ const Pipeline = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Project Selector */}
-            <Select
-              value={activeProjectId}
-              onValueChange={handleProjectChange}
-            >
-              <SelectTrigger className="w-[260px]">
-                <div className="flex items-center gap-2">
-                  <FolderKanban className="h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Select project" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map(p => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name} — {p.employer_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Searchable Project Selector */}
+            <Popover open={projectPickerOpen} onOpenChange={setProjectPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={projectPickerOpen}
+                  className="w-[300px] justify-between font-normal"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <FolderKanban className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    {selectedProject ? (
+                      <span className="truncate">{selectedProject.name} — {selectedProject.employer_name}</span>
+                    ) : (
+                      <span className="text-muted-foreground">Select project...</span>
+                    )}
+                  </div>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[350px] p-0" align="end">
+                <Command>
+                  <CommandInput placeholder="Search projects..." />
+                  <CommandList className="max-h-[300px]">
+                    <CommandEmpty>No projects found.</CommandEmpty>
+                    {activeProjects.length > 0 && (
+                      <CommandGroup heading="Active">
+                        {activeProjects.map(p => (
+                          <CommandItem
+                            key={p.id}
+                            value={`${p.name} ${p.employer_name}`}
+                            onSelect={() => handleProjectChange(p.id)}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="flex flex-col min-w-0">
+                              <span className="truncate font-medium text-sm">{p.name}</span>
+                              <span className="truncate text-xs text-muted-foreground">{p.employer_name} · {p.location}</span>
+                            </div>
+                            <Check className={cn("h-4 w-4 shrink-0", activeProjectId === p.id ? "opacity-100" : "opacity-0")} />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                    {otherProjects.length > 0 && (
+                      <CommandGroup heading="Other">
+                        {otherProjects.map(p => (
+                          <CommandItem
+                            key={p.id}
+                            value={`${p.name} ${p.employer_name}`}
+                            onSelect={() => handleProjectChange(p.id)}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="flex flex-col min-w-0">
+                              <span className="truncate font-medium text-sm">{p.name}</span>
+                              <span className="truncate text-xs text-muted-foreground">{p.employer_name} · {p.location}</span>
+                            </div>
+                            <Check className={cn("h-4 w-4 shrink-0", activeProjectId === p.id ? "opacity-100" : "opacity-0")} />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
 
             {activeProjectId && (
               <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
