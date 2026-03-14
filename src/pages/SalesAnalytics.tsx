@@ -150,12 +150,13 @@ function ClientsContractsTab({
   // Revenue by client (party_type = employer)
   const byClient = filteredCommissions.reduce((acc, c) => {
     const name = c.employer_name || c.project_name || 'Unknown';
-    if (!acc[name]) acc[name] = { revenue: 0, contracts: 0, commissions: 0 };
+    if (!acc[name]) acc[name] = { revenue: 0, contracts: 0, commissions: 0, project_id: c.project_id };
     acc[name].revenue += c.contract_value || 0;
     acc[name].commissions += c.commission_amount;
     acc[name].contracts += 1;
+    if (!acc[name].project_id && c.project_id) acc[name].project_id = c.project_id;
     return acc;
-  }, {} as Record<string, { revenue: number; contracts: number; commissions: number }>);
+  }, {} as Record<string, { revenue: number; contracts: number; commissions: number; project_id: string | null }>);
 
   const clientData = Object.entries(byClient)
     .sort(([, a], [, b]) => b.revenue - a.revenue)
