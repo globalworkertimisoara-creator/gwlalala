@@ -27,6 +27,7 @@ import {
   Plus, Upload, Download, History, Trash2, FileText,
   ChevronRight, Loader2, Search, Eye, EyeOff,
 } from 'lucide-react';
+import { PdfPreview } from '@/components/documents/PdfPreview';
 
 function getTypeLabel(value: string) {
   return TEMPLATE_TYPES.find(t => t.value === value)?.label ?? value;
@@ -43,6 +44,7 @@ export function ContractTemplatesView() {
   const [historyTemplateId, setHistoryTemplateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [previewFile, setPreviewFile] = useState<{ url: string; fileName: string; isPdf: boolean } | null>(null);
 
   // Create form
   const [newName, setNewName] = useState('');
@@ -119,6 +121,22 @@ export function ContractTemplatesView() {
     a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handlePreviewVersion = async (storagePath: string, fileName: string) => {
+    const isPdf = fileName.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      const { data } = await supabase.storage.from('contract-documents').createSignedUrl(storagePath, 3600);
+      if (data?.signedUrl) {
+        setPreviewFile({ url: data.signedUrl, fileName, isPdf: true });
+      }
+    } else {
+      // For Word docs, download as blob and show info
+      const { data } = await supabase.storage.from('contract-documents').createSignedUrl(storagePath, 3600);
+      if (data?.signedUrl) {
+        setPreviewFile({ url: data.signedUrl, fileName, isPdf: false });
+      }
+    }
   };
 
   const historyTemplate = templates.find(t => t.id === historyTemplateId);
@@ -373,6 +391,7 @@ export function ContractTemplatesView() {
                   <TableHead>Size</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead>Uploaded</TableHead>
+                  <TableHead className="text-right">View</TableHead>
                   <TableHead className="text-right">Download</TableHead>
                 </TableRow>
               </TableHeader>
@@ -393,6 +412,11 @@ export function ContractTemplatesView() {
                       {format(new Date(v.created_at), 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => handlePreviewVersion(v.storage_path, v.file_name)} title="Preview document">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleDownloadVersion(v.storage_path, v.file_name)}>
                         <Download className="h-4 w-4" />
                       </Button>
@@ -402,6 +426,55 @@ export function ContractTemplatesView() {
               </TableBody>
             </Table>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Preview Dialog */}
+      <Dialog open={!!previewFile} onOpenChange={open => { if (!open) setPreviewFile(null); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="truncate">{previewFile?.fileName}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-auto">
+            {previewFile?.isPdf ? (
+              <PdfPreview
+                fileUrl={previewFile.url}
+                fileName={previewFile.fileName}
+                onDownload={() => {
+                  const a = document.createElement('a');
+                  a.href = previewFile.url;
+                  a.download = previewFile.fileName;
+                  a.click();
+                }}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-4 py-12">
+                <FileText className="h-16 w-16 text-muted-foreground/40" />
+                <div className="text-center">
+                  <p className="font-medium text-foreground">Word Document Preview</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Word documents (.doc, .docx) cannot be previewed inline.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Download to view or edit the document.
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const a = document.createElement('a');
+                      a.href = previewFile!.url;
+                      a.download = previewFile!.fileName;
+                      a.click();
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" /> Download
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
