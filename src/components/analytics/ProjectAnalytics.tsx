@@ -151,7 +151,7 @@ export default function ProjectAnalytics({ compact = false }: ProjectAnalyticsPr
                 />
                 <Bar
                   dataKey="project_count"
-                  fill="#3B82F6"
+                  fill="hsl(var(--chart-1))"
                   radius={[0, 4, 4, 0]}
                   style={{ cursor: 'pointer' }}
                   onClick={(data) => setSelectedCountry(data.country)}

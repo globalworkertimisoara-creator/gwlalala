@@ -618,8 +618,8 @@ function SalesTeamTab({
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `€${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
                   <Legend />
-                  <Bar dataKey="earned" fill="#10b981" name="Earned" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="pending" fill="#f59e0b" name="Pending" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="earned" fill="hsl(var(--chart-3))" name="Earned" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="pending" fill="hsl(var(--chart-4))" name="Pending" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
