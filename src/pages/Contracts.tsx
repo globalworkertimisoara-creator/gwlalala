@@ -274,7 +274,7 @@ export default function Contracts() {
                   </TableHeader>
                   <TableBody>
                     {contracts.map(c => (
-                      <TableRow key={c.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => { setSelectedContract(c); setDetailOpen(true); }}>
+                      <TableRow key={c.id} className={cn("hover:bg-muted/50 cursor-pointer", highlightId === c.id && "ring-2 ring-primary/50 bg-primary/5")} onClick={() => { setSelectedContract(c); setDetailOpen(true); }}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-muted-foreground" />
