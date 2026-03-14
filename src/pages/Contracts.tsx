@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useContracts, useExpiringContracts, type Contract } from '@/hooks/useContracts';
 import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
@@ -12,6 +13,7 @@ import { ContractFilters } from '@/components/contracts/ContractFilters';
 import { ContractTable } from '@/components/contracts/ContractTable';
 import { ContractAnalyticsPanel } from '@/components/contracts/ContractAnalyticsPanel';
 import { CreateContractDialog } from '@/components/contracts/CreateContractDialog';
+import { ContractTemplatesView } from '@/components/contracts/ContractTemplatesView';
 import { format } from 'date-fns';
 
 export default function Contracts() {
