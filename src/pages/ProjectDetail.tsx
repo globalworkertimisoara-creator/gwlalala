@@ -187,8 +187,14 @@ export default function ProjectDetail() {
     <AppLayout>
       <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
+        {fromSales && (
+          <Button variant="outline" size="sm" className="mb-2 gap-1" onClick={() => navigate('/sales-analytics')}>
+            <ArrowLeft className="h-4 w-4" />
+            Back to Sales Analytics
+          </Button>
+        )}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/projects')}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(fromSales ? '/sales-analytics' : '/projects')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
