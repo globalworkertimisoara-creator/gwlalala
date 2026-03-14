@@ -104,6 +104,16 @@ export interface RolePermissions {
 
   // Sales
   viewSalesAnalytics: boolean;
+
+  // Contracts
+  viewContracts: boolean;
+  createDraftContracts: boolean;
+  editOwnDraftContracts: boolean;
+  editAllContracts: boolean;
+  deleteContracts: boolean;
+  uploadContractDocuments: boolean;
+  approveContracts: boolean;
+  changeContractStatus: boolean;
 }
 
 // ─── Internal Staff Permissions ───────────────────────────────────────────────
