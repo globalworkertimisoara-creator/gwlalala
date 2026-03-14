@@ -27,6 +27,7 @@ import {
   Plus, Upload, Download, History, Trash2, FileText,
   ChevronRight, Loader2, Search, Eye, EyeOff,
 } from 'lucide-react';
+import { PdfPreview } from '@/components/documents/PdfPreview';
 
 function getTypeLabel(value: string) {
   return TEMPLATE_TYPES.find(t => t.value === value)?.label ?? value;
