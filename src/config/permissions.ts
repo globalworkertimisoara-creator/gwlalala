@@ -104,7 +104,50 @@ export interface RolePermissions {
 
   // Sales
   viewSalesAnalytics: boolean;
+
+  // Contracts
+  viewContracts: boolean;
+  createDraftContracts: boolean;
+  editOwnDraftContracts: boolean;
+  editAllContracts: boolean;
+  deleteContracts: boolean;
+  uploadContractDocuments: boolean;
+  approveContracts: boolean;
+  changeContractStatus: boolean;
 }
+
+// ─── Contract permission defaults by role type ────────────────────────────────
+const CONTRACT_NONE = {
+  viewContracts: false,
+  createDraftContracts: false,
+  editOwnDraftContracts: false,
+  editAllContracts: false,
+  deleteContracts: false,
+  uploadContractDocuments: false,
+  approveContracts: false,
+  changeContractStatus: false,
+};
+const CONTRACT_VIEW_ONLY = { ...CONTRACT_NONE, viewContracts: true };
+const CONTRACT_FULL = {
+  viewContracts: true,
+  createDraftContracts: true,
+  editOwnDraftContracts: true,
+  editAllContracts: true,
+  deleteContracts: true,
+  uploadContractDocuments: true,
+  approveContracts: true,
+  changeContractStatus: true,
+};
+const CONTRACT_SALES = {
+  viewContracts: true,
+  createDraftContracts: true,
+  editOwnDraftContracts: true,
+  editAllContracts: false,
+  deleteContracts: false,
+  uploadContractDocuments: true,
+  approveContracts: false,
+  changeContractStatus: false,
+};
 
 // ─── Internal Staff Permissions ───────────────────────────────────────────────
 
@@ -172,6 +215,7 @@ const ADMIN_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: true,
+  ...CONTRACT_FULL,
 };
 
 const RECRUITER_PERMISSIONS: RolePermissions = {
@@ -238,6 +282,7 @@ const RECRUITER_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_VIEW_ONLY,
 };
 
 const OPERATIONS_MANAGER_PERMISSIONS: RolePermissions = {
@@ -304,6 +349,7 @@ const OPERATIONS_MANAGER_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_FULL,
 };
 
 const DOCUMENTATION_STAFF_PERMISSIONS: RolePermissions = {
@@ -370,6 +416,7 @@ const DOCUMENTATION_STAFF_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_VIEW_ONLY,
 };
 
 // ─── Agency Team Permissions ──────────────────────────────────────────────────
@@ -438,6 +485,7 @@ const AGENCY_OWNER_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 const AGENCY_RECRUITER_PERMISSIONS: RolePermissions = {
@@ -504,6 +552,7 @@ const AGENCY_RECRUITER_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 const AGENCY_DOCUMENT_STAFF_PERMISSIONS: RolePermissions = {
@@ -570,6 +619,7 @@ const AGENCY_DOCUMENT_STAFF_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
@@ -636,6 +686,7 @@ const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 // ─── Documentation Lead Permissions ───────────────────────────────────────────
@@ -704,6 +755,7 @@ const DOCUMENTATION_LEAD_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: true,
+  ...CONTRACT_VIEW_ONLY,
 };
 
 // ─── Sales Manager Permissions ────────────────────────────────────────────────
@@ -772,6 +824,7 @@ const SALES_MANAGER_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_SALES,
 };
 
 // ─── Project Manager Permissions ──────────────────────────────────────────────
@@ -841,6 +894,7 @@ const PROJECT_MANAGER_PERMISSIONS: RolePermissions = {
   viewOffers: false,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 // ─── Employer Team Permissions ────────────────────────────────────────────────
@@ -909,6 +963,7 @@ const EMPLOYER_ADMIN_PERMISSIONS: RolePermissions = {
   viewOffers: true,
   approveOffers: true,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 const EMPLOYER_HR_PERMISSIONS: RolePermissions = {
@@ -975,6 +1030,7 @@ const EMPLOYER_HR_PERMISSIONS: RolePermissions = {
   viewOffers: true,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 const EMPLOYER_HIRING_MANAGER_PERMISSIONS: RolePermissions = {
@@ -1041,6 +1097,7 @@ const EMPLOYER_HIRING_MANAGER_PERMISSIONS: RolePermissions = {
   viewOffers: true,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 const EMPLOYER_VIEWER_PERMISSIONS: RolePermissions = {
@@ -1107,6 +1164,7 @@ const EMPLOYER_VIEWER_PERMISSIONS: RolePermissions = {
   viewOffers: true,
   approveOffers: false,
   viewSalesAnalytics: false,
+  ...CONTRACT_NONE,
 };
 
 

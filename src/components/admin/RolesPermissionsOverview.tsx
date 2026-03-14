@@ -101,6 +101,14 @@ const PERMISSION_ROWS: PermissionRow[] = [
   { section: 'System', action: 'Create registration codes', key: 'createRegistrationCodes' },
   { section: 'Billing', action: 'View billing', key: 'viewBilling' },
   { section: 'Billing', action: 'Manage billing', key: 'manageBilling' },
+  { section: 'Contracts', action: 'View contracts', key: 'viewContracts' },
+  { section: 'Contracts', action: 'Create draft contracts', key: 'createDraftContracts' },
+  { section: 'Contracts', action: 'Edit own draft contracts', key: 'editOwnDraftContracts' },
+  { section: 'Contracts', action: 'Edit all contracts', key: 'editAllContracts' },
+  { section: 'Contracts', action: 'Delete contracts', key: 'deleteContracts' },
+  { section: 'Contracts', action: 'Upload contract documents', key: 'uploadContractDocuments' },
+  { section: 'Contracts', action: 'Approve contracts', key: 'approveContracts' },
+  { section: 'Contracts', action: 'Change contract status', key: 'changeContractStatus' },
 ];
 
 const ROLE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
