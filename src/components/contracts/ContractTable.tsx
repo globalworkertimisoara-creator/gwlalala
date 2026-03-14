@@ -5,6 +5,7 @@ import { FileText, Loader2, ArrowRight } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { usePartyNameLookup, useSalesPersonLookup } from '@/hooks/useContractParties';
 import type { Contract } from '@/hooks/useContracts';
 
 const statusColors: Record<string, string> = {
