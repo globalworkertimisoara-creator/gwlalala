@@ -150,12 +150,13 @@ function ClientsContractsTab({
   // Revenue by client (party_type = employer)
   const byClient = filteredCommissions.reduce((acc, c) => {
     const name = c.employer_name || c.project_name || 'Unknown';
-    if (!acc[name]) acc[name] = { revenue: 0, contracts: 0, commissions: 0 };
+    if (!acc[name]) acc[name] = { revenue: 0, contracts: 0, commissions: 0, project_id: c.project_id };
     acc[name].revenue += c.contract_value || 0;
     acc[name].commissions += c.commission_amount;
     acc[name].contracts += 1;
+    if (!acc[name].project_id && c.project_id) acc[name].project_id = c.project_id;
     return acc;
-  }, {} as Record<string, { revenue: number; contracts: number; commissions: number }>);
+  }, {} as Record<string, { revenue: number; contracts: number; commissions: number; project_id: string | null }>);
 
   const clientData = Object.entries(byClient)
     .sort(([, a], [, b]) => b.revenue - a.revenue)
@@ -348,8 +349,15 @@ function ClientsContractsTab({
                 .sort(([, a], [, b]) => b.revenue - a.revenue)
                 .slice(0, 15)
                 .map(([name, data]) => (
-                  <TableRow key={name} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium">{name}</TableCell>
+                  <TableRow
+                    key={name}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => data.project_id ? navigate(`/projects/${data.project_id}?from=sales-analytics`) : null}
+                  >
+                    <TableCell className="font-medium flex items-center gap-2">
+                      {name}
+                      {data.project_id && <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                    </TableCell>
                     <TableCell>€{data.revenue.toLocaleString()}</TableCell>
                     <TableCell>€{data.commissions.toLocaleString()}</TableCell>
                     <TableCell>{data.contracts}</TableCell>
