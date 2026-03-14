@@ -78,6 +78,23 @@ const PERMISSION_ROWS: PermissionRow[] = [
   { section: 'Contracts', action: 'Upload contract documents', key: 'uploadContractDocuments' },
   { section: 'Contracts', action: 'Approve contracts', key: 'approveContracts' },
   { section: 'Contracts', action: 'Change contract status', key: 'changeContractStatus' },
+  { section: 'Employer Portal', action: 'Invite employer team', key: 'inviteEmployerTeam' },
+  { section: 'Employer Portal', action: 'Remove employer team', key: 'removeEmployerTeam' },
+  { section: 'Employer Portal', action: 'Manage employer team', key: 'manageEmployerTeam' },
+  { section: 'Employer Portal', action: 'View company profile', key: 'viewCompanyProfile' },
+  { section: 'Employer Portal', action: 'Edit company profile', key: 'editCompanyProfile' },
+  { section: 'Employer Portal', action: 'Upload company documents', key: 'uploadCompanyDocuments' },
+  { section: 'Employer Portal', action: 'View assigned projects', key: 'viewAssignedProjects' },
+  { section: 'Employer Portal', action: 'View all company projects', key: 'viewAllCompanyProjects' },
+  { section: 'Employer Portal', action: 'View project candidates', key: 'viewProjectCandidates' },
+  { section: 'Employer Portal', action: 'Export candidate lists', key: 'exportCandidateLists' },
+  { section: 'Employer Portal', action: 'View candidate documents', key: 'viewCandidateDocuments' },
+  { section: 'Employer Portal', action: 'Schedule interviews', key: 'scheduleInterviews' },
+  { section: 'Employer Portal', action: 'View interviews', key: 'viewInterviews' },
+  { section: 'Employer Portal', action: 'Provide feedback', key: 'provideFeedback' },
+  { section: 'Employer Portal', action: 'Create offers', key: 'createOffers' },
+  { section: 'Employer Portal', action: 'View offers', key: 'viewOffers' },
+  { section: 'Employer Portal', action: 'Approve offers', key: 'approveOffers' },
 ];
 
 function RolePermissionsPanel({
