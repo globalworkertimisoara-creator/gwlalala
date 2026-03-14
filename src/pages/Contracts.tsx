@@ -75,9 +75,28 @@ export default function Contracts() {
     setDialogOpen(false);
   };
 
+  const handleDetailClose = (open: boolean) => {
+    setDetailOpen(open);
+    if (!open && highlightId) {
+      setSearchParams({}, { replace: true });
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-6 lg:p-8 space-y-8">
+        {/* Back link when coming from Sales Analytics */}
+        {highlightId && (
+          <Button
+            variant="ghost"
+            className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate('/sales-analytics')}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Sales Analytics
+          </Button>
+        )}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
