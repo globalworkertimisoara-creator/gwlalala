@@ -18,7 +18,7 @@ import {
 import { useSalesCommissionsSummary, type SalesCommissionSummary } from '@/hooks/useSalesCommissions';
 import { useContracts, useExpiringContracts, type Contract } from '@/hooks/useContracts';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend,
 } from 'recharts';
 import { format, isWithinInterval, startOfMonth, startOfQuarter, startOfYear, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
