@@ -121,6 +121,7 @@ export default function Contracts() {
             <ContractQuickActions
               onNewContract={() => setDialogOpen(true)}
               onShowAnalytics={() => setShowAnalytics(!showAnalytics)}
+              onShowTemplates={() => setActiveTab('templates')}
               selectedCount={selectedIds.size}
             />
 

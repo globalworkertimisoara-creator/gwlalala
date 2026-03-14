@@ -6,10 +6,11 @@ import { useToast } from '@/hooks/use-toast';
 interface ContractQuickActionsProps {
   onNewContract: () => void;
   onShowAnalytics: () => void;
+  onShowTemplates?: () => void;
   selectedCount?: number;
 }
 
-export function ContractQuickActions({ onNewContract, onShowAnalytics, selectedCount = 0 }: ContractQuickActionsProps) {
+export function ContractQuickActions({ onNewContract, onShowAnalytics, onShowTemplates, selectedCount = 0 }: ContractQuickActionsProps) {
   const { toast } = useToast();
 
   return (
@@ -20,7 +21,7 @@ export function ContractQuickActions({ onNewContract, onShowAnalytics, selectedC
       <Button variant="outline" className="gap-2" onClick={onShowAnalytics}>
         <BarChart3 className="h-4 w-4" /> Analytics
       </Button>
-      <Button variant="outline" className="gap-2" onClick={() => toast({ title: 'Contract templates coming soon' })}>
+      <Button variant="outline" className="gap-2" onClick={onShowTemplates}>
         <FileText className="h-4 w-4" /> Templates
       </Button>
       <Button variant="outline" className="gap-2" onClick={() => toast({ title: 'Reminder settings coming soon' })}>
