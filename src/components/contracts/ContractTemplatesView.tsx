@@ -123,6 +123,22 @@ export function ContractTemplatesView() {
     URL.revokeObjectURL(url);
   };
 
+  const handlePreviewVersion = async (storagePath: string, fileName: string) => {
+    const isPdf = fileName.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      const { data } = await supabase.storage.from('contract-documents').createSignedUrl(storagePath, 3600);
+      if (data?.signedUrl) {
+        setPreviewFile({ url: data.signedUrl, fileName, isPdf: true });
+      }
+    } else {
+      // For Word docs, download as blob and show info
+      const { data } = await supabase.storage.from('contract-documents').createSignedUrl(storagePath, 3600);
+      if (data?.signedUrl) {
+        setPreviewFile({ url: data.signedUrl, fileName, isPdf: false });
+      }
+    }
+  };
+
   const historyTemplate = templates.find(t => t.id === historyTemplateId);
 
   if (isLoading) {
