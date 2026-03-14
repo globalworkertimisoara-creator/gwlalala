@@ -72,11 +72,11 @@ const Pipeline = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 lg:p-6 space-y-4">
+      <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Recruitment Pipeline</h1>
+          <div className="space-y-1">
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Recruitment Pipeline</h1>
             <p className="text-sm text-muted-foreground">
               Track candidates through recruitment stages per project
             </p>

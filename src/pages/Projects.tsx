@@ -165,12 +165,12 @@ export default function Projects() {
 
   return (
     <AppLayout>
-      <div className="space-y-4">
+      <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Projects</h1>
-            <p className="text-muted-foreground text-sm">
+            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Projects</h1>
+            <p className="text-muted-foreground">
               Manage client projects and track recruitment fulfillment
             </p>
           </div>

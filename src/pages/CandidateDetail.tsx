@@ -235,7 +235,7 @@ export default function CandidateDetail() {
 
   return (
     <AppLayout>
-      <div className="p-4 lg:p-6 space-y-6">
+      <div className="p-6 lg:p-8 space-y-8">
 
         {/* Back Button */}
         <Button variant="ghost" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => navigate(-1)}>
