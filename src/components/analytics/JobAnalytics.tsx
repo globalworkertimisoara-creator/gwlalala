@@ -186,7 +186,7 @@ export default function JobAnalytics() {
                   return null;
                 }}
               />
-              <Bar dataKey="job_count" fill="#8B5CF6" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="job_count" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

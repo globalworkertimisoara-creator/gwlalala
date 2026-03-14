@@ -22,7 +22,7 @@ export default function AgencyProjectsView({ agencyId }: AgencyProjectsViewProps
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<any>(null);
 
-  const COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899'];
+  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
   return (
     <div className="space-y-6">

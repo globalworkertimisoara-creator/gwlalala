@@ -31,7 +31,10 @@ const STATUS_COLORS: Record<string, string> = {
   frozen: 'bg-sky-100 text-sky-800',
   forfeited: 'bg-red-100 text-red-800',
 };
-const PASTEL_COLORS = ['hsl(215, 60%, 75%)', 'hsl(170, 50%, 72%)', 'hsl(280, 45%, 75%)', 'hsl(35, 60%, 75%)', 'hsl(340, 50%, 75%)', 'hsl(200, 55%, 70%)', 'hsl(140, 40%, 70%)'];
+const CHART_COLORS = [
+  'hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))', 'hsl(var(--chart-5))', 'hsl(var(--accent))', 'hsl(var(--primary))',
+];
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   sent: 'bg-blue-100 text-blue-800',
@@ -299,7 +302,7 @@ function ClientsContractsTab({
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
                   <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                    {typeData.map((_, i) => <Cell key={i} fill={PASTEL_COLORS[i % PASTEL_COLORS.length]} />)}
+                    {typeData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -615,8 +618,8 @@ function SalesTeamTab({
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `€${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
                   <Legend />
-                  <Bar dataKey="earned" fill="#10b981" name="Earned" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="pending" fill="#f59e0b" name="Pending" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="earned" fill="hsl(var(--chart-3))" name="Earned" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="pending" fill="hsl(var(--chart-4))" name="Pending" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -634,7 +637,7 @@ function SalesTeamTab({
                   <Tooltip formatter={(v: number) => `€${v.toLocaleString()}`} />
                   <Legend />
                   {allNames.map((name, i) => (
-                    <Bar key={name} dataKey={name} stackId="a" fill={PASTEL_COLORS[i % PASTEL_COLORS.length]} />
+                    <Bar key={name} dataKey={name} stackId="a" fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
