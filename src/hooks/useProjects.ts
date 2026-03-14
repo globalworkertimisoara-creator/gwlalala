@@ -119,7 +119,7 @@ export function useProject(id: string) {
       });
 
       const daysSinceContract = project.contract_signed_at
-        ? differenceInDays(new Date(), new Date(project.contract_signed_at))
+        ? Math.max(0, differenceInDays(new Date(), new Date(project.contract_signed_at)))
         : null;
 
       return {
