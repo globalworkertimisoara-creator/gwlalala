@@ -59,7 +59,8 @@ export default function Projects() {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-
+  const [drilldown, setDrilldown] = useState<DrilldownType>(null);
+  const navigate = useNavigate();
   // Derive filter options from data
   const employers = useMemo(() => {
     if (!projects) return [];
