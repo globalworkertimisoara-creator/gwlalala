@@ -70,6 +70,8 @@ import { useState, useMemo } from 'react';
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromSales = searchParams.get('from') === 'sales-analytics';
   const { data: project, isLoading } = useProject(id!);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
