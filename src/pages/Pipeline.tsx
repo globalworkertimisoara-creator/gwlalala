@@ -4,13 +4,16 @@ import { usePipelineCandidates, useAddCandidateToPipeline } from '@/hooks/usePip
 import { useProjects } from '@/hooks/useProjects';
 import { useCandidates } from '@/hooks/useCandidates';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Plus, Loader2, FolderKanban } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Loader2, FolderKanban, ChevronsUpDown, Check, Search } from 'lucide-react';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 const Pipeline = () => {
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
