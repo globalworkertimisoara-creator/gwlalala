@@ -1658,6 +1658,83 @@ export type Database = {
           },
         ]
       }
+      contract_template_versions: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          id: string
+          notes: string | null
+          storage_path: string
+          template_id: string
+          uploaded_by: string | null
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          notes?: string | null
+          storage_path: string
+          template_id: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          notes?: string | null
+          storage_path?: string
+          template_id?: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          template_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
           auto_renew: boolean | null
