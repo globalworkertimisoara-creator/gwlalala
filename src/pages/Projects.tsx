@@ -441,6 +441,112 @@ export default function Projects() {
           </div>
         )}
       </div>
+
+      {/* Drilldown Dialog */}
+      <Dialog open={drilldown !== null} onOpenChange={() => setDrilldown(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {drilldown === 'total' && 'All Projects by Status'}
+              {drilldown === 'active' && 'Active Projects'}
+              {drilldown === 'placed' && 'Placed Candidates by Project'}
+              {drilldown === 'fill' && 'Fulfillment Rate by Project'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {drilldown === 'total' && (() => {
+              const byStatus = (projects || []).reduce((acc, p) => {
+                acc[p.status] = (acc[p.status] || []);
+                acc[p.status].push(p);
+                return acc;
+              }, {} as Record<string, ProjectWithMetrics[]>);
+              return Object.entries(byStatus).map(([status, items]) => (
+                <div key={status} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Badge className={getProjectStatusColor(status as ProjectStatus)}>
+                      {getProjectStatusLabel(status as ProjectStatus)}
+                    </Badge>
+                    <span className="text-sm font-bold">{items.length}</span>
+                  </div>
+                  {items.map(p => (
+                    <div 
+                      key={p.id} 
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
+                      onClick={() => { setDrilldown(null); navigate(`/projects/${p.id}`); }}
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">{p.employer_name}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{p.jobs.length} roles</span>
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
+
+            {drilldown === 'active' && (() => {
+              const active = (projects || []).filter(p => p.status === 'active');
+              if (active.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">No active projects</p>;
+              return active.map(p => (
+                <div 
+                  key={p.id} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
+                  onClick={() => { setDrilldown(null); navigate(`/projects/${p.id}`); }}
+                >
+                  <div>
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">{p.employer_name} · {p.location}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold">{p.fill_percentage}%</p>
+                    <p className="text-xs text-muted-foreground">filled</p>
+                  </div>
+                </div>
+              ));
+            })()}
+
+            {drilldown === 'placed' && (() => {
+              const withPlaced = (projects || []).filter(p => p.filled_positions > 0).sort((a, b) => b.filled_positions - a.filled_positions);
+              if (withPlaced.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">No placed candidates yet</p>;
+              return withPlaced.map(p => (
+                <div 
+                  key={p.id} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
+                  onClick={() => { setDrilldown(null); navigate(`/projects/${p.id}`); }}
+                >
+                  <div>
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">{p.employer_name}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold">{p.filled_positions}</p>
+                    <p className="text-xs text-muted-foreground">of {p.total_positions}</p>
+                  </div>
+                </div>
+              ));
+            })()}
+
+            {drilldown === 'fill' && (() => {
+              const sorted = [...(projects || [])].sort((a, b) => b.fill_percentage - a.fill_percentage);
+              return sorted.map(p => (
+                <div 
+                  key={p.id} 
+                  className="p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors space-y-2"
+                  onClick={() => { setDrilldown(null); navigate(`/projects/${p.id}`); }}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <span className="text-sm font-bold">{p.fill_percentage}%</span>
+                  </div>
+                  <Progress value={p.fill_percentage} className="h-2" />
+                  <p className="text-xs text-muted-foreground">{p.filled_positions} placed of {p.total_positions} · {p.employer_name}</p>
+                </div>
+              ));
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
