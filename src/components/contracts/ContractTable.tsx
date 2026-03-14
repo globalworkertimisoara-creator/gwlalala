@@ -5,6 +5,7 @@ import { FileText, Loader2, ArrowRight } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { usePartyNameLookup, useSalesPersonLookup } from '@/hooks/useContractParties';
 import type { Contract } from '@/hooks/useContracts';
 
 const statusColors: Record<string, string> = {
@@ -34,6 +35,9 @@ interface ContractTableProps {
 }
 
 export function ContractTable({ contracts, isLoading, highlightId, selectedIds, onSelect, onSelectAll, onRowClick }: ContractTableProps) {
+  const partyLookup = usePartyNameLookup();
+  const salesLookup = useSalesPersonLookup();
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -67,7 +71,8 @@ export function ContractTable({ contracts, isLoading, highlightId, selectedIds, 
             </TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead>Party</TableHead>
+            <TableHead>Party Name</TableHead>
+            <TableHead>Sales Person</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Value</TableHead>
             <TableHead>Duration</TableHead>
@@ -111,7 +116,13 @@ export function ContractTable({ contracts, isLoading, highlightId, selectedIds, 
                 </TableCell>
                 <TableCell className="text-sm">{typeLabels[c.contract_type] || c.contract_type}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="capitalize">{c.party_type}</Badge>
+                  <div>
+                    <p className="text-sm font-medium">{partyLookup.get(c.party_id) || c.party_id.slice(0, 8)}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{c.party_type}</p>
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm">
+                  {c.sales_person_id ? (salesLookup.get(c.sales_person_id) || '—') : '—'}
                 </TableCell>
                 <TableCell>
                   <Badge className={statusColors[c.status] || 'bg-muted'}>{c.status}</Badge>

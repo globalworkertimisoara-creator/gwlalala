@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { useContractDocuments, useUploadContractDocument, useDeleteContractDocument } from '@/hooks/useContractDocuments';
 import { useSalesCommissions, useCreateCommission, useSalesStaff, type SalesCommission } from '@/hooks/useSalesCommissions';
 import { useUpdateContract, type Contract } from '@/hooks/useContracts';
+import { usePartyNameLookup, useSalesPersonLookup } from '@/hooks/useContractParties';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,12 +66,17 @@ export function ContractDetailDialog({ contract, open, onOpenChange }: ContractD
 
 function ContractMetadata({ contract }: { contract: Contract }) {
   const updateContract = useUpdateContract();
+  const partyLookup = usePartyNameLookup();
+  const salesLookup = useSalesPersonLookup();
   const { toast } = useToast();
 
   const handleStatusChange = async (newStatus: string) => {
     await updateContract.mutateAsync({ id: contract.id, status: newStatus, _oldContract: contract } as any);
     toast({ title: 'Status updated' });
   };
+
+  const partyName = partyLookup.get(contract.party_id) || contract.party_id;
+  const salesName = contract.sales_person_id ? (salesLookup.get(contract.sales_person_id) || '—') : '—';
 
   return (
     <div className="grid grid-cols-2 gap-4 text-sm">
@@ -88,7 +94,8 @@ function ContractMetadata({ contract }: { contract: Contract }) {
           </SelectContent>
         </Select>
       </div>
-      <div><span className="text-muted-foreground">Party:</span> <span className="font-medium">{contract.party_type}</span></div>
+      <div><span className="text-muted-foreground">Party:</span> <span className="font-medium">{partyName}</span> <span className="text-muted-foreground capitalize text-xs">({contract.party_type})</span></div>
+      <div><span className="text-muted-foreground">Sales Person:</span> <span className="font-medium">{salesName}</span></div>
       <div><span className="text-muted-foreground">Value:</span> <span className="font-medium">{contract.total_value ? `${contract.total_value.toLocaleString()} ${contract.currency}` : '—'}</span></div>
       <div><span className="text-muted-foreground">Start:</span> <span>{contract.start_date ? format(new Date(contract.start_date), 'MMM d, yyyy') : '—'}</span></div>
       <div><span className="text-muted-foreground">End:</span> <span>{contract.end_date ? format(new Date(contract.end_date), 'MMM d, yyyy') : '—'}</span></div>
