@@ -54,6 +54,7 @@ const INTERNAL_ROLES: AppRole[] = [
   'operations_manager',
   'documentation_lead',
   'sales_manager',
+  'sales_agent',
   'project_manager',
 ];
 
