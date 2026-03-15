@@ -156,7 +156,7 @@ export default function Contracts() {
               </CardHeader>
               <CardContent>
                 <ContractTable
-                  contracts={filteredContracts}
+                  contracts={contracts}
                   isLoading={isLoading}
                   highlightId={highlightId}
                   selectedIds={selectedIds}
