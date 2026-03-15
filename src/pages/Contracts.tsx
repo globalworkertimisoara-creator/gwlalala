@@ -79,7 +79,7 @@ export default function Contracts() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedIds(checked ? new Set(filteredContracts.map(c => c.id)) : new Set());
+    setSelectedIds(checked ? new Set(contracts.map(c => c.id)) : new Set());
   };
 
   return (
