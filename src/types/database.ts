@@ -1,14 +1,15 @@
 // Database types for GlobalWorker Recruitment Tracker
 
-export type AppRole = 
-  | 'admin' 
-  | 'recruiter' 
-  | 'agency' 
+export type AppRole =
+  | 'admin'
+  | 'recruiter'
+  | 'agency'
   | 'employer'
-  | 'documentation_staff' 
+  | 'documentation_staff'
   | 'operations_manager'
   | 'documentation_lead'
   | 'sales_manager'
+  | 'sales_agent'
   | 'project_manager';
 
 // Role configuration with labels and descriptions
@@ -16,6 +17,7 @@ export const ROLES: { value: AppRole; label: string; description: string; isInte
   { value: 'admin', label: 'Admin', description: 'Full system access', isInternal: true },
   { value: 'project_manager', label: 'Project Manager', description: 'Manages projects and assignments', isInternal: true },
   { value: 'sales_manager', label: 'Sales Manager', description: 'Sales and client relations', isInternal: true },
+  { value: 'sales_agent', label: 'Sales Agent', description: 'Sales operations under Sales Manager', isInternal: true },
   { value: 'operations_manager', label: 'Operations Manager', description: 'Supervises recruitment operations', isInternal: true },
   { value: 'documentation_lead', label: 'Documentation Lead', description: 'Leads documentation team', isInternal: true },
   { value: 'recruiter', label: 'Recruiter', description: 'Recruitment operations', isInternal: true },

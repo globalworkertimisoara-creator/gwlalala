@@ -52,7 +52,7 @@ export function useTogglePermission() {
       permissionKey: keyof RolePermissions;
       newValue: boolean;
     }) => {
-      // Try to fetch existing row; maybeSingle avoids throwing on no rows
+      // Try to fetch existing row; maySingle avoids throwing on no rows
       const { data: existing, error: fetchErr } = await supabase
         .from('role_permissions')
         .select('permissions')

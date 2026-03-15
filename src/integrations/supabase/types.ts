@@ -3730,6 +3730,7 @@ export type Database = {
         | "sales_manager"
         | "project_manager"
         | "employer"
+        | "sales_agent"
       approval_status:
         | "pending_review"
         | "approved"
@@ -3966,6 +3967,7 @@ export const Constants = {
         "sales_manager",
         "project_manager",
         "employer",
+        "sales_agent",
       ],
       approval_status: [
         "pending_review",

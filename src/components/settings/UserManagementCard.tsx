@@ -54,6 +54,7 @@ const INTERNAL_ROLES: AppRole[] = [
   'operations_manager',
   'documentation_lead',
   'sales_manager',
+  'sales_agent',
   'project_manager',
 ];
 
@@ -64,6 +65,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   operations_manager: 'Operations Manager',
   documentation_lead: 'Documentation Lead',
   sales_manager: 'Sales Manager',
+  sales_agent: 'Sales Agent',
   project_manager: 'Project Manager',
   agency: 'Agency',
   employer: 'Employer',
