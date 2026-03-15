@@ -65,6 +65,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   operations_manager: 'Operations Manager',
   documentation_lead: 'Documentation Lead',
   sales_manager: 'Sales Manager',
+  sales_agent: 'Sales Agent',
   project_manager: 'Project Manager',
   agency: 'Agency',
   employer: 'Employer',
