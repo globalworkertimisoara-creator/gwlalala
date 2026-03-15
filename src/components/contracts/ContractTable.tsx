@@ -6,7 +6,7 @@ import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { usePartyNameLookup, useSalesPersonLookup } from '@/hooks/useContractParties';
-import type { Contract } from '@/hooks/useContracts';
+import type { Contract } from '@/types/contract';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -18,6 +18,10 @@ const statusColors: Record<string, string> = {
 };
 
 const typeLabels: Record<string, string> = {
+  recruitment: 'Recruitment (REC)',
+  partnership: 'Partnership (PAR)',
+  consultancy: 'Consultancy (CON)',
+  service: 'Service (SRV)',
   employer_agreement: 'Employer Agreement',
   agency_agreement: 'Agency Agreement',
   worker_contract: 'Worker Contract',
@@ -69,6 +73,7 @@ export function ContractTable({ contracts, isLoading, highlightId, selectedIds, 
                 onCheckedChange={(checked) => onSelectAll(!!checked)}
               />
             </TableHead>
+            <TableHead>Contract Number</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Party Name</TableHead>
@@ -84,6 +89,8 @@ export function ContractTable({ contracts, isLoading, highlightId, selectedIds, 
           {contracts.map((c) => {
             const progress = getContractProgress(c);
             const daysLeft = c.end_date ? differenceInDays(new Date(c.end_date), new Date()) : null;
+            const clientName = (c as any).client_name || partyLookup.get(c.party_id) || c.party_id.slice(0, 8);
+            const salesName = (c as any).sales_person_name || (c.sales_person_id ? (salesLookup.get(c.sales_person_id) || '—') : '—');
 
             return (
               <TableRow
@@ -99,6 +106,15 @@ export function ContractTable({ contracts, isLoading, highlightId, selectedIds, 
                     checked={selectedIds.has(c.id)}
                     onCheckedChange={(checked) => onSelect(c.id, !!checked)}
                   />
+                </TableCell>
+                <TableCell>
+                  {c.contract_number ? (
+                    <span className="font-mono font-semibold text-primary">
+                      {c.contract_number}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">—</span>
+                  )}
                 </TableCell>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
@@ -117,13 +133,11 @@ export function ContractTable({ contracts, isLoading, highlightId, selectedIds, 
                 <TableCell className="text-sm">{typeLabels[c.contract_type] || c.contract_type}</TableCell>
                 <TableCell>
                   <div>
-                    <p className="text-sm font-medium">{partyLookup.get(c.party_id) || c.party_id.slice(0, 8)}</p>
+                    <p className="text-sm font-medium">{clientName}</p>
                     <p className="text-[10px] text-muted-foreground capitalize">{c.party_type}</p>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm">
-                  {c.sales_person_id ? (salesLookup.get(c.sales_person_id) || '—') : '—'}
-                </TableCell>
+                <TableCell className="text-sm">{salesName}</TableCell>
                 <TableCell>
                   <Badge className={statusColors[c.status] || 'bg-muted'}>{c.status}</Badge>
                 </TableCell>

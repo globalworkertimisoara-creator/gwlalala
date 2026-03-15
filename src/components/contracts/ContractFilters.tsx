@@ -7,15 +7,19 @@ interface ContractFiltersProps {
   typeFilter: string;
   statusFilter: string;
   searchQuery: string;
+  yearFilter?: string;
   onTypeChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onSearchChange: (value: string) => void;
+  onYearChange?: (value: string) => void;
 }
 
 export function ContractFilters({
-  typeFilter, statusFilter, searchQuery,
-  onTypeChange, onStatusChange, onSearchChange,
+  typeFilter, statusFilter, searchQuery, yearFilter,
+  onTypeChange, onStatusChange, onSearchChange, onYearChange,
 }: ContractFiltersProps) {
+  const currentYear = new Date().getFullYear();
+
   return (
     <Card>
       <CardContent className="p-4">
@@ -23,7 +27,7 @@ export function ContractFilters({
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search contracts..."
+              placeholder="Search by number, title or client..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-9"
@@ -33,10 +37,10 @@ export function ContractFilters({
             <SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder="All Types" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="employer_agreement">Employer Agreement</SelectItem>
-              <SelectItem value="agency_agreement">Agency Agreement</SelectItem>
-              <SelectItem value="worker_contract">Worker Contract</SelectItem>
-              <SelectItem value="service_agreement">Service Agreement</SelectItem>
+              <SelectItem value="recruitment">Recruitment (REC)</SelectItem>
+              <SelectItem value="partnership">Partnership (PAR)</SelectItem>
+              <SelectItem value="consultancy">Consultancy (CON)</SelectItem>
+              <SelectItem value="service">Service (SRV)</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={onStatusChange}>
@@ -51,6 +55,17 @@ export function ContractFilters({
               <SelectItem value="terminated">Terminated</SelectItem>
             </SelectContent>
           </Select>
+          {onYearChange && (
+            <Select value={yearFilter || 'all'} onValueChange={onYearChange}>
+              <SelectTrigger className="w-full sm:w-[130px]"><SelectValue placeholder="Year" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                {[currentYear, currentYear - 1, currentYear - 2].map(y => (
+                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </CardContent>
     </Card>
