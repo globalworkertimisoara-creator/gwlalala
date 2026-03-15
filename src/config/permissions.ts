@@ -5,7 +5,7 @@
  * This file defines what each user role can and cannot do in the system.
  */
 
-export type InternalRole = 'admin' | 'recruiter' | 'operations_manager' | 'documentation_staff' | 'documentation_lead' | 'sales_manager' | 'project_manager';
+export type InternalRole = 'admin' | 'recruiter' | 'operations_manager' | 'documentation_staff' | 'documentation_lead' | 'sales_manager' | 'sales_agent' | 'project_manager';
 
 export type AgencyRole = 'agency_owner' | 'agency_recruiter' | 'agency_document_staff' | 'agency_viewer';
 
@@ -827,6 +827,76 @@ const SALES_MANAGER_PERMISSIONS: RolePermissions = {
   ...CONTRACT_SALES,
 };
 
+// ─── Sales Agent Permissions ──────────────────────────────────────────────────
+// Sales Agents work under Sales Managers with reduced access.
+
+const SALES_AGENT_PERMISSIONS: RolePermissions = {
+  createUsers: false,
+  viewAllUsers: false,
+  modifyUserRoles: false,
+  viewAllCandidates: true,
+  createCandidates: false,
+  editCandidates: false,
+  deleteCandidates: false,
+  exportCandidates: false,
+  viewAllJobs: true,
+  createJobs: false,
+  editJobs: false,
+  deleteJobs: false,
+  linkCandidatesToJobs: false,
+  viewAllProjects: true,
+  createProjects: false,
+  editProjects: false,
+  deleteProjects: false,
+  viewAllDocuments: true,
+  uploadDocuments: false,
+  deleteDocuments: false,
+  viewAllWorkflows: true,
+  createWorkflows: false,
+  advanceWorkflowPhases: false,
+  reviewApproveDocuments: false,
+  viewAllAgencies: true,
+  approveRejectAgencies: false,
+  viewAgencyProfiles: true,
+  editAgencyDetails: false,
+  viewAgencyWorkers: false,
+  inviteTeamMembers: false,
+  removeTeamMembers: false,
+  changeTeamMemberRoles: false,
+  viewTeamActivityLog: false,
+  viewAllNotes: true,
+  createNotes: true,
+  editOwnNotes: true,
+  deleteAnyNotes: false,
+  accessAdminPanel: false,
+  viewSystemLogs: false,
+  modifySettings: false,
+  createRegistrationCodes: false,
+  viewBilling: false,
+  manageBilling: false,
+  viewInvoices: true,
+  managePaymentMethods: false,
+  inviteEmployerTeam: false,
+  removeEmployerTeam: false,
+  manageEmployerTeam: false,
+  viewCompanyProfile: false,
+  editCompanyProfile: false,
+  uploadCompanyDocuments: false,
+  viewAssignedProjects: false,
+  viewAllCompanyProjects: false,
+  viewProjectCandidates: false,
+  exportCandidateLists: false,
+  viewCandidateDocuments: false,
+  scheduleInterviews: false,
+  viewInterviews: false,
+  provideFeedback: false,
+  createOffers: false,
+  viewOffers: false,
+  approveOffers: false,
+  viewSalesAnalytics: true,
+  ...CONTRACT_SALES,
+};
+
 // ─── Project Manager Permissions ──────────────────────────────────────────────
 // Project Managers only see Dashboard and Projects assigned to them.
 
@@ -1177,6 +1247,7 @@ export const PERMISSIONS_BY_ROLE: Record<AllRoles, RolePermissions> = {
   documentation_staff: DOCUMENTATION_STAFF_PERMISSIONS,
   documentation_lead: DOCUMENTATION_LEAD_PERMISSIONS,
   sales_manager: SALES_MANAGER_PERMISSIONS,
+  sales_agent: SALES_AGENT_PERMISSIONS,
   project_manager: PROJECT_MANAGER_PERMISSIONS,
   agency_owner: AGENCY_OWNER_PERMISSIONS,
   agency_recruiter: AGENCY_RECRUITER_PERMISSIONS,
@@ -1228,6 +1299,7 @@ export function getRoleName(role: AllRoles): string {
     documentation_staff: 'Documentation Staff',
     documentation_lead: 'Documentation Lead',
     sales_manager: 'Sales Manager',
+    sales_agent: 'Sales Agent',
     project_manager: 'Project Manager',
     agency_owner: 'Agency Owner',
     agency_recruiter: 'Agency Recruiter',
@@ -1245,7 +1317,7 @@ export function getRoleName(role: AllRoles): string {
  * Check if role is internal staff
  */
 export function isInternalStaff(role: AllRoles): boolean {
-  return ['admin', 'recruiter', 'operations_manager', 'documentation_staff', 'documentation_lead', 'sales_manager', 'project_manager'].includes(role);
+  return ['admin', 'recruiter', 'operations_manager', 'documentation_staff', 'documentation_lead', 'sales_manager', 'sales_agent', 'project_manager'].includes(role);
 }
 
 /**

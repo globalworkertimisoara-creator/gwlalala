@@ -21,6 +21,7 @@ interface AuthContextType {
   isDocumentationStaff: boolean;
   isDocumentationLead: boolean;
   isSalesManager: boolean;
+  isSalesAgent: boolean;
   isProjectManager: boolean;
   canManageAssignments: boolean;
   roleOverride: AppRole | null;
@@ -125,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = role === 'admin';
   const isSalesManager = role === 'sales_manager';
+  const isSalesAgent = role === 'sales_agent';
   const isProjectManager = role === 'project_manager';
 
   const value = {
@@ -145,8 +147,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isDocumentationStaff: role === 'documentation_staff',
     isDocumentationLead: role === 'documentation_lead',
     isSalesManager,
+    isSalesAgent,
     isProjectManager,
-    canManageAssignments: isAdmin || isSalesManager || isProjectManager,
+    canManageAssignments: isAdmin || isSalesManager || isSalesAgent || isProjectManager,
     roleOverride: isRealAdmin ? roleOverride : null,
     setRoleOverride: (r: AppRole | null) => {
       if (isRealAdmin) setRoleOverride(r);
