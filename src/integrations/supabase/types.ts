@@ -1615,6 +1615,13 @@ export type Database = {
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contract_activity_log_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "v_contracts_with_details"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contract_documents: {
@@ -1656,7 +1663,101 @@ export type Database = {
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contract_documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "v_contracts_with_details"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      contract_number_audit_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string
+          contract_id: string
+          id: string
+          new_contract_date: string | null
+          new_contract_number: string | null
+          new_sequence_number: number | null
+          old_contract_date: string | null
+          old_contract_number: string | null
+          old_sequence_number: number | null
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by: string
+          contract_id: string
+          id?: string
+          new_contract_date?: string | null
+          new_contract_number?: string | null
+          new_sequence_number?: number | null
+          old_contract_date?: string | null
+          old_contract_number?: string | null
+          old_sequence_number?: number | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string
+          contract_id?: string
+          id?: string
+          new_contract_date?: string | null
+          new_contract_number?: string | null
+          new_sequence_number?: number | null
+          old_contract_date?: string | null
+          old_contract_number?: string | null
+          old_sequence_number?: number | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_number_audit_log_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_number_audit_log_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "v_contracts_with_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_sequences: {
+        Row: {
+          contract_prefix: string
+          created_at: string
+          id: string
+          last_sequence_number: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          contract_prefix: string
+          created_at?: string
+          id?: string
+          last_sequence_number?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          contract_prefix?: string
+          created_at?: string
+          id?: string
+          last_sequence_number?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
       }
       contract_template_versions: {
         Row: {
@@ -1738,6 +1839,9 @@ export type Database = {
       contracts: {
         Row: {
           auto_renew: boolean | null
+          contract_date: string | null
+          contract_number: string | null
+          contract_prefix: string | null
           contract_type: string
           created_at: string
           created_by: string | null
@@ -1746,11 +1850,15 @@ export type Database = {
           id: string
           job_id: string | null
           notes: string | null
+          number_modification_reason: string | null
+          number_modified_at: string | null
+          number_modified_by: string | null
           party_id: string
           party_type: string
           project_id: string | null
           renewal_date: string | null
           sales_person_id: string | null
+          sequence_number: number | null
           signed_by_party_at: string | null
           signed_by_staff_at: string | null
           start_date: string | null
@@ -1762,6 +1870,9 @@ export type Database = {
         }
         Insert: {
           auto_renew?: boolean | null
+          contract_date?: string | null
+          contract_number?: string | null
+          contract_prefix?: string | null
           contract_type: string
           created_at?: string
           created_by?: string | null
@@ -1770,11 +1881,15 @@ export type Database = {
           id?: string
           job_id?: string | null
           notes?: string | null
+          number_modification_reason?: string | null
+          number_modified_at?: string | null
+          number_modified_by?: string | null
           party_id: string
           party_type: string
           project_id?: string | null
           renewal_date?: string | null
           sales_person_id?: string | null
+          sequence_number?: number | null
           signed_by_party_at?: string | null
           signed_by_staff_at?: string | null
           start_date?: string | null
@@ -1786,6 +1901,9 @@ export type Database = {
         }
         Update: {
           auto_renew?: boolean | null
+          contract_date?: string | null
+          contract_number?: string | null
+          contract_prefix?: string | null
           contract_type?: string
           created_at?: string
           created_by?: string | null
@@ -1794,11 +1912,15 @@ export type Database = {
           id?: string
           job_id?: string | null
           notes?: string | null
+          number_modification_reason?: string | null
+          number_modified_at?: string | null
+          number_modified_by?: string | null
           party_id?: string
           party_type?: string
           project_id?: string | null
           renewal_date?: string | null
           sales_person_id?: string | null
+          sequence_number?: number | null
           signed_by_party_at?: string | null
           signed_by_staff_at?: string | null
           start_date?: string | null
@@ -2682,6 +2804,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sales_commissions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "v_contracts_with_details"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sales_commissions_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -3154,6 +3283,44 @@ export type Database = {
         }
         Relationships: []
       }
+      v_contracts_with_details: {
+        Row: {
+          auto_renew: boolean | null
+          candidate_name: string | null
+          client_name: string | null
+          contract_date: string | null
+          contract_number: string | null
+          contract_prefix: string | null
+          contract_type: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          end_date: string | null
+          id: string | null
+          job_id: string | null
+          notes: string | null
+          number_modification_reason: string | null
+          number_modified_at: string | null
+          number_modified_by: string | null
+          party_id: string | null
+          party_type: string | null
+          project_id: string | null
+          project_name: string | null
+          renewal_date: string | null
+          sales_person_id: string | null
+          sales_person_name: string | null
+          sequence_number: number | null
+          signed_by_party_at: string | null
+          signed_by_staff_at: string | null
+          start_date: string | null
+          status: string | null
+          storage_path: string | null
+          title: string | null
+          total_value: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       v_document_statistics: {
         Row: {
           avg_review_hours: number | null
@@ -3263,6 +3430,13 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_commissions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "v_contracts_with_details"
             referencedColumns: ["id"]
           },
           {
@@ -3415,6 +3589,10 @@ export type Database = {
           period: string
         }[]
       }
+      get_contract_prefix: {
+        Args: { p_contract_type: string }
+        Returns: string
+      }
       get_conversion_rates: {
         Args: never
         Returns: {
@@ -3439,6 +3617,15 @@ export type Database = {
       get_employer_team_role_fn: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["employer_team_role"]
+      }
+      get_next_contract_number: {
+        Args: { p_contract_date?: string; p_contract_prefix: string }
+        Returns: {
+          contract_date: string
+          contract_number: string
+          prefix: string
+          sequence_number: number
+        }[]
       }
       get_pipeline_funnel: {
         Args: { p_end_date?: string; p_start_date?: string }
