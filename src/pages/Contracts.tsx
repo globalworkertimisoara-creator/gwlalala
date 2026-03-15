@@ -144,9 +144,11 @@ export default function Contracts() {
               typeFilter={typeFilter}
               statusFilter={statusFilter}
               searchQuery={searchQuery}
+              yearFilter={yearFilter}
               onTypeChange={setTypeFilter}
               onStatusChange={setStatusFilter}
               onSearchChange={setSearchQuery}
+              onYearChange={setYearFilter}
             />
 
             {/* Contracts Table */}
