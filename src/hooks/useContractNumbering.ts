@@ -21,7 +21,7 @@ export function useNextContractNumber(prefix: ContractPrefix, contractDate?: str
     queryFn: async () => {
       const date = contractDate || new Date().toISOString().split('T')[0];
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .rpc('get_next_contract_number', {
           p_contract_prefix: prefix,
           p_contract_date: date,
@@ -40,18 +40,13 @@ export function useContractNumberAuditLog(contractId: string) {
     queryKey: ['contract-number-audit-log', contractId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('contract_number_audit_log')
-        .select(`
-          *,
-          changed_by_profile:profiles!contract_number_audit_log_changed_by_fkey(
-            full_name
-          )
-        `)
+        .from('contract_number_audit_log' as any)
+        .select('*')
         .eq('contract_id', contractId)
         .order('changed_at', { ascending: false });
 
       if (error) throw error;
-      return data as ContractNumberAuditLog[];
+      return (data ?? []) as unknown as ContractNumberAuditLog[];
     },
     enabled: !!contractId,
   });
@@ -67,7 +62,7 @@ export function useUpdateContractNumber() {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
-        .from('contracts')
+        .from('contracts' as any)
         .update({
           sequence_number: input.sequence_number,
           contract_date: input.contract_date,
@@ -98,7 +93,7 @@ export function useCheckContractNumberAvailable() {
   return useMutation({
     mutationFn: async (params: { prefix: ContractPrefix; sequenceNumber: number; year: number }) => {
       const { data, error } = await supabase
-        .from('contracts')
+        .from('contracts' as any)
         .select('id')
         .eq('contract_prefix', params.prefix)
         .eq('sequence_number', params.sequenceNumber)
@@ -106,11 +101,11 @@ export function useCheckContractNumberAvailable() {
         .filter('contract_date', 'lte', `${params.year}-12-31`)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') throw error;
       
       return {
         available: !data,
-        existingContractId: data?.id || null,
+        existingContractId: (data as any)?.id || null,
       };
     },
   });
@@ -125,7 +120,7 @@ export function useContractsExpiringSoon(days: number = 30) {
       futureDate.setDate(futureDate.getDate() + days);
 
       const { data, error } = await supabase
-        .from('v_contracts_with_details')
+        .from('v_contracts_with_details' as any)
         .select('*')
         .eq('status', 'active')
         .lte('end_date', futureDate.toISOString().split('T')[0])
@@ -145,14 +140,13 @@ export function useContractStatsByYear(year?: number) {
     queryKey: ['contract-stats-by-year', currentYear],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('contracts')
+        .from('contracts' as any)
         .select('contract_prefix, status')
         .gte('contract_date', `${currentYear}-01-01`)
         .lte('contract_date', `${currentYear}-12-31`);
 
       if (error) throw error;
 
-      // Aggregate stats
       const stats = {
         REC: { total: 0, draft: 0, signed: 0, active: 0 },
         PAR: { total: 0, draft: 0, signed: 0, active: 0 },
@@ -160,7 +154,7 @@ export function useContractStatsByYear(year?: number) {
         SRV: { total: 0, draft: 0, signed: 0, active: 0 },
       };
 
-      data.forEach((contract) => {
+      (data as any[])?.forEach((contract: any) => {
         const prefix = contract.contract_prefix as ContractPrefix;
         if (prefix && stats[prefix]) {
           stats[prefix].total++;

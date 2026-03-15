@@ -2,59 +2,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogContractActivity } from '@/hooks/useContractActivityLog';
+import type { Contract, CreateContractInput } from '@/types/contract';
 
-export interface Contract {
-  id: string;
-  contract_type: string;
-  party_type: string;
-  party_id: string;
-  title: string;
-  status: string;
-  start_date: string | null;
-  end_date: string | null;
-  renewal_date: string | null;
-  auto_renew: boolean;
-  total_value: number | null;
-  currency: string;
-  storage_path: string | null;
-  signed_by_party_at: string | null;
-  signed_by_staff_at: string | null;
-  notes: string | null;
-  project_id: string | null;
-  job_id: string | null;
-  sales_person_id: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// Re-export types for backward compatibility
+export type { Contract, CreateContractInput } from '@/types/contract';
 
-export interface CreateContractInput {
-  contract_type: string;
-  party_type: string;
-  party_id: string;
-  title: string;
-  start_date?: string;
-  end_date?: string;
-  renewal_date?: string;
-  auto_renew?: boolean;
-  total_value?: number;
-  currency?: string;
-  storage_path?: string;
-  notes?: string;
-  project_id?: string;
-  job_id?: string;
-  sales_person_id?: string;
-}
-
-export function useContracts(filters?: { status?: string; party_type?: string; contract_type?: string }) {
+export function useContracts(filters?: { status?: string; party_type?: string; contract_type?: string; search?: string; year?: number }) {
   return useQuery({
     queryKey: ['contracts', filters],
     queryFn: async () => {
-      let query = supabase.from('contracts' as any).select('*').order('created_at', { ascending: false });
+      let query = supabase.from('v_contracts_with_details' as any).select('*').order('created_at', { ascending: false });
 
-      if (filters?.status) query = query.eq('status', filters.status);
-      if (filters?.party_type) query = query.eq('party_type', filters.party_type);
-      if (filters?.contract_type) query = query.eq('contract_type', filters.contract_type);
+      if (filters?.status && filters.status !== 'all') query = query.eq('status', filters.status);
+      if (filters?.party_type && filters.party_type !== 'all') query = query.eq('party_type', filters.party_type);
+      if (filters?.contract_type && filters.contract_type !== 'all') query = query.eq('contract_type', filters.contract_type);
+      
+      if (filters?.search) {
+        query = query.or(`contract_number.ilike.%${filters.search}%,title.ilike.%${filters.search}%,client_name.ilike.%${filters.search}%`);
+      }
+      
+      if (filters?.year) {
+        query = query.gte('contract_date', `${filters.year}-01-01`).lte('contract_date', `${filters.year}-12-31`);
+      }
 
       const { data, error } = await query.limit(100);
       if (error) throw error;
@@ -100,10 +69,11 @@ export function useCreateContract() {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['contracts'] });
+      qc.invalidateQueries({ queryKey: ['next-contract-number'] });
       logActivity.mutate({
         contract_id: data.id,
         action: 'created',
-        summary: `Contract "${data.title}" created with status "${data.status}"`,
+        summary: `Contract "${data.title}" created${data.contract_number ? ` as ${data.contract_number}` : ''}`,
       });
     },
   });
@@ -122,7 +92,6 @@ export function useUpdateContract() {
     onSuccess: ({ updated, oldContract, changedFields }) => {
       qc.invalidateQueries({ queryKey: ['contracts'] });
 
-      // Log each changed field
       const fieldLabels: Record<string, string> = {
         status: 'Status',
         title: 'Title',

@@ -6,14 +6,24 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
-import { useCreateContract, type CreateContractInput } from '@/hooks/useContracts';
+import { useCreateContract } from '@/hooks/useContracts';
 import { useSalesStaff } from '@/hooks/useSalesCommissions';
 import { useCompanies, useAgencies, useCandidatesList } from '@/hooks/useContractParties';
+import ContractNumberInput from './ContractNumberInput';
+import { getContractPrefix } from '@/types/contract';
+import type { ContractPrefix, CreateContractInput } from '@/types/contract';
 
 interface CreateContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const contractTypeOptions = [
+  { value: 'recruitment', label: 'Recruitment Contract (REC)' },
+  { value: 'partnership', label: 'Partnership Agreement (PAR)' },
+  { value: 'consultancy', label: 'Consultancy Agreement (CON)' },
+  { value: 'service', label: 'Service Agreement (SRV)' },
+];
 
 export function CreateContractDialog({ open, onOpenChange }: CreateContractDialogProps) {
   const createContract = useCreateContract();
@@ -23,11 +33,17 @@ export function CreateContractDialog({ open, onOpenChange }: CreateContractDialo
   const { data: candidates = [] } = useCandidatesList();
 
   const [form, setForm] = useState<CreateContractInput>({
-    contract_type: 'employer_agreement',
+    contract_type: 'recruitment' as any,
     party_type: 'employer',
     party_id: '',
     title: '',
   });
+
+  const [contractPrefix, setContractPrefix] = useState<ContractPrefix>('REC');
+  const [contractNumber, setContractNumber] = useState<{
+    sequenceNumber: number | null;
+    contractDate: string | null;
+  }>({ sequenceNumber: null, contractDate: null });
 
   const partyOptions = useMemo(() => {
     switch (form.party_type) {
@@ -38,16 +54,28 @@ export function CreateContractDialog({ open, onOpenChange }: CreateContractDialo
     }
   }, [form.party_type, companies, agencies, candidates]);
 
+  const handleContractTypeChange = (type: string) => {
+    setForm(p => ({ ...p, contract_type: type as any }));
+    setContractPrefix(getContractPrefix(type as any));
+    setContractNumber({ sequenceNumber: null, contractDate: null });
+  };
+
   const handleCreate = async () => {
     if (!form.title.trim() || !form.party_id.trim()) return;
-    await createContract.mutateAsync(form);
-    setForm({ contract_type: 'employer_agreement', party_type: 'employer', party_id: '', title: '' });
+    await createContract.mutateAsync({
+      ...form,
+      contract_prefix: contractPrefix,
+      sequence_number: contractNumber.sequenceNumber ?? undefined,
+      contract_date: contractNumber.contractDate ?? undefined,
+    });
+    setForm({ contract_type: 'recruitment' as any, party_type: 'employer', party_id: '', title: '' });
+    setContractNumber({ sequenceNumber: null, contractDate: null });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Contract</DialogTitle>
         </DialogHeader>
@@ -59,19 +87,18 @@ export function CreateContractDialog({ open, onOpenChange }: CreateContractDialo
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Contract Type</Label>
-              <Select value={form.contract_type} onValueChange={v => setForm(p => ({ ...p, contract_type: v }))}>
+              <Select value={form.contract_type} onValueChange={handleContractTypeChange}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="employer_agreement">Employer Agreement</SelectItem>
-                  <SelectItem value="agency_agreement">Agency Agreement</SelectItem>
-                  <SelectItem value="worker_contract">Worker Contract</SelectItem>
-                  <SelectItem value="service_agreement">Service Agreement</SelectItem>
+                  {contractTypeOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Party Type</Label>
-              <Select value={form.party_type} onValueChange={v => setForm(p => ({ ...p, party_type: v, party_id: '' }))}>
+              <Select value={form.party_type} onValueChange={v => setForm(p => ({ ...p, party_type: v as any, party_id: '' }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="employer">Employer</SelectItem>
@@ -81,6 +108,14 @@ export function CreateContractDialog({ open, onOpenChange }: CreateContractDialo
               </Select>
             </div>
           </div>
+
+          {/* Contract Number Input */}
+          <ContractNumberInput
+            contractPrefix={contractPrefix}
+            value={contractNumber}
+            onChange={setContractNumber}
+          />
+
           <div>
             <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : 'Worker'}</Label>
             <Select value={form.party_id || 'none'} onValueChange={v => setForm(p => ({ ...p, party_id: v === 'none' ? '' : v }))}>
