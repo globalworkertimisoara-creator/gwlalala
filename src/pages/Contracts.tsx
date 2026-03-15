@@ -25,32 +25,23 @@ export default function Contracts() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [yearFilter, setYearFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('contracts');
+  
   const filters: any = {};
   if (typeFilter !== 'all') filters.contract_type = typeFilter;
   if (statusFilter !== 'all') filters.status = statusFilter;
+  if (searchQuery.trim()) filters.search = searchQuery.trim();
+  if (yearFilter !== 'all') filters.year = parseInt(yearFilter);
 
   const { data: contracts = [], isLoading } = useContracts(Object.keys(filters).length > 0 ? filters : undefined);
   const { data: expiring = [] } = useExpiringContracts(30);
-  // Also fetch all contracts unfiltered for dashboard cards
   const { data: allContracts = [] } = useContracts();
-
-  // Search filtering
-  const filteredContracts = useMemo(() => {
-    if (!searchQuery.trim()) return contracts;
-    const q = searchQuery.toLowerCase();
-    return contracts.filter(c =>
-      c.title.toLowerCase().includes(q) ||
-      c.contract_type.toLowerCase().includes(q) ||
-      c.party_type.toLowerCase().includes(q) ||
-      c.status.toLowerCase().includes(q)
-    );
-  }, [contracts, searchQuery]);
 
   // Auto-open highlighted contract
   useEffect(() => {
