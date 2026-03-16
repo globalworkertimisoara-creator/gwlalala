@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { useCreateContract } from '@/hooks/useContracts';
 import { useSalesStaff } from '@/hooks/useSalesCommissions';
 import { useCompanies, useAgencies, useCandidatesList } from '@/hooks/useContractParties';
+import { useProjects } from '@/hooks/useProjects';
 import ContractNumberInput from './ContractNumberInput';
 import { getContractPrefix } from '@/types/contract';
 import type { ContractPrefix, CreateContractInput } from '@/types/contract';
@@ -16,6 +17,7 @@ import type { ContractPrefix, CreateContractInput } from '@/types/contract';
 interface CreateContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preselectedProjectId?: string;
 }
 
 const contractTypeOptions = [
@@ -25,18 +27,20 @@ const contractTypeOptions = [
   { value: 'service', label: 'Service Agreement (SRV)' },
 ];
 
-export function CreateContractDialog({ open, onOpenChange }: CreateContractDialogProps) {
+export function CreateContractDialog({ open, onOpenChange, preselectedProjectId }: CreateContractDialogProps) {
   const createContract = useCreateContract();
   const { data: salesStaff = [] } = useSalesStaff();
   const { data: companies = [] } = useCompanies();
   const { data: agencies = [] } = useAgencies();
   const { data: candidates = [] } = useCandidatesList();
+  const { data: projects = [] } = useProjects();
 
   const [form, setForm] = useState<CreateContractInput>({
     contract_type: 'recruitment' as any,
     party_type: 'employer',
     party_id: '',
     title: '',
+    project_id: preselectedProjectId,
   });
 
   const [contractPrefix, setContractPrefix] = useState<ContractPrefix>('REC');
@@ -156,6 +160,18 @@ export function CreateContractDialog({ open, onOpenChange }: CreateContractDialo
                 <SelectItem value="none">None</SelectItem>
                 {salesStaff.map(s => (
                   <SelectItem key={s.user_id} value={s.user_id}>{s.full_name || s.user_id}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Linked Project</Label>
+            <Select value={form.project_id || 'none'} onValueChange={v => setForm(p => ({ ...p, project_id: v === 'none' ? undefined : v }))}>
+              <SelectTrigger><SelectValue placeholder="Select project (optional)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {projects.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name} — {p.employer_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

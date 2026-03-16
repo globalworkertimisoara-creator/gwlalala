@@ -4,7 +4,11 @@ import { useProject, useUpdateProject, useDeleteProject, useLinkJobToProject } f
 import { useJobs, useCreateJob } from '@/hooks/useJobs';
 import { usePipelineCandidates, useAddCandidateToPipeline } from '@/hooks/usePipelineCandidates';
 import { useCandidates } from '@/hooks/useCandidates';
+import { useContractsByProject, useContracts, useLinkContractToProject } from '@/hooks/useContracts';
 import { PipelineBoard } from '@/components/pipeline/PipelineBoard';
+import { CreateContractDialog } from '@/components/contracts/CreateContractDialog';
+import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
+import type { Contract } from '@/types/contract';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,6 +65,8 @@ import {
   Search,
   Link2,
   Route,
+  FileText,
+  Unlink,
 } from 'lucide-react';
 import WorkflowPhaseTracker from '@/components/projects/WorkflowPhaseTracker';
 import { format } from 'date-fns';
@@ -92,6 +98,35 @@ export default function ProjectDetail() {
   const [linkedJobSearch, setLinkedJobSearch] = useState('');
   const [linkJobDialogOpen, setLinkJobDialogOpen] = useState(false);
   const [createJobDialogOpen, setCreateJobDialogOpen] = useState(false);
+  const [createContractDialogOpen, setCreateContractDialogOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [linkContractDialogOpen, setLinkContractDialogOpen] = useState(false);
+  const [contractSearch, setContractSearch] = useState('');
+
+  // Contract data
+  const { data: projectContracts = [], isLoading: contractsLoading } = useContractsByProject(id);
+  const { data: allContracts = [] } = useContracts();
+  const linkContractToProject = useLinkContractToProject();
+
+  const linkedContractIds = new Set(projectContracts.map(c => c.id));
+  const availableContracts = useMemo(() => {
+    return allContracts
+      .filter(c => !linkedContractIds.has(c.id) && !c.project_id)
+      .filter(c => {
+        if (!contractSearch) return true;
+        const q = contractSearch.toLowerCase();
+        return c.title.toLowerCase().includes(q) || (c.contract_number || '').toLowerCase().includes(q);
+      });
+  }, [allContracts, linkedContractIds, contractSearch]);
+
+  const handleLinkContract = async (contractId: string) => {
+    if (!id) return;
+    await linkContractToProject.mutateAsync({ contractId, projectId: id });
+  };
+
+  const handleUnlinkContract = async (contractId: string) => {
+    await linkContractToProject.mutateAsync({ contractId, projectId: null });
+  };
 
   const existingCandidateIds = new Set(pipelineCandidates.map(pc => pc.candidate_id));
   const availableCandidates = useMemo(() => {
@@ -241,6 +276,10 @@ export default function ProjectDetail() {
             <TabsTrigger value="pipeline" className="gap-1.5">
               <GitBranchPlus className="h-3.5 w-3.5" />
               Pipeline ({pipelineCandidates.length})
+            </TabsTrigger>
+            <TabsTrigger value="contracts" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              Contracts ({projectContracts.length})
             </TabsTrigger>
             <TabsTrigger value="workflow">Workflow</TabsTrigger>
           </TabsList>
@@ -636,6 +675,142 @@ export default function ProjectDetail() {
               </Dialog>
             </div>
             <PipelineBoard candidates={pipelineCandidates} isLoading={pipelineLoading} />
+          </TabsContent>
+
+          <TabsContent value="contracts" className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Linked Contracts ({projectContracts.length})
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  {/* Link Existing Contract */}
+                  <Dialog open={linkContractDialogOpen} onOpenChange={(open) => { setLinkContractDialogOpen(open); if (!open) setContractSearch(''); }}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <Link2 className="h-4 w-4" />
+                        Link Contract
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Link Existing Contract</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search contracts..."
+                            value={contractSearch}
+                            onChange={e => setContractSearch(e.target.value)}
+                            className="pl-9"
+                          />
+                        </div>
+                        <div className="max-h-64 overflow-y-auto space-y-1">
+                          {availableContracts.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              {contractSearch ? 'No matching contracts found' : 'No unlinked contracts available'}
+                            </p>
+                          ) : (
+                            availableContracts.slice(0, 20).map(c => (
+                              <button
+                                key={c.id}
+                                onClick={() => handleLinkContract(c.id)}
+                                disabled={linkContractToProject.isPending}
+                                className="w-full flex items-center justify-between p-2.5 rounded-lg border hover:bg-accent/50 transition-colors text-left"
+                              >
+                                <div>
+                                  <p className="text-sm font-medium">{c.title}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {c.contract_number || 'No number'}
+                                    <Badge variant={c.status === 'active' ? 'default' : 'secondary'} className="ml-2 text-[10px] px-1.5 py-0">
+                                      {c.status}
+                                    </Badge>
+                                  </p>
+                                </div>
+                                <Link2 className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Create New Contract for Project */}
+                  <Button size="sm" className="gap-1.5" onClick={() => setCreateContractDialogOpen(true)}>
+                    <Plus className="h-4 w-4" />
+                    New Contract
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {contractsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : projectContracts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No contracts linked to this project yet</p>
+                    <p className="text-sm">Link existing contracts or create a new one</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Number</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Value</TableHead>
+                        <TableHead className="w-[60px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {projectContracts.map(c => (
+                        <TableRow
+                          key={c.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setSelectedContract(c)}
+                        >
+                          <TableCell className="font-medium">{c.title}</TableCell>
+                          <TableCell className="text-muted-foreground text-xs">{c.contract_number || '—'}</TableCell>
+                          <TableCell className="capitalize">{c.contract_type}</TableCell>
+                          <TableCell>
+                            <Badge variant={c.status === 'active' ? 'default' : 'secondary'}>{c.status}</Badge>
+                          </TableCell>
+                          <TableCell>{c.total_value ? `${c.total_value.toLocaleString()} ${c.currency}` : '—'}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={(e) => { e.stopPropagation(); handleUnlinkContract(c.id); }}
+                              disabled={linkContractToProject.isPending}
+                            >
+                              <Unlink className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            <CreateContractDialog
+              open={createContractDialogOpen}
+              onOpenChange={setCreateContractDialogOpen}
+              preselectedProjectId={id}
+            />
+            <ContractDetailDialog
+              contract={selectedContract}
+              open={!!selectedContract}
+              onOpenChange={(open) => { if (!open) setSelectedContract(null); }}
+            />
           </TabsContent>
 
           <TabsContent value="workflow" className="mt-6">
