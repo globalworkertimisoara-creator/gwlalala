@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, XCircle, Shield, Users, FileText, Eye, Briefcase, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Shield, Users, FileText, Eye, Briefcase, Loader2, BarChart3, FolderKanban, Building2, UserCheck } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -116,6 +116,18 @@ const ROLE_CONFIG: Record<string, { label: string; icon: React.ElementType; colo
   recruiter: { label: 'Recruiter', icon: Users, color: 'bg-blue-100 text-blue-700' },
   operations_manager: { label: 'Ops Manager', icon: Briefcase, color: 'bg-amber-100 text-amber-700' },
   documentation_staff: { label: 'Doc Staff', icon: FileText, color: 'bg-green-100 text-green-700' },
+  documentation_lead: { label: 'Doc Lead', icon: FileText, color: 'bg-emerald-100 text-emerald-700' },
+  sales_manager: { label: 'Sales Mgr', icon: BarChart3, color: 'bg-indigo-100 text-indigo-700' },
+  sales_agent: { label: 'Sales Agent', icon: UserCheck, color: 'bg-sky-100 text-sky-700' },
+  project_manager: { label: 'Project Mgr', icon: FolderKanban, color: 'bg-rose-100 text-rose-700' },
+  agency_owner: { label: 'Agency Owner', icon: Building2, color: 'bg-orange-100 text-orange-700' },
+  agency_recruiter: { label: 'Agency Recruiter', icon: Users, color: 'bg-orange-50 text-orange-600' },
+  agency_document_staff: { label: 'Agency Doc Staff', icon: FileText, color: 'bg-orange-50 text-orange-600' },
+  agency_viewer: { label: 'Agency Viewer', icon: Eye, color: 'bg-orange-50 text-orange-600' },
+  employer_admin: { label: 'Employer Admin', icon: Shield, color: 'bg-teal-100 text-teal-700' },
+  employer_hr: { label: 'Employer HR', icon: Users, color: 'bg-teal-50 text-teal-600' },
+  employer_hiring_manager: { label: 'Hiring Mgr', icon: Briefcase, color: 'bg-teal-50 text-teal-600' },
+  employer_viewer: { label: 'Employer Viewer', icon: Eye, color: 'bg-teal-50 text-teal-600' },
 };
 
 interface Props {
