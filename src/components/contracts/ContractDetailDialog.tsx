@@ -57,7 +57,7 @@ export function ContractDetailDialog({ contract, open, onOpenChange }: ContractD
         <div className="space-y-6">
           <ContractMetadata contract={contract} />
           <SalesPersonSection contract={contract} />
-          <LinkedProjectSection contract={contract} />
+          <LinkedProjectSection contract={contract} onCloseDialog={() => onOpenChange(false)} />
           <CommissionSection contract={contract} />
           <DocumentsSection contractId={contract.id} />
           <ContractActivitySection contractId={contract.id} />
