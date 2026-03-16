@@ -147,7 +147,21 @@ function SalesPersonSection({ contract }: { contract: Contract }) {
   );
 }
 
-function LinkedProjectSection({ contract }: { contract: Contract }) {
+function ProjectLink({ projectId, name, subtitle, onNavigate }: { projectId: string; name: string; subtitle: string; onNavigate: () => void }) {
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      className="text-left hover:bg-muted/50 rounded-md p-1 -m-1 transition-colors cursor-pointer"
+      onClick={() => { onNavigate(); navigate(`/projects/${projectId}`); }}
+    >
+      <p className="text-sm font-medium text-primary underline-offset-4 hover:underline">{name}</p>
+      <p className="text-xs text-muted-foreground">{subtitle}</p>
+    </button>
+  );
+}
+
+function LinkedProjectSection({ contract, onCloseDialog }: { contract: Contract; onCloseDialog: () => void }) {
   const { data: projects = [] } = useProjects();
   const linkContract = useLinkContractToProject();
   const { toast } = useToast();
@@ -173,7 +187,7 @@ function LinkedProjectSection({ contract }: { contract: Contract }) {
       <CardContent className="space-y-3">
         {linkedProject ? (
           <div className="flex items-center justify-between rounded-lg border p-3">
-            <ProjectLink projectId={linkedProject.id} name={linkedProject.name} subtitle={`${linkedProject.employer_name} · ${linkedProject.location}`} onNavigate={() => onOpenChange(false)} />
+            <ProjectLink projectId={linkedProject.id} name={linkedProject.name} subtitle={`${linkedProject.employer_name} · ${linkedProject.location}`} onNavigate={onCloseDialog} />
             <Button
               variant="ghost"
               size="sm"
