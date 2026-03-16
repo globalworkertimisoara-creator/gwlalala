@@ -173,10 +173,7 @@ function LinkedProjectSection({ contract }: { contract: Contract }) {
       <CardContent className="space-y-3">
         {linkedProject ? (
           <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <p className="text-sm font-medium">{linkedProject.name}</p>
-              <p className="text-xs text-muted-foreground">{linkedProject.employer_name} · {linkedProject.location}</p>
-            </div>
+            <ProjectLink projectId={linkedProject.id} name={linkedProject.name} subtitle={`${linkedProject.employer_name} · ${linkedProject.location}`} onNavigate={() => onOpenChange(false)} />
             <Button
               variant="ghost"
               size="sm"
