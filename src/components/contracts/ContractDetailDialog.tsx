@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Upload, Trash2, FileText, Download, DollarSign, Activity } from 'lucide-react';
+import { Loader2, Upload, Trash2, FileText, Download, DollarSign, Activity, FolderKanban, Link2, Unlink } from 'lucide-react';
 import { format } from 'date-fns';
 import { useContractDocuments, useUploadContractDocument, useDeleteContractDocument } from '@/hooks/useContractDocuments';
 import { useSalesCommissions, useCreateCommission, useSalesStaff, type SalesCommission } from '@/hooks/useSalesCommissions';
-import { useUpdateContract, type Contract } from '@/hooks/useContracts';
+import { useUpdateContract, useLinkContractToProject, type Contract } from '@/hooks/useContracts';
+import { useProjects } from '@/hooks/useProjects';
 import { usePartyNameLookup, useSalesPersonLookup } from '@/hooks/useContractParties';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
@@ -55,6 +56,7 @@ export function ContractDetailDialog({ contract, open, onOpenChange }: ContractD
         <div className="space-y-6">
           <ContractMetadata contract={contract} />
           <SalesPersonSection contract={contract} />
+          <LinkedProjectSection contract={contract} />
           <CommissionSection contract={contract} />
           <DocumentsSection contractId={contract.id} />
           <ContractActivitySection contractId={contract.id} />
@@ -139,6 +141,65 @@ function SalesPersonSection({ contract }: { contract: Contract }) {
             ))}
           </SelectContent>
         </Select>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LinkedProjectSection({ contract }: { contract: Contract }) {
+  const { data: projects = [] } = useProjects();
+  const linkContract = useLinkContractToProject();
+  const { toast } = useToast();
+
+  const linkedProject = contract.project_id
+    ? projects.find(p => p.id === contract.project_id)
+    : null;
+
+  const handleLink = async (projectId: string) => {
+    const value = projectId === 'none' ? null : projectId;
+    await linkContract.mutateAsync({ contractId: contract.id, projectId: value });
+    toast({ title: value ? 'Contract linked to project' : 'Contract unlinked from project' });
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <FolderKanban className="h-4 w-4" />
+          Linked Project
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {linkedProject ? (
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <p className="text-sm font-medium">{linkedProject.name}</p>
+              <p className="text-xs text-muted-foreground">{linkedProject.employer_name} · {linkedProject.location}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive gap-1.5"
+              onClick={() => handleLink('none')}
+              disabled={linkContract.isPending}
+            >
+              {linkContract.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
+              Unlink
+            </Button>
+          </div>
+        ) : (
+          <Select value="none" onValueChange={handleLink}>
+            <SelectTrigger>
+              <SelectValue placeholder="Link to a project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No project linked</SelectItem>
+              {projects.map(p => (
+                <SelectItem key={p.id} value={p.id}>{p.name} — {p.employer_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </CardContent>
     </Card>
   );

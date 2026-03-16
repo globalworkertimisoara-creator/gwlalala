@@ -79,6 +79,55 @@ export function useCreateContract() {
   });
 }
 
+export function useContractsByProject(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ['contracts', 'by-project', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contracts' as any)
+        .select('*')
+        .eq('project_id', projectId!)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return (data ?? []) as unknown as Contract[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useLinkContractToProject() {
+  const qc = useQueryClient();
+  const logActivity = useLogContractActivity();
+
+  return useMutation({
+    mutationFn: async ({ contractId, projectId }: { contractId: string; projectId: string | null }) => {
+      const { data, error } = await supabase
+        .from('contracts' as any)
+        .update({ project_id: projectId })
+        .eq('id', contractId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as unknown as Contract;
+    },
+    onSuccess: (data, { projectId }) => {
+      qc.invalidateQueries({ queryKey: ['contracts'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      logActivity.mutate({
+        contract_id: data.id,
+        action: 'field_update',
+        summary: projectId
+          ? `Linked to project`
+          : `Unlinked from project`,
+        field_changed: 'project_id',
+        old_value: '—',
+        new_value: projectId || '—',
+      });
+    },
+  });
+}
+
 export function useUpdateContract() {
   const qc = useQueryClient();
   const logActivity = useLogContractActivity();
