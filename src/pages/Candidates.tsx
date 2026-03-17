@@ -83,7 +83,7 @@ const Candidates = () => {
               </Button>
             )}
             {can('createCandidates') && (
-              <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+              <Button className="gap-2" onClick={() => navigate('/candidates/new')}>
                 <Plus className="h-4 w-4" />
                 Add Candidate
               </Button>

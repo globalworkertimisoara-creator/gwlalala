@@ -37,6 +37,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Plus,
 } from 'lucide-react';
 import { ProjectStatus, PROJECT_STATUS_CONFIG, ProjectWithMetrics } from '@/types/project';
 import { useTasks } from '@/hooks/useTasks';
@@ -181,7 +182,10 @@ export default function Projects() {
               Manage client projects and track recruitment fulfillment
             </p>
           </div>
-          <CreateProjectDialog />
+          <Button onClick={() => navigate('/projects/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Project
+          </Button>
         </div>
 
         {/* Stats Cards */}

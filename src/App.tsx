@@ -39,11 +39,12 @@ import Analytics from "./pages/Analytics";
 import AgencyAnalytics from "./pages/AgencyAnalytics";
 import Tasks from "./pages/Tasks";
 import Contracts from "./pages/Contracts";
-import SalesAnalytics from "./pages/SalesAnalytics";
-import Reports from "./pages/Reports";
 import CreateContract from "./pages/CreateContract";
 import CreateProject from "./pages/CreateProject";
 import CreateCandidate from "./pages/CreateCandidate";
+import AdminAgencyContracts from "./pages/AdminAgencyContracts";
+import SalesAnalytics from "./pages/SalesAnalytics";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -114,6 +115,11 @@ const App = () => (
                 <JobDetail />
               </ProtectedRoute>
             } />
+            <Route path="/candidates/new" element={
+              <ProtectedRoute>
+                <CreateCandidate />
+              </ProtectedRoute>
+            } />
             <Route path="/candidates/:id" element={
               <ProtectedRoute>
                 <CandidateDetail />
@@ -122,6 +128,11 @@ const App = () => (
             <Route path="/projects" element={
               <ProtectedRoute>
                 <Projects />
+              </ProtectedRoute>
+            } />
+            <Route path="/projects/new" element={
+              <ProtectedRoute>
+                <CreateProject />
               </ProtectedRoute>
             } />
             <Route path="/projects/:id" element={
@@ -224,6 +235,11 @@ const App = () => (
                 </ErrorBoundary>
               </ProtectedRoute>
             } />
+            <Route path="/contracts/new" element={
+              <ProtectedRoute>
+                <CreateContract />
+              </ProtectedRoute>
+            } />
             <Route path="/sales-analytics" element={
               <ProtectedRoute>
                 <ErrorBoundary>
@@ -238,25 +254,10 @@ const App = () => (
                 </ErrorBoundary>
               </ProtectedRoute>
             } />
-            <Route path="/contracts/new" element={
+            {/* Admin Routes */}
+            <Route path="/admin/agency-contracts" element={
               <ProtectedRoute>
-                <ErrorBoundary>
-                  <CreateContract />
-                </ErrorBoundary>
-              </ProtectedRoute>
-            } />
-            <Route path="/projects/new" element={
-              <ProtectedRoute>
-                <ErrorBoundary>
-                  <CreateProject />
-                </ErrorBoundary>
-              </ProtectedRoute>
-            } />
-            <Route path="/candidates/new" element={
-              <ProtectedRoute>
-                <ErrorBoundary>
-                  <CreateCandidate />
-                </ErrorBoundary>
+                <AdminAgencyContracts />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

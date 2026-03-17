@@ -111,7 +111,7 @@ export default function Contracts() {
 
             {/* Quick Actions */}
             <ContractQuickActions
-              onNewContract={() => setDialogOpen(true)}
+              onNewContract={() => navigate('/contracts/new')}
               onShowAnalytics={() => setShowAnalytics(!showAnalytics)}
               onShowTemplates={() => setActiveTab('templates')}
               selectedCount={selectedIds.size}
