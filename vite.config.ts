@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "d3-shape": path.resolve(__dirname, "./node_modules/d3-shape/src/index.js"),
     },
     dedupe: ["react", "react-dom"],
   },
