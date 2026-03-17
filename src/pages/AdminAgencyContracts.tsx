@@ -142,7 +142,7 @@ export default function AdminAgencyContracts() {
                     >
                       <TableCell className="font-medium">{c.title}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{c.contract_number || '—'}</TableCell>
-                      <TableCell>{c.client_name || '—'}</TableCell>
+                      <TableCell>{(c as any).client_name || '—'}</TableCell>
                       <TableCell>
                         <Badge variant={c.status === 'active' ? 'default' : 'secondary'}>{c.status}</Badge>
                       </TableCell>
