@@ -135,7 +135,7 @@ const Candidates = () => {
         )}
       </div>
 
-      <AddCandidateDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      
       <LinkToProjectDialog
         open={!!linkCandidate}
         onOpenChange={(open) => { if (!open) setLinkCandidate(null); }}

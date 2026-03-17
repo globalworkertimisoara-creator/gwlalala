@@ -175,7 +175,7 @@ export default function Contracts() {
           </TabsContent>
         </Tabs>
 
-        <CreateContractDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+        
         <ContractDetailDialog contract={selectedContract} open={detailOpen} onOpenChange={handleDetailClose} />
       </div>
     </AppLayout>
