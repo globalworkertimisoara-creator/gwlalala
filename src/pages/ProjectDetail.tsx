@@ -241,8 +241,8 @@ export default function ProjectDetail() {
               projectId={id!}
               employerName={project.employer_name}
               location={project.location}
-              jobs={project.jobs}
-              allJobs={allJobs}
+              jobs={project.jobs as any}
+              allJobs={allJobs as any}
               onLinkJob={handleLinkJob}
               linkJobPending={linkJobToProject.isPending}
               onCreateJob={handleCreateJob}
