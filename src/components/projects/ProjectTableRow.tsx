@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ interface ProjectTableRowProps {
   pendingTasksCount?: number;
 }
 
-export function ProjectTableRow({ project, agenciesInvolved, pendingTasksCount }: ProjectTableRowProps) {
+export const ProjectTableRow = forwardRef<HTMLTableRowElement, ProjectTableRowProps>(function ProjectTableRow({ project, agenciesInvolved, pendingTasksCount }, _ref) {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
@@ -223,4 +223,4 @@ export function ProjectTableRow({ project, agenciesInvolved, pendingTasksCount }
       )}
     </>
   );
-}
+});
