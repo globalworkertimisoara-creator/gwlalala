@@ -39,10 +39,10 @@ interface Job {
   id: string;
   title: string;
   status: string;
-  total_candidates?: number;
-  placed_candidates?: number;
-  client_company?: string;
-  country?: string;
+  total_candidates: number;
+  placed_candidates: number;
+  client_company: string;
+  country: string;
   [key: string]: any;
 }
 

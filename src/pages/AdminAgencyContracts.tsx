@@ -45,7 +45,7 @@ export default function AdminAgencyContracts() {
           return (
             c.title.toLowerCase().includes(q) ||
             (c.contract_number || '').toLowerCase().includes(q) ||
-            ((c as any).client_name || '').toLowerCase().includes(q)
+            (c.client_name || '').toLowerCase().includes(q)
           );
         }
         return true;
@@ -142,7 +142,7 @@ export default function AdminAgencyContracts() {
                     >
                       <TableCell className="font-medium">{c.title}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{c.contract_number || '—'}</TableCell>
-                      <TableCell>{(c as any).client_name || '—'}</TableCell>
+                      <TableCell>{c.client_name || '—'}</TableCell>
                       <TableCell>
                         <Badge variant={c.status === 'active' ? 'default' : 'secondary'}>{c.status}</Badge>
                       </TableCell>
