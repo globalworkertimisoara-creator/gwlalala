@@ -14,12 +14,6 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     target: "es2022",
-    rollupOptions: {
-      onwarn(warning, warn) {
-        if (warning.message?.includes('d3-shape')) return;
-        warn(warning);
-      },
-    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
