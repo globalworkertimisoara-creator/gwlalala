@@ -45,7 +45,7 @@ export default function AdminAgencyContracts() {
           return (
             c.title.toLowerCase().includes(q) ||
             (c.contract_number || '').toLowerCase().includes(q) ||
-            (c.client_name || '').toLowerCase().includes(q)
+            ((c as any).client_name || '').toLowerCase().includes(q)
           );
         }
         return true;
