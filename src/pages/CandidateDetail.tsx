@@ -59,6 +59,10 @@ import {
   X,
   FolderSymlink,
   Download,
+  LayoutDashboard,
+  User,
+  GitBranch,
+  History,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -208,7 +212,6 @@ export default function CandidateDetail() {
       stage: selectedStage as RecruitmentStage,
       note: stageNote || undefined,
     });
-    // Log activity
     logCandidateActivity.mutate({
       candidate_id: id,
       event_type: 'stage_change',
@@ -345,21 +348,24 @@ export default function CandidateDetail() {
           </CardContent>
         </Card>
 
-        {/* ── Tabbed Content ───────────────────────────────────────────────── */}
+        {/* ── Tabbed Content (4 tabs) ────────────────────────────────────── */}
         <Tabs defaultValue="overview">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="cv">CV</TabsTrigger>
-            <TabsTrigger value="workflow">Workflow</TabsTrigger>
-            <TabsTrigger value="notes">
-              Notes{notes && notes.length > 0 && <span className="ml-1.5 text-xs opacity-60">({notes.length})</span>}
+          <TabsList>
+            <TabsTrigger value="overview" className="gap-1.5">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Overview
             </TabsTrigger>
-            <TabsTrigger value="documents">
-              Documents{documents && documents.length > 0 && <span className="ml-1.5 text-xs opacity-60">({documents.length})</span>}
+            <TabsTrigger value="profile" className="gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              Profile
             </TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-            <TabsTrigger value="activity">
-              Activity{activityLog.length > 0 && <span className="ml-1.5 text-xs opacity-60">({activityLog.length})</span>}
+            <TabsTrigger value="workflow" className="gap-1.5">
+              <GitBranch className="h-3.5 w-3.5" />
+              Workflow
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-1.5">
+              <History className="h-3.5 w-3.5" />
+              History
             </TabsTrigger>
           </TabsList>
 
@@ -452,7 +458,7 @@ export default function CandidateDetail() {
               )}
 
               {/* Project Links */}
-              <Card>
+              <Card className="lg:col-span-2">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <FolderSymlink className="h-4 w-4" />
@@ -468,7 +474,7 @@ export default function CandidateDetail() {
                       Not linked to any project yet.
                     </p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                       {candidateWorkflows.map((wf: any) => (
                         <div
                           key={wf.id}
@@ -516,191 +522,195 @@ export default function CandidateDetail() {
             </div>
           </TabsContent>
 
-          {/* ── Workflow ──────────────────────────────────────────────────── */}
-          <TabsContent value="workflow" className="space-y-4 mt-4">
-            {id && <CandidateWorkflowSection candidateId={id} />}
-          </TabsContent>
+          {/* ── Profile (CV + Documents) ──────────────────────────────────── */}
+          <TabsContent value="profile" className="space-y-6 mt-4">
+            {/* CV Section */}
+            <CandidateCVTab candidate={candidate as any} />
 
-          {/* ── Notes ────────────────────────────────────────────────────── */}
-          <TabsContent value="notes" className="space-y-4 mt-4">
-            {/* Compose */}
-            {can('createNotes') && (
+            {/* Documents Section */}
             <Card>
-              <CardContent className="p-4 space-y-3">
-                <Textarea
-                  placeholder="Write a note about this candidate…"
-                  value={noteContent}
-                  onChange={(e) => setNoteContent(e.target.value)}
-                  rows={3}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                      e.preventDefault();
-                      handleAddNote();
-                    }
-                  }}
-                />
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Ctrl + Enter to submit</span>
-                  <Button size="sm" disabled={!noteContent.trim() || createNote.isPending} onClick={handleAddNote}>
-                    {createNote.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                    <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    Add Note
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Documents
+                  {documents && documents.length > 0 && (
+                    <span className="text-xs text-muted-foreground font-normal">({documents.length})</span>
+                  )}
+                </CardTitle>
+                {can('uploadDocuments') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => navigate(`/candidates/${id}/upload`)}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload to Drive
                   </Button>
-                </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                {id && can('uploadDocuments') && (
+                  <CandidateDocumentUpload
+                    candidateId={id}
+                    candidate={candidate}
+                    onDataApplied={() => {
+                      queryClient.invalidateQueries({ queryKey: ['candidate', id] });
+                      queryClient.invalidateQueries({ queryKey: ['candidate-education', id] });
+                      queryClient.invalidateQueries({ queryKey: ['candidate-work-experience', id] });
+                      queryClient.invalidateQueries({ queryKey: ['candidate-languages', id] });
+                      queryClient.invalidateQueries({ queryKey: ['candidate-skills', id] });
+                      queryClient.invalidateQueries({ queryKey: ['candidate-references', id] });
+                      queryClient.invalidateQueries({ queryKey: ['documents', id] });
+                    }}
+                  />
+                )}
               </CardContent>
             </Card>
-            )}
-
-            {/* List */}
-            {notesLoading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : notes && notes.length > 0 ? (
-              <div className="space-y-3">
-                {notes.map((note) => (
-                  <Card key={note.id}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start gap-3">
-                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                        {can('deleteAnyNotes') && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
-                          onClick={() => handleDeleteNote(note.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {note.author_name && <span className="font-medium text-foreground">{note.author_name}</span>}
-                        {note.author_name && ' · '}
-                        {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-10 text-center">
-                  <MessageSquare className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                  <p className="text-muted-foreground font-medium">No notes yet</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">Add a note above to track your thoughts on this candidate.</p>
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
 
-          {/* ── Documents ────────────────────────────────────────────────── */}
-          <TabsContent value="documents" className="space-y-4 mt-4">
-            {can('uploadDocuments') && (
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => navigate(`/candidates/${id}/upload`)}
-              >
-                <Upload className="h-4 w-4" />
-                Upload to Drive
-              </Button>
-            </div>
-            )}
-            {id && can('uploadDocuments') && (
-              <CandidateDocumentUpload 
-                candidateId={id}
-                candidate={candidate}
-                onDataApplied={() => {
-                  // Refresh all candidate and CV data queries
-                  queryClient.invalidateQueries({ queryKey: ['candidate', id] });
-                  queryClient.invalidateQueries({ queryKey: ['candidate-education', id] });
-                  queryClient.invalidateQueries({ queryKey: ['candidate-work-experience', id] });
-                  queryClient.invalidateQueries({ queryKey: ['candidate-languages', id] });
-                  queryClient.invalidateQueries({ queryKey: ['candidate-skills', id] });
-                  queryClient.invalidateQueries({ queryKey: ['candidate-references', id] });
-                  queryClient.invalidateQueries({ queryKey: ['documents', id] });
-                }}
-              />
-            )}
-          </TabsContent>
+          {/* ── Workflow + Notes ───────────────────────────────────────────── */}
+          <TabsContent value="workflow" className="space-y-6 mt-4">
+            {/* Workflow Section */}
+            {id && <CandidateWorkflowSection candidateId={id} />}
 
-          {/* ── History ──────────────────────────────────────────────────── */}
-          <TabsContent value="history" className="mt-4">
-            {historyLoading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : stageHistory && stageHistory.length > 0 ? (
-              <div className="relative space-y-4">
-                {/* Vertical timeline line */}
-                <div className="absolute left-[15px] top-4 bottom-4 w-px bg-border" />
-
-                {stageHistory.map((entry) => (
-                  <div key={entry.id} className="relative flex gap-4">
-                    {/* Timeline dot */}
-                    <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card border-2 border-primary shrink-0">
-                      <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+            {/* Notes Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Notes
+                  {notes && notes.length > 0 && (
+                    <span className="text-xs text-muted-foreground font-normal">({notes.length})</span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Compose */}
+                {can('createNotes') && (
+                  <div className="space-y-3">
+                    <Textarea
+                      placeholder="Write a note about this candidate…"
+                      value={noteContent}
+                      onChange={(e) => setNoteContent(e.target.value)}
+                      rows={3}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                          e.preventDefault();
+                          handleAddNote();
+                        }
+                      }}
+                    />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Ctrl + Enter to submit</span>
+                      <Button size="sm" disabled={!noteContent.trim() || createNote.isPending} onClick={handleAddNote}>
+                        {createNote.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                        <Plus className="h-3.5 w-3.5 mr-1.5" />
+                        Add Note
+                      </Button>
                     </div>
-
-                    {/* Card */}
-                    <Card className="flex-1">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-3 flex-wrap">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {entry.from_stage && (
-                              <>
-                                <Badge variant="secondary" className={cn('text-xs', getStageColor(entry.from_stage))}>
-                                  {getStageLabel(entry.from_stage).split(' / ')[0]}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">→</span>
-                              </>
-                            )}
-                            <Badge variant="secondary" className={cn('text-xs', getStageColor(entry.to_stage))}>
-                              {getStageLabel(entry.to_stage).split(' / ')[0]}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
-                            {entry.changed_by_name && (
-                              <span className="font-medium text-foreground">{entry.changed_by_name}</span>
-                            )}
-                            <span>{format(new Date(entry.changed_at), 'MMM d, yyyy · HH:mm')}</span>
-                          </div>
-                        </div>
-                        {entry.note && (
-                          <p className="text-sm text-muted-foreground mt-2 italic">{entry.note}</p>
-                        )}
-                      </CardContent>
-                    </Card>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-10 text-center">
-                  <Clock className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-                  <p className="text-muted-foreground font-medium">No stage history yet</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">Stage changes will be logged here automatically.</p>
-                </CardContent>
-              </Card>
-            )}
+                )}
+
+                {/* Notes List */}
+                {notesLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : notes && notes.length > 0 ? (
+                  <div className="space-y-3">
+                    {notes.map((note) => (
+                      <div key={note.id} className="p-3 rounded-lg border">
+                        <div className="flex justify-between items-start gap-3">
+                          <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                          {can('deleteAnyNotes') && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                              onClick={() => handleDeleteNote(note.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {note.author_name && <span className="font-medium text-foreground">{note.author_name}</span>}
+                          {note.author_name && ' · '}
+                          {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No notes yet</p>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          {/* ── Activity Log ─────────────────────────────────────────────── */}
-          <TabsContent value="activity" className="mt-4">
+          {/* ── History (Stage History + Activity Log) ─────────────────────── */}
+          <TabsContent value="history" className="space-y-6 mt-4">
+            {/* Stage History */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Stage History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {historyLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : stageHistory && stageHistory.length > 0 ? (
+                  <div className="relative space-y-4">
+                    <div className="absolute left-[15px] top-4 bottom-4 w-px bg-border" />
+                    {stageHistory.map((entry) => (
+                      <div key={entry.id} className="relative flex gap-4">
+                        <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card border-2 border-primary shrink-0">
+                          <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                        </div>
+                        <div className="flex-1 p-3 rounded-lg border">
+                          <div className="flex items-start justify-between gap-3 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {entry.from_stage && (
+                                <>
+                                  <Badge variant="secondary" className={cn('text-xs', getStageColor(entry.from_stage))}>
+                                    {getStageLabel(entry.from_stage).split(' / ')[0]}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">→</span>
+                                </>
+                              )}
+                              <Badge variant="secondary" className={cn('text-xs', getStageColor(entry.to_stage))}>
+                                {getStageLabel(entry.to_stage).split(' / ')[0]}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
+                              {entry.changed_by_name && (
+                                <span className="font-medium text-foreground">{entry.changed_by_name}</span>
+                              )}
+                              <span>{format(new Date(entry.changed_at), 'MMM d, yyyy · HH:mm')}</span>
+                            </div>
+                          </div>
+                          {entry.note && (
+                            <p className="text-sm text-muted-foreground mt-2 italic">{entry.note}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No stage changes yet</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Activity Log */}
             <CandidateActivityLog
               entries={activityLog}
               isLoading={activityLoading}
               showActorType={true}
-              title="Full Activity Log"
+              title="Activity Log"
             />
-          </TabsContent>
-
-          {/* ── CV / Profile ─────────────────────────────────────────────── */}
-          <TabsContent value="cv" className="mt-4">
-            <CandidateCVTab candidate={candidate as any} />
           </TabsContent>
         </Tabs>
 
@@ -734,7 +744,6 @@ function CandidateWorkflowSection({ candidateId }: { candidateId: string }) {
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const { toast } = useToast();
 
-  // Fetch projects linked to this candidate through jobs
   const { data: linkedProjects, isLoading: projectsLoading } = useQuery({
     queryKey: ['candidate-projects', candidateId],
     queryFn: async () => {

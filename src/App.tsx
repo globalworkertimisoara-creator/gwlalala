@@ -41,6 +41,9 @@ import Tasks from "./pages/Tasks";
 import Contracts from "./pages/Contracts";
 import SalesAnalytics from "./pages/SalesAnalytics";
 import Reports from "./pages/Reports";
+import CreateContract from "./pages/CreateContract";
+import CreateProject from "./pages/CreateProject";
+import CreateCandidate from "./pages/CreateCandidate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -232,6 +235,27 @@ const App = () => (
               <ProtectedRoute>
                 <ErrorBoundary>
                   <Reports />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/contracts/new" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <CreateContract />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/projects/new" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <CreateProject />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/candidates/new" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <CreateCandidate />
                 </ErrorBoundary>
               </ProtectedRoute>
             } />
