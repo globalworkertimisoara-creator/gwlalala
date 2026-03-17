@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useJob, useUpdateJob, useJobCandidates, useLinkCandidateToJob } from '@/hooks/useJobs';
 import { useCandidates } from '@/hooks/useCandidates';
 import { useProjects, useLinkJobToProject } from '@/hooks/useProjects';
+import { useTasks, useCreateTask, useUpdateTask } from '@/hooks/useTasks';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,9 @@ import {
   Search,
   Plus,
   FolderKanban,
+  CheckSquare,
+  Circle,
+  CheckCircle2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { JobStatus, getStageLabel, getStageColor } from '@/types/database';
@@ -61,6 +65,12 @@ export default function JobDetail() {
   const updateJob = useUpdateJob();
   const linkCandidate = useLinkCandidateToJob();
   const linkJobToProject = useLinkJobToProject();
+
+  // Tasks
+  const { data: jobTasks = [], isLoading: tasksLoading } = useTasks({ entity_type: 'job', entity_id: id });
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const [newTaskTitle, setNewTaskTitle] = useState('');
 
   const [newStatus, setNewStatus] = useState<string>('');
   const [linkSearch, setLinkSearch] = useState('');
@@ -313,6 +323,87 @@ export default function JobDetail() {
 
             {/* Invite Agencies */}
             <InviteAgenciesCard jobId={id!} />
+
+            {/* Tasks */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4" />
+                  Tasks ({jobTasks.filter(t => t.status !== 'done').length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Add a task..."
+                    value={newTaskTitle}
+                    onChange={e => setNewTaskTitle(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && newTaskTitle.trim()) {
+                        createTask.mutateAsync({
+                          title: newTaskTitle.trim(),
+                          priority: 'medium',
+                          entity_type: 'job',
+                          entity_id: id,
+                          task_type: 'job',
+                        }).then(() => setNewTaskTitle(''));
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    disabled={createTask.isPending || !newTaskTitle.trim()}
+                    onClick={() => {
+                      if (newTaskTitle.trim()) {
+                        createTask.mutateAsync({
+                          title: newTaskTitle.trim(),
+                          priority: 'medium',
+                          entity_type: 'job',
+                          entity_id: id,
+                          task_type: 'job',
+                        }).then(() => setNewTaskTitle(''));
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {tasksLoading ? (
+                  <div className="flex justify-center py-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : jobTasks.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-2">No tasks yet</p>
+                ) : (
+                  <div className="space-y-1">
+                    {jobTasks.filter(t => t.status !== 'done').map(task => (
+                      <div key={task.id} className="flex items-center gap-2 p-2 rounded-lg border text-sm">
+                        <button
+                          onClick={() => updateTask.mutateAsync({ id: task.id, status: 'done' })}
+                          className="shrink-0"
+                        >
+                          <Circle className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                        </button>
+                        <span className="flex-1 truncate">{task.title}</span>
+                      </div>
+                    ))}
+                    {jobTasks.filter(t => t.status === 'done').slice(0, 3).map(task => (
+                      <div key={task.id} className="flex items-center gap-2 p-2 rounded-lg text-sm opacity-50">
+                        <button
+                          onClick={() => updateTask.mutateAsync({ id: task.id, status: 'todo' })}
+                          className="shrink-0"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                        </button>
+                        <span className="flex-1 truncate line-through">{task.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Link Candidate */}
             {can('linkCandidatesToJobs') && (

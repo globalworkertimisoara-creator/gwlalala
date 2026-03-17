@@ -1,30 +1,20 @@
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useProject, useUpdateProject, useDeleteProject, useLinkJobToProject } from '@/hooks/useProjects';
 import { useJobs, useCreateJob } from '@/hooks/useJobs';
 import { usePipelineCandidates, useAddCandidateToPipeline } from '@/hooks/usePipelineCandidates';
 import { useCandidates } from '@/hooks/useCandidates';
 import { useContractsByProject, useContracts, useLinkContractToProject } from '@/hooks/useContracts';
-import { PipelineBoard } from '@/components/pipeline/PipelineBoard';
-import { CreateContractDialog } from '@/components/contracts/CreateContractDialog';
-import { ContractDetailDialog } from '@/components/contracts/ContractDetailDialog';
-import type { Contract } from '@/types/contract';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useTasks } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,47 +27,28 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   ArrowLeft,
-  Building2,
-  MapPin,
-  Users,
-  Clock,
-  Calendar,
-  Briefcase,
   Trash2,
   Loader2,
-  Plus,
-  GitBranchPlus,
-  Search,
-  Link2,
-  Route,
-  FileText,
-  Unlink,
+  LayoutDashboard,
+  Users,
+  Briefcase,
+  Activity,
 } from 'lucide-react';
-import WorkflowPhaseTracker from '@/components/projects/WorkflowPhaseTracker';
-import { format } from 'date-fns';
-import { getProjectStatusColor, getProjectStatusLabel, PROJECT_STATUS_CONFIG, ProjectStatus, WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
-import { useState, useMemo } from 'react';
+import { PROJECT_STATUS_CONFIG, ProjectStatus } from '@/types/project';
+import { useState } from 'react';
+
+import { ProjectOverviewTab } from '@/components/projects/ProjectOverviewTab';
+import { ProjectPeopleTab } from '@/components/projects/ProjectPeopleTab';
+import { ProjectBusinessTab } from '@/components/projects/ProjectBusinessTab';
+import { ProjectActivityTab } from '@/components/projects/ProjectActivityTab';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fromSales = searchParams.get('from') === 'sales-analytics';
+
   const { data: project, isLoading } = useProject(id!);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
@@ -87,81 +58,33 @@ export default function ProjectDetail() {
   const { data: pipelineCandidates = [], isLoading: pipelineLoading } = usePipelineCandidates(id);
   const { data: allCandidates = [] } = useCandidates();
   const addToPipeline = useAddCandidateToPipeline();
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [candidateSearch, setCandidateSearch] = useState('');
-  const [pipelineWorkflowType, setPipelineWorkflowType] = useState<WorkflowType | ''>('');
 
-  // Job linking & creation state
+  // Jobs data
   const { data: allJobs = [] } = useJobs();
   const createJob = useCreateJob();
-  const [jobSearch, setJobSearch] = useState('');
-  const [linkedJobSearch, setLinkedJobSearch] = useState('');
-  const [linkJobDialogOpen, setLinkJobDialogOpen] = useState(false);
-  const [createJobDialogOpen, setCreateJobDialogOpen] = useState(false);
-  const [createContractDialogOpen, setCreateContractDialogOpen] = useState(false);
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-  const [linkContractDialogOpen, setLinkContractDialogOpen] = useState(false);
-  const [contractSearch, setContractSearch] = useState('');
 
   // Contract data
   const { data: projectContracts = [], isLoading: contractsLoading } = useContractsByProject(id);
   const { data: allContracts = [] } = useContracts();
   const linkContractToProject = useLinkContractToProject();
 
-  const linkedContractIds = new Set(projectContracts.map(c => c.id));
-  const availableContracts = useMemo(() => {
-    return allContracts
-      .filter(c => !linkedContractIds.has(c.id) && !c.project_id)
-      .filter(c => {
-        if (!contractSearch) return true;
-        const q = contractSearch.toLowerCase();
-        return c.title.toLowerCase().includes(q) || (c.contract_number || '').toLowerCase().includes(q);
-      });
-  }, [allContracts, linkedContractIds, contractSearch]);
+  // Tasks data (for count in overview)
+  const { data: projectTasks = [] } = useTasks({ entity_type: 'project', entity_id: id });
+  const pendingTaskCount = projectTasks.filter(t => t.status !== 'done').length;
 
-  const handleLinkContract = async (contractId: string) => {
-    if (!id) return;
-    await linkContractToProject.mutateAsync({ contractId, projectId: id });
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const handleStatusChange = (status: ProjectStatus) => {
+    if (project) {
+      updateProject.mutate({ id: project.id, status });
+    }
   };
 
-  const handleUnlinkContract = async (contractId: string) => {
-    await linkContractToProject.mutateAsync({ contractId, projectId: null });
-  };
-
-  const existingCandidateIds = new Set(pipelineCandidates.map(pc => pc.candidate_id));
-  const availableCandidates = useMemo(() => {
-    return allCandidates
-      .filter(c => !existingCandidateIds.has(c.id))
-      .filter(c => !candidateSearch || c.full_name.toLowerCase().includes(candidateSearch.toLowerCase()) || c.email.toLowerCase().includes(candidateSearch.toLowerCase()));
-  }, [allCandidates, existingCandidateIds, candidateSearch]);
-
-  // Jobs not yet linked to this project (for linking dialog)
-  const linkedJobIds = new Set(project?.jobs?.map(j => j.id) || []);
-  const availableJobs = useMemo(() => {
-    return allJobs
-      .filter(j => !linkedJobIds.has(j.id))
-      .filter(j => {
-        if (!jobSearch) return true;
-        const q = jobSearch.toLowerCase();
-        return j.title.toLowerCase().includes(q) || j.client_company.toLowerCase().includes(q);
-      });
-  }, [allJobs, linkedJobIds, jobSearch]);
-
-  // Filter linked jobs by search
-  const filteredLinkedJobs = useMemo(() => {
-    if (!project?.jobs) return [];
-    if (!linkedJobSearch) return project.jobs;
-    const q = linkedJobSearch.toLowerCase();
-    return project.jobs.filter(j => j.title.toLowerCase().includes(q));
-  }, [project?.jobs, linkedJobSearch]);
-
-  const handleAddCandidate = async (candidateId: string) => {
-    if (!id) return;
-    const wfType = (pipelineWorkflowType || project?.default_workflow_type || 'full_immigration') as 'full_immigration' | 'no_visa';
-    await addToPipeline.mutateAsync({ candidateId, projectId: id, workflowType: wfType });
-    setAddDialogOpen(false);
-    setCandidateSearch('');
-    setPipelineWorkflowType('');
+  const handleDelete = async () => {
+    if (project) {
+      await deleteProject.mutateAsync(project.id);
+      navigate('/projects');
+    }
   };
 
   const handleLinkJob = async (jobId: string) => {
@@ -181,20 +104,20 @@ export default function ProjectDetail() {
       description: formData.get('description') as string || undefined,
       project_id: id,
     });
-    setCreateJobDialogOpen(false);
   };
 
-  const handleStatusChange = (status: ProjectStatus) => {
-    if (project) {
-      updateProject.mutate({ id: project.id, status });
-    }
+  const handleLinkContract = async (contractId: string) => {
+    if (!id) return;
+    await linkContractToProject.mutateAsync({ contractId, projectId: id });
   };
 
-  const handleDelete = async () => {
-    if (project) {
-      await deleteProject.mutateAsync(project.id);
-      navigate('/projects');
-    }
+  const handleUnlinkContract = async (contractId: string) => {
+    await linkContractToProject.mutateAsync({ contractId, projectId: null });
+  };
+
+  const handleAddCandidate = async (candidateId: string, workflowType: 'full_immigration' | 'no_visa') => {
+    if (!id) return;
+    await addToPipeline.mutateAsync({ candidateId, projectId: id, workflowType });
   };
 
   if (isLoading) {
@@ -269,552 +192,72 @@ export default function ProjectDetail() {
           </AlertDialog>
         </div>
 
-        {/* Tabs: Overview | Pipeline | Workflow */}
-        <Tabs defaultValue="overview">
+        {/* Tabs: Overview | People | Business | Activity */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="pipeline" className="gap-1.5">
-              <GitBranchPlus className="h-3.5 w-3.5" />
-              Pipeline ({pipelineCandidates.length})
+            <TabsTrigger value="overview" className="gap-1.5">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Overview
             </TabsTrigger>
-            <TabsTrigger value="contracts" className="gap-1.5">
-              <FileText className="h-3.5 w-3.5" />
-              Contracts ({projectContracts.length})
+            <TabsTrigger value="people" className="gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              People ({pipelineCandidates.length})
             </TabsTrigger>
-            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+            <TabsTrigger value="business" className="gap-1.5">
+              <Briefcase className="h-3.5 w-3.5" />
+              Business
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-1.5">
+              <Activity className="h-3.5 w-3.5" />
+              Activity {pendingTaskCount > 0 && `(${pendingTaskCount})`}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
-            <div className="grid lg:grid-cols-3 gap-6">
-              {/* Left Column - Details */}
-              <div className="lg:col-span-1 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Project Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Employer</p>
-                        <p className="font-medium">{project.employer_name}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Location</p>
-                        <p className="font-medium">{project.location}</p>
-                      </div>
-                    </div>
-                    {project.sales_person_name && (
-                      <div className="flex items-center gap-3">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Sales Person</p>
-                          <p className="font-medium">{project.sales_person_name}</p>
-                        </div>
-                      </div>
-                    )}
-                    {project.contract_signed_at && (
-                      <div className="flex items-center gap-3">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Contract Signed</p>
-                          <p className="font-medium">
-                            {format(new Date(project.contract_signed_at), 'MMM d, yyyy')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {project.days_since_contract !== null && (
-                      <div className="flex items-center gap-3">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Time Since Contract</p>
-                          <p className="font-medium">{project.days_since_contract} days</p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <Route className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Workflow Type</p>
-                        <Select
-                          value={project.default_workflow_type || 'full_immigration'}
-                          onValueChange={(v) => updateProject.mutate({ id: project.id, default_workflow_type: v } as any)}
-                        >
-                          <SelectTrigger className="h-8 w-[180px] mt-0.5">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
-                              <SelectItem key={value} value={value}>
-                                {config.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Contract Countries</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {project.countries_in_contract.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {project.countries_in_contract.map(country => (
-                          <Badge key={country} variant="outline">
-                            {country}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No countries specified</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {project.notes && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Notes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm whitespace-pre-wrap">{project.notes}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              {/* Right Column - Metrics & Jobs */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Fulfillment Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Contract Fulfillment</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-3xl font-bold">{project.fill_percentage}%</span>
-                      <span className="text-muted-foreground">
-                        {project.filled_positions} of {project.total_positions} positions filled
-                      </span>
-                    </div>
-                    <Progress value={project.fill_percentage} className="h-3" />
-                  </CardContent>
-                </Card>
-
-                {/* Jobs Table */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Briefcase className="h-4 w-4" />
-                      Linked Jobs ({project.jobs.length})
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      {/* Link Existing Job Dialog */}
-                      <Dialog open={linkJobDialogOpen} onOpenChange={(open) => { setLinkJobDialogOpen(open); if (!open) setJobSearch(''); }}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-1.5">
-                            <Link2 className="h-4 w-4" />
-                            Link Job
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>Link Existing Job</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                placeholder="Search active jobs..."
-                                value={jobSearch}
-                                onChange={e => setJobSearch(e.target.value)}
-                                className="pl-9"
-                              />
-                            </div>
-                            <div className="max-h-64 overflow-y-auto space-y-1">
-                              {availableJobs.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-4">
-                                  {jobSearch ? 'No matching jobs found' : 'All jobs are already linked'}
-                                </p>
-                              ) : (
-                                availableJobs.slice(0, 20).map(job => (
-                                  <button
-                                    key={job.id}
-                                    onClick={() => handleLinkJob(job.id)}
-                                    disabled={linkJobToProject.isPending}
-                                    className="w-full flex items-center justify-between p-2.5 rounded-lg border hover:bg-accent/50 transition-colors text-left"
-                                  >
-                                    <div>
-                                      <p className="text-sm font-medium">{job.title}</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {job.client_company} · {job.country}
-                                        <Badge variant={job.status === 'open' ? 'default' : 'secondary'} className="ml-2 text-[10px] px-1.5 py-0">
-                                          {job.status}
-                                        </Badge>
-                                      </p>
-                                    </div>
-                                    <Link2 className="h-4 w-4 text-muted-foreground" />
-                                  </button>
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
-                      {/* Add New Job Dialog */}
-                      <Dialog open={createJobDialogOpen} onOpenChange={setCreateJobDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" className="gap-1.5">
-                            <Plus className="h-4 w-4" />
-                            Add Job
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg">
-                          <DialogHeader>
-                            <DialogTitle>Create New Job</DialogTitle>
-                          </DialogHeader>
-                          <form onSubmit={handleCreateJob} className="space-y-4">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <div className="space-y-2">
-                                <Label htmlFor="pj-title">Job Title *</Label>
-                                <Input id="pj-title" name="title" required />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="pj-client_company">Client Company *</Label>
-                                <Input id="pj-client_company" name="client_company" defaultValue={project.employer_name} required />
-                              </div>
-                            </div>
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <div className="space-y-2">
-                                <Label htmlFor="pj-country">Country *</Label>
-                                <Input id="pj-country" name="country" defaultValue={project.location} required />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="pj-salary_range">Salary Range</Label>
-                                <Input id="pj-salary_range" name="salary_range" placeholder="e.g., €50k-70k" />
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="pj-required_skills">Required Skills</Label>
-                              <Input id="pj-required_skills" name="required_skills" placeholder="e.g., JavaScript, React, Node.js" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="pj-description">Description</Label>
-                              <Textarea id="pj-description" name="description" rows={3} />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button type="button" variant="outline" onClick={() => setCreateJobDialogOpen(false)}>Cancel</Button>
-                              <Button type="submit" disabled={createJob.isPending}>
-                                {createJob.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Job
-                              </Button>
-                            </div>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
-
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to="/jobs">Manage Jobs</Link>
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {project.jobs.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>No jobs linked to this project yet</p>
-                        <p className="text-sm">Link existing jobs or create a new one</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* Search bar for linked jobs */}
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Search linked jobs..."
-                            value={linkedJobSearch}
-                            onChange={e => setLinkedJobSearch(e.target.value)}
-                            className="pl-9"
-                          />
-                        </div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Role</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead className="text-center">Total</TableHead>
-                              <TableHead className="text-center">Placed</TableHead>
-                              <TableHead className="text-right">Fill Rate</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredLinkedJobs.length === 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                                  No jobs match your search
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              filteredLinkedJobs.map(job => {
-                                const fillRate = job.total_candidates > 0
-                                  ? Math.round((job.placed_candidates / job.total_candidates) * 100)
-                                  : 0;
-                                return (
-                                  <TableRow
-                                    key={job.id}
-                                    className="cursor-pointer hover:bg-muted/50"
-                                    onClick={() => navigate(`/jobs/${job.id}`)}
-                                  >
-                                    <TableCell className="font-medium">{job.title}</TableCell>
-                                    <TableCell>
-                                      <Badge variant={job.status === 'open' ? 'default' : 'secondary'}>
-                                        {job.status}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-center">{job.total_candidates}</TableCell>
-                                    <TableCell className="text-center">{job.placed_candidates}</TableCell>
-                                    <TableCell className="text-right">
-                                      <div className="flex items-center justify-end gap-2">
-                                        <Progress value={fillRate} className="w-16 h-2" />
-                                        <span className="text-sm w-10">{fillRate}%</span>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="pipeline" className="mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-muted-foreground">
-                {pipelineCandidates.length} candidates in this project's pipeline
-              </p>
-              <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="gap-1.5">
-                    <Plus className="h-4 w-4" />
-                    Add to Pipeline
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add Candidate to Pipeline</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Workflow Type</Label>
-                      <Select
-                        value={pipelineWorkflowType || project.default_workflow_type || 'full_immigration'}
-                        onValueChange={(v) => setPipelineWorkflowType(v as WorkflowType)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(WORKFLOW_TYPE_CONFIG).map(([value, config]) => (
-                            <SelectItem key={value} value={value}>
-                              {config.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {WORKFLOW_TYPE_CONFIG[(pipelineWorkflowType || project.default_workflow_type || 'full_immigration') as WorkflowType]?.description}
-                      </p>
-                    </div>
-                    <div>
-                      <Label>Search candidates</Label>
-                      <Input
-                        placeholder="Name or email..."
-                        value={candidateSearch}
-                        onChange={e => setCandidateSearch(e.target.value)}
-                      />
-                    </div>
-                    <div className="max-h-64 overflow-y-auto space-y-1">
-                      {availableCandidates.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          {candidateSearch ? 'No matching candidates found' : 'All candidates are already in this pipeline'}
-                        </p>
-                      ) : (
-                        availableCandidates.slice(0, 20).map(c => (
-                          <button
-                            key={c.id}
-                            onClick={() => handleAddCandidate(c.id)}
-                            disabled={addToPipeline.isPending}
-                            className="w-full flex items-center justify-between p-2.5 rounded-lg border hover:bg-accent/50 transition-colors text-left"
-                          >
-                            <div>
-                              <p className="text-sm font-medium">{c.full_name}</p>
-                              <p className="text-xs text-muted-foreground">{c.email}</p>
-                            </div>
-                            <Plus className="h-4 w-4 text-muted-foreground" />
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <PipelineBoard candidates={pipelineCandidates} isLoading={pipelineLoading} />
-          </TabsContent>
-
-          <TabsContent value="contracts" className="mt-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Linked Contracts ({projectContracts.length})
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  {/* Link Existing Contract */}
-                  <Dialog open={linkContractDialogOpen} onOpenChange={(open) => { setLinkContractDialogOpen(open); if (!open) setContractSearch(''); }}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-1.5">
-                        <Link2 className="h-4 w-4" />
-                        Link Contract
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Link Existing Contract</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Search contracts..."
-                            value={contractSearch}
-                            onChange={e => setContractSearch(e.target.value)}
-                            className="pl-9"
-                          />
-                        </div>
-                        <div className="max-h-64 overflow-y-auto space-y-1">
-                          {availableContracts.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">
-                              {contractSearch ? 'No matching contracts found' : 'No unlinked contracts available'}
-                            </p>
-                          ) : (
-                            availableContracts.slice(0, 20).map(c => (
-                              <button
-                                key={c.id}
-                                onClick={() => handleLinkContract(c.id)}
-                                disabled={linkContractToProject.isPending}
-                                className="w-full flex items-center justify-between p-2.5 rounded-lg border hover:bg-accent/50 transition-colors text-left"
-                              >
-                                <div>
-                                  <p className="text-sm font-medium">{c.title}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {c.contract_number || 'No number'}
-                                    <Badge variant={c.status === 'active' ? 'default' : 'secondary'} className="ml-2 text-[10px] px-1.5 py-0">
-                                      {c.status}
-                                    </Badge>
-                                  </p>
-                                </div>
-                                <Link2 className="h-4 w-4 text-muted-foreground" />
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Create New Contract for Project */}
-                  <Button size="sm" className="gap-1.5" onClick={() => setCreateContractDialogOpen(true)}>
-                    <Plus className="h-4 w-4" />
-                    New Contract
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {contractsLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : projectContracts.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>No contracts linked to this project yet</p>
-                    <p className="text-sm">Link existing contracts or create a new one</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Number</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead className="w-[60px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {projectContracts.map(c => (
-                        <TableRow
-                          key={c.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => setSelectedContract(c)}
-                        >
-                          <TableCell className="font-medium">{c.title}</TableCell>
-                          <TableCell className="text-muted-foreground text-xs">{c.contract_number || '—'}</TableCell>
-                          <TableCell className="capitalize">{c.contract_type}</TableCell>
-                          <TableCell>
-                            <Badge variant={c.status === 'active' ? 'default' : 'secondary'}>{c.status}</Badge>
-                          </TableCell>
-                          <TableCell>{c.total_value ? `${c.total_value.toLocaleString()} ${c.currency}` : '—'}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              onClick={(e) => { e.stopPropagation(); handleUnlinkContract(c.id); }}
-                              disabled={linkContractToProject.isPending}
-                            >
-                              <Unlink className="h-3.5 w-3.5" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-
-            <CreateContractDialog
-              open={createContractDialogOpen}
-              onOpenChange={setCreateContractDialogOpen}
-              preselectedProjectId={id}
-            />
-            <ContractDetailDialog
-              contract={selectedContract}
-              open={!!selectedContract}
-              onOpenChange={(open) => { if (!open) setSelectedContract(null); }}
+            <ProjectOverviewTab
+              project={project}
+              onUpdateProject={(updates) => updateProject.mutate(updates)}
+              pipelineCount={pipelineCandidates.length}
+              contractCount={projectContracts.length}
+              taskCount={pendingTaskCount}
+              onTabChange={setActiveTab}
             />
           </TabsContent>
 
-          <TabsContent value="workflow" className="mt-6">
-            <WorkflowPhaseTracker projectId={project.id} />
+          <TabsContent value="people" className="mt-6">
+            <ProjectPeopleTab
+              projectId={id!}
+              pipelineCandidates={pipelineCandidates}
+              pipelineLoading={pipelineLoading}
+              allCandidates={allCandidates}
+              defaultWorkflowType={project.default_workflow_type || 'full_immigration'}
+              onAddCandidate={handleAddCandidate}
+              addPending={addToPipeline.isPending}
+            />
+          </TabsContent>
+
+          <TabsContent value="business" className="mt-6">
+            <ProjectBusinessTab
+              projectId={id!}
+              employerName={project.employer_name}
+              location={project.location}
+              jobs={project.jobs}
+              allJobs={allJobs}
+              onLinkJob={handleLinkJob}
+              linkJobPending={linkJobToProject.isPending}
+              onCreateJob={handleCreateJob}
+              createJobPending={createJob.isPending}
+              projectContracts={projectContracts}
+              contractsLoading={contractsLoading}
+              allContracts={allContracts}
+              onLinkContract={handleLinkContract}
+              onUnlinkContract={handleUnlinkContract}
+              linkContractPending={linkContractToProject.isPending}
+            />
+          </TabsContent>
+
+          <TabsContent value="activity" className="mt-6">
+            <ProjectActivityTab projectId={id!} />
           </TabsContent>
         </Tabs>
       </div>
