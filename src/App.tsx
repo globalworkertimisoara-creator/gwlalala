@@ -41,6 +41,9 @@ import Tasks from "./pages/Tasks";
 import Contracts from "./pages/Contracts";
 import SalesAnalytics from "./pages/SalesAnalytics";
 import Reports from "./pages/Reports";
+import CreateContract from "./pages/CreateContract";
+import CreateProject from "./pages/CreateProject";
+import CreateCandidate from "./pages/CreateCandidate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
