@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Kanban, 
-  Settings, 
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Users,
+  Kanban,
+  Settings,
   Globe,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Briefcase,
   LogOut,
   User,
@@ -17,10 +18,12 @@ import {
   Receipt,
   Eye,
   BarChart3,
-  CheckSquare,
   FileText,
   FileDown,
   Shield,
+  ClipboardList,
+  TrendingUp,
+  Wrench,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -69,26 +72,58 @@ interface NavItem {
   title: string;
   url: string;
   icon: any;
-  /** If set, the item is only shown when the user has this permission */
   requirePermission?: keyof RolePermissions;
 }
 
-const navItems: NavItem[] = [
-  { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Projects', url: '/projects', icon: FolderKanban, requirePermission: 'viewAllProjects' },
-  { title: 'Pipeline', url: '/pipeline', icon: Kanban, requirePermission: 'viewAllCandidates' },
-  { title: 'Candidates', url: '/candidates', icon: Users, requirePermission: 'viewAllCandidates' },
-  { title: 'Jobs', url: '/jobs', icon: Briefcase },
-  { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
-  
-  { title: 'Contracts', url: '/contracts', icon: FileText },
-  { title: 'Reports', url: '/reports', icon: FileDown },
-  { title: 'Sales Analytics', url: '/sales-analytics', icon: BarChart3, requirePermission: 'viewSalesAnalytics' },
-  { title: 'Billing', url: '/billing', icon: Receipt, requirePermission: 'viewBilling' },
-  { title: 'Analytics', url: '/analytics', icon: BarChart3, requirePermission: 'viewAllCandidates' },
-  { title: 'Agency Contracts', url: '/admin/agency-contracts', icon: Shield, requirePermission: 'accessAdminPanel' },
-  { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
-  { title: 'Settings', url: '/settings', icon: Settings, requirePermission: 'modifySettings' },
+interface NavGroup {
+  label: string;
+  icon: any;
+  accentColor: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Recruitment',
+    icon: ClipboardList,
+    accentColor: 'text-blue-400',
+    items: [
+      { title: 'Projects', url: '/projects', icon: FolderKanban, requirePermission: 'viewAllProjects' },
+      { title: 'Pipeline', url: '/pipeline', icon: Kanban, requirePermission: 'viewAllCandidates' },
+      { title: 'Candidates', url: '/candidates', icon: Users, requirePermission: 'viewAllCandidates' },
+      { title: 'Jobs', url: '/jobs', icon: Briefcase },
+    ],
+  },
+  {
+    label: 'Business',
+    icon: Building2,
+    accentColor: 'text-emerald-400',
+    items: [
+      { title: 'Contracts', url: '/contracts', icon: FileText },
+      { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
+      { title: 'Reports', url: '/reports', icon: FileDown },
+    ],
+  },
+  {
+    label: 'Insights',
+    icon: TrendingUp,
+    accentColor: 'text-purple-400',
+    items: [
+      { title: 'Sales Analytics', url: '/sales-analytics', icon: BarChart3, requirePermission: 'viewSalesAnalytics' },
+      { title: 'Analytics', url: '/analytics', icon: BarChart3, requirePermission: 'viewAllCandidates' },
+      { title: 'Billing', url: '/billing', icon: Receipt, requirePermission: 'viewBilling' },
+    ],
+  },
+  {
+    label: 'Admin',
+    icon: Wrench,
+    accentColor: 'text-gray-400',
+    items: [
+      { title: 'Agency Contracts', url: '/admin/agency-contracts', icon: Shield, requirePermission: 'accessAdminPanel' },
+      { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
+      { title: 'Settings', url: '/settings', icon: Settings, requirePermission: 'modifySettings' },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -96,18 +131,46 @@ export function AppSidebar() {
   const { user, role, signOut, isRealAdmin, roleOverride, setRoleOverride } = useAuth();
   const { can } = usePermissions();
   const navigate = useNavigate();
+  const location = useLocation();
   const isCollapsed = state === 'collapsed';
-  
+
+  // Collapsed groups state - persisted in localStorage
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('sidebar-collapsed-groups');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   // Auto-fade state - persisted in localStorage
   const [autoFade, setAutoFade] = useState(() => {
     const saved = localStorage.getItem('sidebar-auto-fade');
     return saved === 'true';
   });
 
+  // Persist collapsed groups
+  useEffect(() => {
+    localStorage.setItem('sidebar-collapsed-groups', JSON.stringify(collapsedGroups));
+  }, [collapsedGroups]);
+
   // Save auto-fade preference
   useEffect(() => {
     localStorage.setItem('sidebar-auto-fade', String(autoFade));
   }, [autoFade]);
+
+  const toggleGroup = (label: string) => {
+    setCollapsedGroups(prev => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  // Check if any item in a group is currently active
+  const isGroupActive = (group: NavGroup) => {
+    return group.items.some(item => {
+      if (item.url === '/') return location.pathname === '/';
+      return location.pathname.startsWith(item.url);
+    });
+  };
 
   // Handle mouse enter/leave for auto-fade
   const handleMouseEnter = () => {
@@ -128,9 +191,17 @@ export function AppSidebar() {
     .join('')
     .toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
 
+  // Filter groups: only show groups that have at least one visible item
+  const visibleGroups = navGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.requirePermission || can(item.requirePermission)),
+    }))
+    .filter(group => group.items.length > 0);
+
   return (
-    <Sidebar 
-      collapsible="icon" 
+    <Sidebar
+      collapsible="icon"
       className="border-r border-sidebar-border"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -158,29 +229,99 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        <SidebarGroup>
+        {/* Dashboard - standalone at top */}
+        <SidebarGroup className="pb-0">
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems
-                .filter((item) => !item.requirePermission || can(item.requirePermission))
-                .map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.url === '/'}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Dashboard">
+                  <NavLink
+                    to="/"
+                    end
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                  >
+                    <LayoutDashboard className="h-5 w-5 shrink-0" />
+                    {!isCollapsed && <span>Dashboard</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Grouped navigation */}
+        {visibleGroups.map((group) => {
+          const isGroupCollapsed = collapsedGroups[group.label] ?? false;
+          const groupActive = isGroupActive(group);
+
+          return (
+            <SidebarGroup key={group.label} className="pb-0">
+              <SidebarGroupContent>
+                {/* When sidebar is collapsed (icon mode), show items as flat icons */}
+                {isCollapsed ? (
+                  <SidebarMenu>
+                    {group.items.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild tooltip={item.title}>
+                          <NavLink
+                            to={item.url}
+                            end={item.url === '/'}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                          >
+                            <item.icon className="h-5 w-5 shrink-0" />
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                ) : (
+                  <>
+                    {/* Group header - clickable to expand/collapse */}
+                    <button
+                      onClick={() => toggleGroup(group.label)}
+                      className="flex items-center gap-2 w-full px-3 py-2 mt-2 rounded-md text-xs font-medium tracking-wide text-sidebar-muted hover:text-sidebar-foreground transition-colors group"
+                    >
+                      <group.icon className={`h-4 w-4 shrink-0 ${group.accentColor}`} />
+                      <span className="uppercase">{group.label}</span>
+                      <ChevronDown
+                        className={`h-3 w-3 ml-auto shrink-0 transition-transform duration-200 opacity-0 group-hover:opacity-100 ${
+                          isGroupCollapsed ? '-rotate-90' : ''
+                        } ${groupActive ? 'opacity-100' : ''}`}
+                      />
+                    </button>
+
+                    {/* Group items with smooth collapse */}
+                    <div
+                      className={`overflow-hidden transition-all duration-200 ease-in-out ${
+                        isGroupCollapsed ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'
+                      }`}
+                    >
+                      <SidebarMenu>
+                        {group.items.map((item) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild tooltip={item.title}>
+                              <NavLink
+                                to={item.url}
+                                end={item.url === '/'}
+                                className="flex items-center gap-3 rounded-lg px-3 py-2 pl-9 text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
+                                activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                              >
+                                <item.icon className="h-4 w-4 shrink-0" />
+                                <span>{item.title}</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </div>
+                  </>
+                )}
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
 
       <SidebarFooter className="p-2 space-y-2">
@@ -204,8 +345,8 @@ export function AppSidebar() {
                 onCheckedChange={setAutoFade}
                 className="data-[state=checked]:bg-sidebar-primary"
               />
-              <Label 
-                htmlFor="auto-fade" 
+              <Label
+                htmlFor="auto-fade"
                 className="text-xs text-sidebar-muted cursor-pointer"
               >
                 Auto-fade
