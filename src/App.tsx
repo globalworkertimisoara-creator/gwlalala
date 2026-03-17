@@ -238,6 +238,27 @@ const App = () => (
                 </ErrorBoundary>
               </ProtectedRoute>
             } />
+            <Route path="/contracts/new" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <CreateContract />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/projects/new" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <CreateProject />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/candidates/new" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <CreateCandidate />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
