@@ -6,6 +6,7 @@ import {
   Kanban, 
   Settings, 
   Globe,
+  Shield,
   ChevronLeft,
   ChevronRight,
   Briefcase,

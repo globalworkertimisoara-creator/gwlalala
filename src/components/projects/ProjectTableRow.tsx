@@ -223,4 +223,4 @@ export const ProjectTableRow = forwardRef<HTMLTableRowElement, ProjectTableRowPr
       )}
     </>
   );
-}
+});
