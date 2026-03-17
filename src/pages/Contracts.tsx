@@ -13,7 +13,7 @@ import { ContractQuickActions } from '@/components/contracts/ContractQuickAction
 import { ContractFilters } from '@/components/contracts/ContractFilters';
 import { ContractTable } from '@/components/contracts/ContractTable';
 import { ContractAnalyticsPanel } from '@/components/contracts/ContractAnalyticsPanel';
-import { CreateContractDialog } from '@/components/contracts/CreateContractDialog';
+
 import { ContractTemplatesView } from '@/components/contracts/ContractTemplatesView';
 import { format } from 'date-fns';
 
