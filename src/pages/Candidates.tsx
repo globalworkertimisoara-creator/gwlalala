@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { CandidateTable } from '@/components/candidates/CandidateTable';
-import { AddCandidateDialog } from '@/components/candidates/AddCandidateDialog';
 import { LinkToProjectDialog } from '@/components/candidates/LinkToProjectDialog';
 import { useCandidates } from '@/hooks/useCandidates';
 import { usePermissions } from '@/hooks/usePermissions';
