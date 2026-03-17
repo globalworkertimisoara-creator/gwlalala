@@ -19,6 +19,7 @@ import {
 import { Plus } from 'lucide-react';
 import { PipelineBoard } from '@/components/pipeline/PipelineBoard';
 import { WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
+
 import type { PipelineCandidate } from '@/hooks/usePipelineCandidates';
 
 interface Candidate {
