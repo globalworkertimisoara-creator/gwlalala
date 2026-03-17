@@ -26,7 +26,7 @@ export default function Contracts() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [yearFilter, setYearFilter] = useState<string>('all');
-  const [dialogOpen, setDialogOpen] = useState(false);
+  
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);

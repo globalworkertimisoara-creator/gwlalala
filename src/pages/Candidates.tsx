@@ -28,7 +28,7 @@ const Candidates = () => {
   });
 
   const navigate = useNavigate();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
   const [linkCandidate, setLinkCandidate] = useState<Candidate | null>(null);
 
   const handleExportCSV = () => {
