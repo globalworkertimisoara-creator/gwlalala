@@ -13,7 +13,7 @@ import { ContractQuickActions } from '@/components/contracts/ContractQuickAction
 import { ContractFilters } from '@/components/contracts/ContractFilters';
 import { ContractTable } from '@/components/contracts/ContractTable';
 import { ContractAnalyticsPanel } from '@/components/contracts/ContractAnalyticsPanel';
-
+import { CreateContractDialog } from '@/components/contracts/CreateContractDialog';
 import { ContractTemplatesView } from '@/components/contracts/ContractTemplatesView';
 import { format } from 'date-fns';
 
@@ -26,7 +26,7 @@ export default function Contracts() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [yearFilter, setYearFilter] = useState<string>('all');
-  
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -175,7 +175,7 @@ export default function Contracts() {
           </TabsContent>
         </Tabs>
 
-        
+        <CreateContractDialog open={dialogOpen} onOpenChange={setDialogOpen} />
         <ContractDetailDialog contract={selectedContract} open={detailOpen} onOpenChange={handleDetailClose} />
       </div>
     </AppLayout>

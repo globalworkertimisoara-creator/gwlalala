@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ProjectTableRow } from '@/components/projects/ProjectTableRow';
-
+import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {

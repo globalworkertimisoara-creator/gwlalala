@@ -6,7 +6,6 @@ import {
   Kanban, 
   Settings, 
   Globe,
-  Shield,
   ChevronLeft,
   ChevronRight,
   Briefcase,
@@ -21,6 +20,7 @@ import {
   CheckSquare,
   FileText,
   FileDown,
+  Shield,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -82,11 +82,11 @@ const navItems: NavItem[] = [
   { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
   
   { title: 'Contracts', url: '/contracts', icon: FileText },
-  { title: 'Agency Contracts', url: '/admin/agency-contracts', icon: Shield, requirePermission: 'accessAdminPanel' },
   { title: 'Reports', url: '/reports', icon: FileDown },
   { title: 'Sales Analytics', url: '/sales-analytics', icon: BarChart3, requirePermission: 'viewSalesAnalytics' },
   { title: 'Billing', url: '/billing', icon: Receipt, requirePermission: 'viewBilling' },
   { title: 'Analytics', url: '/analytics', icon: BarChart3, requirePermission: 'viewAllCandidates' },
+  { title: 'Agency Contracts', url: '/admin/agency-contracts', icon: Shield, requirePermission: 'accessAdminPanel' },
   { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
   { title: 'Settings', url: '/settings', icon: Settings, requirePermission: 'modifySettings' },
 ];
