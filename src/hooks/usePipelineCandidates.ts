@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RecruitmentStage } from '@/types/database';
+import { WorkflowType } from '@/types/project';
 import { useToast } from '@/hooks/use-toast';
 
 export interface PipelineCandidate {
@@ -9,6 +10,7 @@ export interface PipelineCandidate {
   project_id: string;
   pipeline_stage: RecruitmentStage;
   current_phase: string;
+  workflow_type: WorkflowType;
   workflow_updated_at: string;
   // Joined candidate data
   full_name: string;
@@ -33,6 +35,7 @@ export function usePipelineCandidates(projectId: string | undefined) {
           project_id,
           pipeline_stage,
           current_phase,
+          workflow_type,
           updated_at,
           candidate:candidates!candidate_workflow_candidate_id_fkey(
             full_name,
@@ -54,6 +57,7 @@ export function usePipelineCandidates(projectId: string | undefined) {
         project_id: row.project_id,
         pipeline_stage: row.pipeline_stage as RecruitmentStage,
         current_phase: row.current_phase,
+        workflow_type: (row.workflow_type || 'full_immigration') as WorkflowType,
         workflow_updated_at: row.updated_at,
         full_name: row.candidate?.full_name || 'Unknown',
         email: row.candidate?.email || '',
@@ -77,11 +81,13 @@ export function useUpdatePipelineStage() {
       candidateId,
       fromStage,
       stage,
+      workflowType,
     }: {
       workflowId: string;
       candidateId: string;
       fromStage: RecruitmentStage;
       stage: RecruitmentStage;
+      workflowType?: WorkflowType;
     }) => {
       // 1. Update the pipeline stage and updated_at
       const { error } = await supabase
@@ -101,6 +107,9 @@ export function useUpdatePipelineStage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // 2b. Check for no-visa → visa_processing warning scenario
+      const isVisaWarning = workflowType === 'no_visa' && stage === 'visa_processing';
+
       // 3. Log in stage_history
       const { error: histErr } = await supabase
         .from('stage_history')
@@ -109,7 +118,9 @@ export function useUpdatePipelineStage() {
           from_stage: fromStage,
           to_stage: stage,
           changed_by: user.id,
-          note: `Pipeline stage moved from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`,
+          note: isVisaWarning
+            ? `WARNING: No-visa candidate moved to visa processing by ${user.email}. Pipeline stage moved from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`
+            : `Pipeline stage moved from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`,
         });
       if (histErr) console.error('stage_history insert error:', histErr);
 
@@ -120,21 +131,24 @@ export function useUpdatePipelineStage() {
           candidate_id: candidateId,
           actor_id: user.id,
           actor_type: 'staff',
-          event_type: 'stage_change',
+          event_type: isVisaWarning ? 'workflow_warning' : 'stage_change',
           is_shared_event: true,
-          summary: `Pipeline stage changed from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`,
-          details: { from_stage: fromStage, to_stage: stage, workflow_id: workflowId },
+          summary: isVisaWarning
+            ? `WARNING: No-visa candidate moved to visa processing stage by ${user.email}`
+            : `Pipeline stage changed from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`,
+          details: {
+            from_stage: fromStage,
+            to_stage: stage,
+            workflow_id: workflowId,
+            workflow_type: workflowType,
+            ...(isVisaWarning ? { warning: 'no_visa_to_visa_processing' } : {}),
+          },
         } as any);
       if (actErr) console.error('activity_log insert error:', actErr);
     },
     onMutate: async ({ workflowId, stage }) => {
-      // Cancel outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ['pipeline-candidates'] });
-
-      // Snapshot previous value
       const previousData = queryClient.getQueriesData({ queryKey: ['pipeline-candidates'] });
-
-      // Optimistically update all matching queries
       queryClient.setQueriesData(
         { queryKey: ['pipeline-candidates'] },
         (old: PipelineCandidate[] | undefined) => {
@@ -146,11 +160,9 @@ export function useUpdatePipelineStage() {
           );
         }
       );
-
       return { previousData };
     },
     onError: (error: Error, _variables, context) => {
-      // Rollback on error
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
@@ -163,18 +175,21 @@ export function useUpdatePipelineStage() {
       });
     },
     onSettled: () => {
-      // Always refetch after mutation to ensure server state
       queryClient.invalidateQueries({ queryKey: ['pipeline-candidates'] });
       queryClient.invalidateQueries({ queryKey: ['stage-history'] });
       queryClient.invalidateQueries({ queryKey: ['candidate-activity-log'] });
       queryClient.invalidateQueries({ queryKey: ['candidate'] });
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
     },
-    onSuccess: () => {
-      toast({
-        title: 'Pipeline stage updated',
-        description: 'The candidate has been moved to the new stage.',
-      });
+    onSuccess: (_data, variables) => {
+      // Don't show success toast if visa warning toast was already shown
+      const isVisaWarning = variables.workflowType === 'no_visa' && variables.stage === 'visa_processing';
+      if (!isVisaWarning) {
+        toast({
+          title: 'Pipeline stage updated',
+          description: 'The candidate has been moved to the new stage.',
+        });
+      }
     },
   });
 }
@@ -193,7 +208,7 @@ export function useAddCandidateToPipeline() {
       candidateId: string;
       projectId: string;
       stage?: RecruitmentStage;
-      workflowType?: 'full_immigration' | 'no_visa';
+      workflowType?: WorkflowType;
     }) => {
       // Check if candidate already in this project's pipeline
       const { data: existing } = await supabase

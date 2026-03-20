@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Plane, UserCheck } from 'lucide-react';
 import { PipelineBoard } from '@/components/pipeline/PipelineBoard';
 import { WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
 
@@ -48,9 +51,13 @@ export function ProjectPeopleTab({
   onAddCandidate,
   addPending,
 }: ProjectPeopleTabProps) {
+  const navigate = useNavigate();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState('');
   const [pipelineWorkflowType, setPipelineWorkflowType] = useState<WorkflowType | ''>('');
+  const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowType>(
+    (defaultWorkflowType as WorkflowType) || 'full_immigration'
+  );
 
   const existingCandidateIds = new Set(pipelineCandidates.map(pc => pc.candidate_id));
   const availableCandidates = useMemo(() => {
@@ -58,6 +65,16 @@ export function ProjectPeopleTab({
       .filter(c => !existingCandidateIds.has(c.id))
       .filter(c => !candidateSearch || c.full_name.toLowerCase().includes(candidateSearch.toLowerCase()) || c.email.toLowerCase().includes(candidateSearch.toLowerCase()));
   }, [allCandidates, existingCandidateIds, candidateSearch]);
+
+  // Workflow tab counts
+  const workflowCounts = useMemo(() => ({
+    full_immigration: pipelineCandidates.filter(c => c.workflow_type === 'full_immigration').length,
+    no_visa: pipelineCandidates.filter(c => c.workflow_type === 'no_visa').length,
+  }), [pipelineCandidates]);
+
+  const handleCandidateClick = useCallback((candidateId: string) => {
+    navigate(`/candidates/${candidateId}?from=pipeline&project=${projectId}`);
+  }, [navigate, projectId]);
 
   const handleAddCandidate = async (candidateId: string) => {
     const wfType = (pipelineWorkflowType || defaultWorkflowType || 'full_immigration') as 'full_immigration' | 'no_visa';
@@ -70,9 +87,29 @@ export function ProjectPeopleTab({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-muted-foreground">
-          {pipelineCandidates.length} candidates in this project's pipeline
-        </p>
+        <div className="flex items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            {pipelineCandidates.length} candidates in this project's pipeline
+          </p>
+          <Tabs value={activeWorkflowTab} onValueChange={(v) => setActiveWorkflowTab(v as WorkflowType)}>
+            <TabsList className="h-8">
+              <TabsTrigger value="full_immigration" className="gap-1.5 text-xs px-2.5">
+                <Plane className="h-3 w-3" />
+                Full Immigration
+                <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                  {workflowCounts.full_immigration}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="no_visa" className="gap-1.5 text-xs px-2.5">
+                <UserCheck className="h-3 w-3" />
+                No Visa
+                <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                  {workflowCounts.no_visa}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5">
@@ -140,7 +177,13 @@ export function ProjectPeopleTab({
           </DialogContent>
         </Dialog>
       </div>
-      <PipelineBoard candidates={pipelineCandidates} isLoading={pipelineLoading} />
+      <PipelineBoard
+        candidates={pipelineCandidates}
+        isLoading={pipelineLoading}
+        projectId={projectId}
+        workflowTab={activeWorkflowTab}
+        onCandidateClick={handleCandidateClick}
+      />
     </div>
   );
 }
