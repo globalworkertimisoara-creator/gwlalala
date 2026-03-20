@@ -42,6 +42,7 @@ import Contracts from "./pages/Contracts";
 import CreateContract from "./pages/CreateContract";
 import CreateProject from "./pages/CreateProject";
 import CreateCandidate from "./pages/CreateCandidate";
+import CreateJob from "./pages/CreateJob";
 import AdminAgencyContracts from "./pages/AdminAgencyContracts";
 import SalesAnalytics from "./pages/SalesAnalytics";
 import Reports from "./pages/Reports";
@@ -108,6 +109,11 @@ const App = () => (
             <Route path="/organization" element={
               <ProtectedRoute>
                 <OrganizationStructure />
+              </ProtectedRoute>
+            } />
+            <Route path="/jobs/new" element={
+              <ProtectedRoute>
+                <CreateJob />
               </ProtectedRoute>
             } />
             <Route path="/jobs/:id" element={
