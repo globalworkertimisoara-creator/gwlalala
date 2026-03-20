@@ -1,15 +1,17 @@
 import { PipelineCandidate } from '@/hooks/usePipelineCandidates';
 import { RecruitmentStage, STAGES, getStageLabel } from '@/types/database';
-import { useQueryClient } from '@tanstack/react-query';
+import { WorkflowType } from '@/types/project';
 import { DraggableCandidateCard } from './DraggableCandidateCard';
 import { DroppableStageColumn } from './DroppableStageColumn';
 import { cn } from '@/lib/utils';
-import { Loader2, Search, LayoutGrid, List } from 'lucide-react';
+import { Loader2, Search, LayoutGrid, List, ChevronDown, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import {
   DndContext,
   DragEndEvent,
@@ -24,9 +26,49 @@ import {
 import { CandidateCard } from './CandidateCard';
 import { useUpdatePipelineStage } from '@/hooks/usePipelineCandidates';
 
-const pipelineStages: RecruitmentStage[] = STAGES
-  .filter(s => s.value !== 'closed_not_placed')
-  .map(s => s.value);
+// Phase-based stage grouping
+interface Phase {
+  key: string;
+  label: string;
+  color: string;
+  stages: RecruitmentStage[];
+}
+
+const PHASES: Phase[] = [
+  {
+    key: 'sourcing',
+    label: 'Sourcing',
+    color: 'bg-slate-500',
+    stages: ['sourced', 'contacted', 'application_received'],
+  },
+  {
+    key: 'evaluation',
+    label: 'Evaluation',
+    color: 'bg-indigo-500',
+    stages: ['screening', 'shortlisted', 'submitted_to_client', 'client_feedback', 'interview_completed'],
+  },
+  {
+    key: 'closing',
+    label: 'Closing',
+    color: 'bg-amber-500',
+    stages: ['offer_extended', 'offer_accepted'],
+  },
+  {
+    key: 'post_hire',
+    label: 'Post-Hire',
+    color: 'bg-green-500',
+    stages: ['visa_processing', 'medical_checks', 'onboarding', 'placed'],
+  },
+  {
+    key: 'closed',
+    label: 'Closed',
+    color: 'bg-red-500',
+    stages: ['closed_not_placed'],
+  },
+];
+
+// No-visa pipeline skips visa_processing
+const NO_VISA_SKIP_STAGES: RecruitmentStage[] = ['visa_processing'];
 
 const stageHeaderColors: Record<RecruitmentStage, string> = {
   sourced: 'border-l-slate-400',
@@ -91,78 +133,81 @@ interface PipelineBoardProps {
   candidates: PipelineCandidate[];
   isLoading: boolean;
   projectId?: string;
+  workflowTab?: WorkflowType;
   onCandidateClick?: (candidateId: string) => void;
 }
 
-export function PipelineBoard({ candidates, isLoading, projectId, onCandidateClick }: PipelineBoardProps) {
+export function PipelineBoard({ candidates, isLoading, projectId, workflowTab = 'full_immigration', onCandidateClick }: PipelineBoardProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const updateStage = useUpdatePipelineStage();
   const [searchTerm, setSearchTerm] = useState('');
   const [nationalityFilter, setNationalityFilter] = useState<string>('');
   const [countryFilter, setCountryFilter] = useState<string>('');
   const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
   const [activeDragCandidate, setActiveDragCandidate] = useState<PipelineCandidate | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const savedScrollLeft = useRef<number>(0);
-  const scrollKey = projectId ? `pipeline-scroll-${projectId}` : null;
-
-  // Persist scroll position to sessionStorage on scroll
-  const handleScroll = useCallback(() => {
-    if (scrollContainerRef.current && scrollKey) {
-      sessionStorage.setItem(scrollKey, String(scrollContainerRef.current.scrollLeft));
-    }
-  }, [scrollKey]);
-
-  // Restore scroll position on mount
-  useEffect(() => {
-    if (scrollKey && scrollContainerRef.current) {
-      const saved = sessionStorage.getItem(scrollKey);
-      if (saved) {
-        const val = parseInt(saved, 10);
-        if (!isNaN(val) && val > 0) {
-          requestAnimationFrame(() => {
-            if (scrollContainerRef.current) {
-              scrollContainerRef.current.scrollLeft = val;
-            }
-          });
-        }
-      }
-    }
-  }, [scrollKey, isLoading]);
+  const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set(['sourcing', 'evaluation']));
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
+  // Filter candidates by workflow tab
+  const tabCandidates = useMemo(() => {
+    return candidates.filter(c => c.workflow_type === workflowTab);
+  }, [candidates, workflowTab]);
+
   const { nationalities, countries } = useMemo(() => {
     const nats = new Set<string>();
     const ctrs = new Set<string>();
-    candidates.forEach(c => {
+    tabCandidates.forEach(c => {
       if (c.nationality) nats.add(c.nationality);
       if (c.current_country) ctrs.add(c.current_country);
     });
     return { nationalities: Array.from(nats).sort(), countries: Array.from(ctrs).sort() };
-  }, [candidates]);
+  }, [tabCandidates]);
 
   const filtered = useMemo(() => {
-    return candidates.filter(c => {
+    return tabCandidates.filter(c => {
       if (searchTerm && !c.full_name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (nationalityFilter && nationalityFilter !== 'all' && c.nationality !== nationalityFilter) return false;
       if (countryFilter && countryFilter !== 'all' && c.current_country !== countryFilter) return false;
       return true;
     });
-  }, [candidates, searchTerm, nationalityFilter, countryFilter]);
+  }, [tabCandidates, searchTerm, nationalityFilter, countryFilter]);
 
   const isCompact = viewMode === 'compact';
+
+  // Get visible phases based on workflow tab
+  const visiblePhases = useMemo(() => {
+    if (workflowTab === 'no_visa') {
+      return PHASES.map(phase => ({
+        ...phase,
+        stages: phase.stages.filter(s => !NO_VISA_SKIP_STAGES.includes(s)),
+      })).filter(phase => phase.stages.length > 0);
+    }
+    // Full immigration: exclude closed_not_placed from main board
+    return PHASES.filter(p => p.key !== 'closed');
+  }, [workflowTab]);
+
+  const togglePhase = (phaseKey: string) => {
+    setExpandedPhases(prev => {
+      const next = new Set(prev);
+      if (next.has(phaseKey)) {
+        next.delete(phaseKey);
+      } else {
+        next.add(phaseKey);
+      }
+      return next;
+    });
+  };
 
   function handleDragStart(event: DragStartEvent) {
     const draggedId = event.active.id as string;
     const found = filtered.find(c => c.workflow_id === draggedId);
     setActiveDragCandidate(found || null);
   }
-
-  const queryClient = useQueryClient();
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -171,30 +216,23 @@ export function PipelineBoard({ candidates, isLoading, projectId, onCandidateCli
       return;
     }
 
-    // Save scroll position before mutation triggers re-render
-    if (scrollContainerRef.current) {
-      savedScrollLeft.current = scrollContainerRef.current.scrollLeft;
-    }
-
     const workflowId = active.id as string;
     const newStage = over.id as RecruitmentStage;
     const candidate = filtered.find(c => c.workflow_id === workflowId);
 
     if (candidate && candidate.pipeline_stage !== newStage) {
-      // Apply optimistic update SYNCHRONOUSLY before clearing drag overlay
-      queryClient.setQueriesData(
-        { queryKey: ['pipeline-candidates'] },
-        (old: PipelineCandidate[] | undefined) => {
-          if (!old) return old;
-          return old.map(c =>
-            c.workflow_id === workflowId
-              ? { ...c, pipeline_stage: newStage, workflow_updated_at: new Date().toISOString() }
-              : c
-          );
-        }
-      );
+      // Warning: no-visa candidate dragged to visa_processing
+      const isVisaWarning = candidate.workflow_type === 'no_visa' && newStage === 'visa_processing';
+      if (isVisaWarning) {
+        toast({
+          variant: 'destructive',
+          title: 'Visa Stage Warning',
+          description: `${candidate.full_name} is on a no-visa workflow but was moved to Visa Processing. This action has been logged.`,
+          duration: 6000,
+        });
+      }
 
-      // Now clear the drag overlay — the card is already in its new column
+      // Clear drag overlay before mutation — onMutate handles the optimistic update
       setActiveDragCandidate(null);
 
       updateStage.mutate({
@@ -202,22 +240,21 @@ export function PipelineBoard({ candidates, isLoading, projectId, onCandidateCli
         candidateId: candidate.candidate_id,
         fromStage: candidate.pipeline_stage,
         stage: newStage,
+        workflowType: candidate.workflow_type,
       });
     } else {
       setActiveDragCandidate(null);
     }
   }
 
-  // Restore scroll position after candidates data changes
-  const prevCandidatesRef = useRef(candidates);
-  if (prevCandidatesRef.current !== candidates) {
-    prevCandidatesRef.current = candidates;
-    requestAnimationFrame(() => {
-      if (scrollContainerRef.current && savedScrollLeft.current > 0) {
-        scrollContainerRef.current.scrollLeft = savedScrollLeft.current;
-      }
+  // Phase stats
+  const phaseStats = useMemo(() => {
+    const stats: Record<string, number> = {};
+    visiblePhases.forEach(phase => {
+      stats[phase.key] = filtered.filter(c => phase.stages.includes(c.pipeline_stage)).length;
     });
-  }
+    return stats;
+  }, [filtered, visiblePhases]);
 
   if (isLoading) {
     return (
@@ -280,76 +317,126 @@ export function PipelineBoard({ candidates, isLoading, projectId, onCandidateCli
         </div>
       </div>
 
-      {/* Pipeline Board with DnD */}
+      {/* Phase-based Pipeline Board with DnD */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div ref={scrollContainerRef} className="overflow-x-auto pb-4" onScroll={handleScroll}>
-          <div className={isCompact ? "flex gap-2 min-w-max" : "flex gap-4 min-w-max"}>
-            {pipelineStages.map((stage) => {
-              const stageCandidates = filtered.filter(c => c.pipeline_stage === stage);
-              const label = isCompact ? compactStageLabels[stage] : getStageLabel(stage).split(' / ')[0];
+        <div className="space-y-3">
+          {visiblePhases.map((phase) => {
+            const isExpanded = expandedPhases.has(phase.key);
+            const phaseCount = phaseStats[phase.key] || 0;
 
-              return (
-                <div
-                  key={stage}
-                  className={cn(
-                    "flex-shrink-0",
-                    isCompact
-                      ? "pipeline-column-compact min-w-[160px] max-w-[200px]"
-                      : "pipeline-column min-w-[280px] max-w-[320px]"
-                  )}
+            return (
+              <div key={phase.key} className="rounded-lg border border-border/60 bg-card overflow-hidden">
+                {/* Phase Header — always visible, clickable to collapse/expand */}
+                <button
+                  onClick={() => togglePhase(phase.key)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors"
                 >
-                  <div className={cn(
-                    "flex items-center gap-2 mb-3 pl-2 border-l-4",
-                    stageHeaderColors[stage]
-                  )}>
-                    <h3 className={cn(
-                      "font-semibold text-foreground truncate",
-                      isCompact ? "text-xs" : "text-sm"
-                    )}>
-                      {label}
-                    </h3>
-                    <span className={cn(
-                      "flex items-center justify-center rounded-full bg-muted font-medium text-muted-foreground",
-                      isCompact ? "h-5 w-5 text-[10px]" : "h-6 w-6 text-xs"
-                    )}>
-                      {stageCandidates.length}
-                    </span>
-                  </div>
-                  <DroppableStageColumn stage={stage}>
-                    <div className={isCompact ? "space-y-1.5" : "space-y-3"}>
-                      {stageCandidates.map((pc) => (
-                        <DraggableCandidateCard
-                          key={pc.workflow_id}
-                          id={pc.workflow_id}
-                          candidate={buildCandidateForCard(pc)}
-                          onClick={() => onCandidateClick ? onCandidateClick(pc.candidate_id) : navigate(`/candidates/${pc.candidate_id}`)}
-                          compact={isCompact}
-                        />
-                      ))}
-                      {stageCandidates.length === 0 && (
-                        <div className={cn(
-                          "rounded-lg border-2 border-dashed border-border/60 text-center",
-                          isCompact ? "p-3" : "p-6"
-                        )}>
-                          <p className={cn(
-                            "text-muted-foreground",
-                            isCompact ? "text-[10px]" : "text-sm"
-                          )}>
-                            No candidates
-                          </p>
-                        </div>
-                      )}
+                  <div className={cn('w-2 h-2 rounded-full', phase.color)} />
+                  <span className="font-semibold text-sm text-foreground">{phase.label}</span>
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {phaseCount}
+                  </Badge>
+                  {/* Compact stage counts when collapsed */}
+                  {!isExpanded && phaseCount > 0 && (
+                    <div className="flex items-center gap-1.5 ml-2">
+                      {phase.stages.map(stage => {
+                        const count = filtered.filter(c => c.pipeline_stage === stage).length;
+                        if (count === 0) return null;
+                        return (
+                          <span key={stage} className="text-[10px] text-muted-foreground">
+                            {compactStageLabels[stage]}: {count}
+                          </span>
+                        );
+                      })}
                     </div>
-                  </DroppableStageColumn>
-                </div>
-              );
-            })}
-          </div>
+                  )}
+                  <span className="ml-auto">
+                    {isExpanded
+                      ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      : <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    }
+                  </span>
+                </button>
+
+                {/* Phase Content — stage columns inside */}
+                {isExpanded && (
+                  <div className="overflow-x-auto px-3 pb-3">
+                    <div className={cn(
+                      "flex gap-2 min-w-max",
+                      isCompact ? "gap-2" : "gap-4"
+                    )}>
+                      {phase.stages.map((stage) => {
+                        const stageCandidates = filtered.filter(c => c.pipeline_stage === stage);
+                        const label = isCompact ? compactStageLabels[stage] : getStageLabel(stage).split(' / ')[0];
+
+                        return (
+                          <div
+                            key={stage}
+                            className={cn(
+                              "flex-shrink-0 flex-1",
+                              isCompact
+                                ? "min-w-[160px] max-w-[220px]"
+                                : "min-w-[260px] max-w-[320px]"
+                            )}
+                          >
+                            <div className={cn(
+                              "flex items-center gap-2 mb-2 pl-2 border-l-4",
+                              stageHeaderColors[stage]
+                            )}>
+                              <h3 className={cn(
+                                "font-semibold text-foreground truncate",
+                                isCompact ? "text-xs" : "text-sm"
+                              )}>
+                                {label}
+                              </h3>
+                              <span className={cn(
+                                "flex items-center justify-center rounded-full bg-muted font-medium text-muted-foreground",
+                                isCompact ? "h-5 w-5 text-[10px]" : "h-6 w-6 text-xs"
+                              )}>
+                                {stageCandidates.length}
+                              </span>
+                            </div>
+                            <DroppableStageColumn stage={stage}>
+                              <div className={isCompact ? "space-y-1.5" : "space-y-3"}>
+                                {stageCandidates.map((pc) => (
+                                  <DraggableCandidateCard
+                                    key={pc.workflow_id}
+                                    id={pc.workflow_id}
+                                    candidate={buildCandidateForCard(pc)}
+                                    workflowType={pc.workflow_type}
+                                    onClick={() => onCandidateClick ? onCandidateClick(pc.candidate_id) : navigate(`/candidates/${pc.candidate_id}`)}
+                                    compact={isCompact}
+                                  />
+                                ))}
+                                {stageCandidates.length === 0 && (
+                                  <div className={cn(
+                                    "rounded-lg border-2 border-dashed border-border/60 text-center",
+                                    isCompact ? "p-3" : "p-6"
+                                  )}>
+                                    <p className={cn(
+                                      "text-muted-foreground",
+                                      isCompact ? "text-[10px]" : "text-sm"
+                                    )}>
+                                      No candidates
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </DroppableStageColumn>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Drag Overlay */}
@@ -358,6 +445,7 @@ export function PipelineBoard({ candidates, isLoading, projectId, onCandidateCli
             <div className="opacity-90 shadow-lg rounded-lg">
               <CandidateCard
                 candidate={buildCandidateForCard(activeDragCandidate)}
+                workflowType={activeDragCandidate.workflow_type}
                 compact={isCompact}
               />
             </div>
