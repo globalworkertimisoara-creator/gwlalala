@@ -1,32 +1,26 @@
-/**
- * src/components/analytics/AgencyAnalytics.tsx
- * 
- * Agency performance metrics and leaderboard with drill-down
- */
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAgencyPerformance, useTopAgencies } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Users, Clock, TrendingUp, ArrowUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { AnalyticsDetailItem } from '@/pages/Analytics';
 
-export default function AgencyAnalytics() {
+interface AgencyAnalyticsProps {
+  onOpenDetail?: (item: AnalyticsDetailItem) => void;
+}
+
+export default function AgencyAnalytics({ onOpenDetail }: AgencyAnalyticsProps) {
   const { data: topAgencies, isLoading: loadingTop } = useTopAgencies();
   const { data: allAgencies, isLoading: loadingAll } = useAgencyPerformance();
   const [sortColumn, setSortColumn] = useState<string>('success_rate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [selectedAgency, setSelectedAgency] = useState<any>(null);
 
   if (loadingTop || loadingAll) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardContent className="p-6">
-            <Skeleton className="h-64 w-full" />
-          </CardContent>
-        </Card>
+        <Card><CardContent className="p-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
       </div>
     );
   }
@@ -40,136 +34,152 @@ export default function AgencyAnalytics() {
     }
   };
 
-  const sortedAgencies = [...(allAgencies || [])].sort((a, b) => {
-    const aValue = a[sortColumn as keyof typeof a];
-    const bValue = b[sortColumn as keyof typeof b];
+  const sortedAgencies = [...(allAgencies || [])].sort((a: any, b: any) => {
+    const aValue = a[sortColumn];
+    const bValue = b[sortColumn];
     if (typeof aValue === 'number' && typeof bValue === 'number') {
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     }
     return 0;
   });
 
+  const handleAgencyClick = (agency: any) => {
+    onOpenDetail?.({
+      type: 'agency',
+      title: agency.agency_name,
+      backLabel: 'Agency Analytics',
+      data: agency,
+    });
+  };
+
   return (
     <div className="space-y-6">
-      {/* Top Agencies Leaderboard */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Top Agencies Leaderboard
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+            <Trophy className="h-3.5 w-3.5 text-amber-500" /> Top Agencies Leaderboard
           </CardTitle>
-          <CardDescription>Click an agency for detailed metrics</CardDescription>
+          <p className="text-xs text-muted-foreground">Click an agency to view details in the panel</p>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {topAgencies?.map((agency: any, index: number) => {
-              const medals = ['🥇', '🥈', '🥉'];
-              const medal = medals[index];
-              return (
-                <div
-                  key={agency.id}
-                  className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
-                    index < 3
-                      ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20'
-                      : 'border-border bg-muted/30'
-                  }`}
-                  onClick={() => setSelectedAgency(agency)}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{medal || `#${index + 1}`}</span>
-                    <div>
-                      <p className="font-semibold text-foreground">{agency.agency_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {agency.successful_placements} successful placements
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-green-600" />
-                      <span className="text-2xl font-bold text-green-600">
-                        {agency.success_rate?.toFixed(1)}%
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">success rate</p>
+          <div className="space-y-2">
+            {topAgencies?.map((agency: any, index: number) => (
+              <div
+                key={agency.id}
+                className={cn(
+                  'flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all hover:shadow-sm',
+                  index < 3
+                    ? 'border-amber-200 bg-amber-50/50 dark:bg-amber-950/10'
+                    : 'border-border bg-muted/30'
+                )}
+                onClick={() => handleAgencyClick(agency)}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className={cn(
+                    'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                    index === 0 ? 'bg-amber-100 text-amber-800' :
+                    index === 1 ? 'bg-slate-200 text-slate-700' :
+                    index === 2 ? 'bg-orange-100 text-orange-800' :
+                    'bg-muted text-muted-foreground'
+                  )}>
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium">{agency.agency_name}</p>
+                    <p className="text-xs text-muted-foreground">{agency.successful_placements} placements</p>
                   </div>
                 </div>
-              );
-            })}
+                <div className="text-right flex items-center gap-1.5">
+                  <TrendingUp className="h-3 w-3 text-green-600" />
+                  <span className="text-lg font-bold text-green-600">{agency.success_rate?.toFixed(1)}%</span>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Agency Performance Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Agency Performance Comparison</CardTitle>
-          <CardDescription>Click a row for agency details</CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">Agency Performance Comparison</CardTitle>
+          <p className="text-xs text-muted-foreground">Click a row for details</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Agency Name</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50" onClick={() => handleSort('total_candidates_submitted')}>
-                    <div className="flex items-center gap-1">Submitted <ArrowUpDown className="h-3 w-3" /></div>
+                  <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground">Agency</th>
+                  <th
+                    className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('total_candidates_submitted')}
+                  >
+                    <div className="flex items-center gap-1">Submitted <ArrowUpDown className="h-2.5 w-2.5" /></div>
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50" onClick={() => handleSort('successful_placements')}>
-                    <div className="flex items-center gap-1">Placed <ArrowUpDown className="h-3 w-3" /></div>
+                  <th
+                    className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('successful_placements')}
+                  >
+                    <div className="flex items-center gap-1">Placed <ArrowUpDown className="h-2.5 w-2.5" /></div>
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50" onClick={() => handleSort('success_rate')}>
-                    <div className="flex items-center gap-1">Success Rate <ArrowUpDown className="h-3 w-3" /></div>
+                  <th
+                    className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('success_rate')}
+                  >
+                    <div className="flex items-center gap-1">Rate <ArrowUpDown className="h-2.5 w-2.5" /></div>
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50" onClick={() => handleSort('avg_days_to_placement')}>
-                    <div className="flex items-center gap-1">Avg Days <ArrowUpDown className="h-3 w-3" /></div>
+                  <th
+                    className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('avg_days_to_placement')}
+                  >
+                    <div className="flex items-center gap-1">Avg Days <ArrowUpDown className="h-2.5 w-2.5" /></div>
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Projects</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Status</th>
+                  <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground">Projects</th>
+                  <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {sortedAgencies?.map((agency: any) => (
+                {sortedAgencies.map((agency: any) => (
                   <tr
                     key={agency.id}
                     className="border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => setSelectedAgency(agency)}
+                    onClick={() => handleAgencyClick(agency)}
                   >
-                    <td className="py-3 px-4">
-                      <p className="font-medium text-foreground">{agency.agency_name}</p>
+                    <td className="py-2.5 px-3">
+                      <p className="text-sm font-medium">{agency.agency_name}</p>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Users className="h-3 w-3" />
                         {agency.total_candidates_submitted}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-3">
                       <span className="text-sm font-semibold text-green-600">{agency.successful_placements}</span>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                            <div className="h-full bg-green-500" style={{ width: `${Math.min(agency.success_rate || 0, 100)}%` }} />
-                          </div>
-                          <span className="text-sm font-semibold text-foreground">{agency.success_rate?.toFixed(1)}%</span>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-14 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-green-500" style={{ width: `${Math.min(agency.success_rate || 0, 100)}%` }} />
                         </div>
+                        <span className="text-xs font-semibold">{agency.success_rate?.toFixed(1)}%</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-3">
                       {agency.avg_days_to_placement && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           {agency.avg_days_to_placement}d
                         </div>
                       )}
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm text-muted-foreground">{agency.projects_involved}</span>
+                    <td className="py-2.5 px-3">
+                      <span className="text-xs text-muted-foreground">{agency.projects_involved}</span>
                     </td>
-                    <td className="py-3 px-4">
-                      <Badge variant={agency.agency_status === 'active' ? 'default' : 'secondary'}>{agency.agency_status}</Badge>
+                    <td className="py-2.5 px-3">
+                      <Badge variant={agency.agency_status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                        {agency.agency_status}
+                      </Badge>
                     </td>
                   </tr>
                 ))}
@@ -178,49 +188,6 @@ export default function AgencyAnalytics() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Agency Detail Dialog */}
-      <Dialog open={selectedAgency !== null} onOpenChange={() => setSelectedAgency(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{selectedAgency?.agency_name}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <p className="text-3xl font-bold text-foreground">{selectedAgency?.total_candidates_submitted}</p>
-                <p className="text-xs text-muted-foreground mt-1">Candidates Submitted</p>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <p className="text-3xl font-bold text-green-600">{selectedAgency?.successful_placements}</p>
-                <p className="text-xs text-muted-foreground mt-1">Successful Placements</p>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <p className="text-3xl font-bold text-foreground">{selectedAgency?.success_rate?.toFixed(1)}%</p>
-                <p className="text-xs text-muted-foreground mt-1">Success Rate</p>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <p className="text-3xl font-bold text-foreground">{selectedAgency?.avg_days_to_placement || '-'}</p>
-                <p className="text-xs text-muted-foreground mt-1">Avg Days to Place</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <span className="text-sm text-muted-foreground">Projects Involved</span>
-              <span className="text-sm font-medium text-foreground">{selectedAgency?.projects_involved}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <span className="text-sm text-muted-foreground">Status</span>
-              <Badge variant={selectedAgency?.agency_status === 'active' ? 'default' : 'secondary'}>
-                {selectedAgency?.agency_status}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <span className="text-sm text-muted-foreground">Country</span>
-              <span className="text-sm font-medium text-foreground">{selectedAgency?.country}</span>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
