@@ -1,11 +1,12 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts';
+import { GitBranch } from 'lucide-react';
 import { Candidate, RecruitmentStage, STAGES, getStageLabel } from '@/types/database';
 
 interface StageChartProps {
   candidates: Candidate[];
 }
 
-// Blue-based color palette for 15 stages
 const stageColors: Record<RecruitmentStage, string> = {
   sourced: 'hsl(215, 20%, 75%)',
   contacted: 'hsl(210, 50%, 70%)',
@@ -30,56 +31,58 @@ export function StageChart({ candidates }: StageChartProps) {
     return acc;
   }, {} as Record<RecruitmentStage, number>);
 
-  // Create data for all stages in order
   const data = STAGES
     .filter(stage => stageCounts[stage.value] && stageCounts[stage.value] > 0)
     .map(stage => ({
-      name: stage.label.split(' / ')[0], // Use short label
+      name: stage.label.split(' / ')[0],
       fullName: stage.label,
       value: stageCounts[stage.value] || 0,
       color: stageColors[stage.value],
     }));
 
-  if (data.length === 0) {
-    return (
-      <div className="stat-card animate-fade-in">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Pipeline Overview</h3>
-        <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-          No candidates to display
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="stat-card animate-fade-in">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Pipeline Overview</h3>
-      <div className="h-[280px]">
-        <ResponsiveContainer width="100%" height="100%">
-           <BarChart data={data} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
-            <XAxis type="number" allowDecimals={false} />
-            <YAxis 
-              type="category" 
-              dataKey="name" 
-              width={160}
-              tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }}
-            />
-            <Tooltip 
-              formatter={(value, name, props) => [value, props.payload.fullName]}
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--card))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-              }}
-            />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+    <Card className="h-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+          <GitBranch className="h-3.5 w-3.5 text-primary" />
+          Stage Distribution
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {data.length === 0 ? (
+          <div className="h-[220px] flex items-center justify-center text-muted-foreground">
+            <p className="text-sm">No candidates to display</p>
+          </div>
+        ) : (
+          <div className="h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} layout="vertical" margin={{ left: 5, right: 15, top: 5, bottom: 5 }}>
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={110}
+                  tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+                />
+                <Tooltip
+                  formatter={(value, name, props) => [value, props.payload.fullName]}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                  }}
+                />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
