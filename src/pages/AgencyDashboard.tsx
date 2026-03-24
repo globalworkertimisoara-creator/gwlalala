@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  useAgencyProfile, 
-  useCreateAgencyProfile, 
+import {
+  useAgencyProfile,
+  useCreateAgencyProfile,
   useUpdateAgencyProfile,
-  useAgencyWorkers 
+  useAgencyWorkers
 } from '@/hooks/useAgency';
 import { AgencyProfileForm } from '@/components/agency/AgencyProfileForm';
 import { SubmitWorkerDialog } from '@/components/agency/SubmitWorkerDialog';
@@ -21,30 +21,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { 
-  Building2, 
-  Users, 
-  Briefcase, 
-  Settings,
-  Loader2,
-  UserPlus,
-  FileText,
-  LogOut,
-  Receipt,
-  ArrowLeft,
-  Eye,
-  FolderOpen,
-  BarChart3,
+import {
+  Building2, Users, Briefcase, Settings, Loader2, UserPlus, FileText,
+  LogOut, Receipt, ArrowLeft, Eye, FolderOpen, BarChart3,
 } from 'lucide-react';
 import { getStageLabel, getStageColor } from '@/types/database';
 import { CreateAgencyProfileInput } from '@/types/agency';
@@ -58,6 +42,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { PERMISSIONS_BY_ROLE, type AgencyRole } from '@/config/permissions';
+import { DashboardDetailPanel, type DashboardDetailItem } from '@/components/dashboard/DashboardDetailPanel';
 
 const AGENCY_ROLES: { value: AgencyRole; label: string }[] = [
   { value: 'agency_owner', label: 'Agency Owner' },
@@ -72,8 +57,8 @@ export default function AgencyDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [adminPreviewAgencyId, setAdminPreviewAgencyId] = useState<string | null>(null);
   const [agencyRolePreview, setAgencyRolePreview] = useState<AgencyRole>('agency_owner');
+  const [detailItem, setDetailItem] = useState<DashboardDetailItem | null>(null);
 
-  // Use isRealAdmin so this works even when viewing as internal role
   const effectiveIsAdmin = isRealAdmin;
 
   // For admin preview: fetch all agencies
@@ -86,7 +71,7 @@ export default function AgencyDashboard() {
     enabled: effectiveIsAdmin,
   });
 
-  // For admin preview: fetch selected agency's workers
+  // For admin preview: fetch selected agency's profile
   const { data: previewAgencyProfile } = useQuery({
     queryKey: ['preview-agency-profile', adminPreviewAgencyId],
     queryFn: async () => {
@@ -102,7 +87,6 @@ export default function AgencyDashboard() {
 
   const { data: profile, isLoading: profileLoading } = useAgencyProfile();
 
-  // Use preview profile for admins, real profile for agencies
   const activeProfile = effectiveIsAdmin ? previewAgencyProfile : profile;
   const activeAgencyId = effectiveIsAdmin ? adminPreviewAgencyId : profile?.id;
 
@@ -110,7 +94,6 @@ export default function AgencyDashboard() {
   const createProfile = useCreateAgencyProfile();
   const updateProfile = useUpdateAgencyProfile();
 
-  // Team management hooks
   const { data: teamMembers = [] } = useAgencyTeamMembers(activeAgencyId || undefined);
   const { data: invitations = [] } = useAgencyTeamInvitations(activeAgencyId || undefined);
   const sendInvitation = useSendAgencyInvitation();
@@ -139,20 +122,19 @@ export default function AgencyDashboard() {
     await cancelInvitation.mutateAsync(invitationId);
   };
 
-  // For admin preview: use agencyRolePreview permissions; for real users: check team role
   const previewPerms = effectiveIsAdmin ? PERMISSIONS_BY_ROLE[agencyRolePreview] : null;
   const isOwner = effectiveIsAdmin
     ? agencyRolePreview === 'agency_owner'
     : teamMembers.some((m) => m.id === user?.id && m.agencyTeamRole === 'agency_owner') || teamMembers.length === 0;
-  
+
   const canSubmitWorkers = effectiveIsAdmin
     ? previewPerms?.createCandidates ?? false
     : isOwner || teamMembers.some((m) => m.id === user?.id && (m.agencyTeamRole === 'agency_owner' || m.agencyTeamRole === 'agency_recruiter'));
-  
+
   const canViewProjects = effectiveIsAdmin
     ? previewPerms?.viewAllProjects ?? false
     : true;
-    
+
   const canUploadDocs = effectiveIsAdmin
     ? previewPerms?.uploadDocuments ?? false
     : true;
@@ -215,7 +197,6 @@ export default function AgencyDashboard() {
     );
   }
 
-  // Show profile setup if no profile exists (only for actual agency users)
   if (!activeProfile) {
     if (effectiveIsAdmin) {
       return (
@@ -234,7 +215,7 @@ export default function AgencyDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4 lg:p-8">
         <div className="max-w-4xl mx-auto">
-          <AgencyProfileForm 
+          <AgencyProfileForm
             onSubmit={handleCreateProfile}
             isLoading={createProfile.isPending}
           />
@@ -243,308 +224,321 @@ export default function AgencyDashboard() {
     );
   }
 
-  // Stats
   const totalWorkers = workers?.length || 0;
   const placedWorkers = workers?.filter(w => w.current_stage === 'placed').length || 0;
-  const inProgressWorkers = workers?.filter(w => 
+  const inProgressWorkers = workers?.filter(w =>
     !['placed', 'closed_not_placed'].includes(w.current_stage)
   ).length || 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Admin Preview Banner */}
-      {effectiveIsAdmin && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-amber-800">
-              <Eye className="h-4 w-4" />
-              <span className="text-sm font-medium">
-                Admin Preview — <strong>{activeProfile.company_name}</strong>
-              </span>
+    <div className="h-[calc(100vh-64px)] flex overflow-hidden bg-background">
+      {/* Main content */}
+      <div className={`flex-1 overflow-y-auto transition-all duration-200 ${detailItem ? 'w-[65%]' : 'w-full'}`}>
+        {/* Admin Preview Banner */}
+        {effectiveIsAdmin && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-amber-800">
+                <Eye className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">
+                  Admin Preview — <strong>{activeProfile.company_name}</strong>
+                </span>
+              </div>
+              <Select value={agencyRolePreview} onValueChange={(v) => setAgencyRolePreview(v as AgencyRole)}>
+                <SelectTrigger className="w-[160px] h-6 text-[11px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGENCY_ROLES.map(r => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={agencyRolePreview} onValueChange={(v) => setAgencyRolePreview(v as AgencyRole)}>
-              <SelectTrigger className="w-[180px] h-7 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {AGENCY_ROLES.map(r => (
-                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-900" onClick={() => setAdminPreviewAgencyId(null)}>
-              Switch Agency
-            </Button>
-            <Button variant="outline" size="sm" className="text-amber-700 border-amber-300" onClick={() => navigate('/')}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Admin
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Building2 className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="font-semibold">{activeProfile.company_name}</h1>
-              <p className="text-sm text-muted-foreground">{activeProfile.country}</p>
-            </div>
-          </div>
-          {!effectiveIsAdmin && (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+              <Button variant="ghost" size="sm" className="h-6 text-xs text-amber-700 hover:text-amber-900" onClick={() => setAdminPreviewAgencyId(null)}>
+                Switch Agency
+              </Button>
+              <Button variant="outline" size="sm" className="h-6 text-xs text-amber-700 border-amber-300" onClick={() => navigate('/')}>
+                <ArrowLeft className="h-3 w-3 mr-1" />
+                Back to Admin
               </Button>
             </div>
-          )}
-        </div>
-      </header>
+          </div>
+        )}
 
-      <main className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            {canViewProjects && (
-              <TabsTrigger value="projects">
-                <FolderOpen className="h-4 w-4 mr-2" />
-                Projects
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="jobs">
-              <Briefcase className="h-4 w-4 mr-2" />
-              Available Jobs
-            </TabsTrigger>
-            {isOwner && (
-              <TabsTrigger value="billing">
-                <Receipt className="h-4 w-4 mr-2" />
-                Billing
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="settings">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </TabsTrigger>
-            <TabsTrigger value="analytics">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              My Analytics
-            </TabsTrigger>
-            {isOwner && (
-              <TabsTrigger value="team">
-                <Users className="h-4 w-4 mr-2" />
-                Team
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-8">
-            {/* Stats */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalWorkers}</div>
-                  <p className="text-xs text-muted-foreground">Workers submitted</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{inProgressWorkers}</div>
-                  <p className="text-xs text-muted-foreground">Being processed</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Placed</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{placedWorkers}</div>
-                  <p className="text-xs text-muted-foreground">Successfully placed</p>
-                </CardContent>
-              </Card>
+        {/* Header with stat chips + Submit Worker */}
+        <header className="border-b bg-card">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Building2 className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold">{activeProfile.company_name}</h1>
+                <p className="text-xs text-muted-foreground">{activeProfile.country}</p>
+              </div>
             </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex items-center gap-4">
+              {/* Stat chips */}
+              <div className="hidden md:flex items-center gap-3">
+                <button
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors"
+                  onClick={() => setDetailItem({
+                    type: 'list',
+                    title: `Submissions (${totalWorkers})`,
+                    backLabel: 'Agency Dashboard',
+                    listItems: (workers || []).map(w => ({
+                      id: w.id,
+                      title: w.full_name,
+                      subtitle: w.email,
+                      badge: getStageLabel(w.current_stage),
+                      badgeColor: getStageColor(w.current_stage),
+                      route: `/agency/workers/${w.id}`,
+                    })),
+                  })}
+                >
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-lg font-bold">{totalWorkers}</span>
+                  <span className="text-xs text-muted-foreground">Submissions</span>
+                </button>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50">
+                  <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-lg font-bold">{inProgressWorkers}</span>
+                  <span className="text-xs text-muted-foreground">In Progress</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-lg font-bold">{placedWorkers}</span>
+                  <span className="text-xs text-muted-foreground">Placed</span>
+                </div>
+              </div>
+              {/* Quick action */}
               {canSubmitWorkers && (
-                <SubmitWorkerDialog 
-                  agencyId={activeProfile.id} 
+                <SubmitWorkerDialog
+                  agencyId={activeProfile.id}
                   onSuccess={handleWorkerSubmitted}
                   trigger={
-                    <Button>
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Submit New Worker
+                    <Button size="sm">
+                      <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                      Submit Worker
                     </Button>
                   }
                 />
               )}
-              <Button variant="outline" onClick={() => setActiveTab('jobs')}>
-                <Briefcase className="mr-2 h-4 w-4" />
-                View Available Jobs
-              </Button>
+              {!effectiveIsAdmin && (
+                <Button variant="ghost" size="sm" onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              )}
             </div>
+          </div>
+        </header>
 
-            {/* Workers Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Submitted Workers</CardTitle>
-                <CardDescription>
-                  View and manage your worker submissions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {workersLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : workers?.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No workers submitted yet</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Start by submitting a worker for an open position
-                    </p>
-                    <SubmitWorkerDialog 
-                      agencyId={activeProfile.id} 
-                      onSuccess={handleWorkerSubmitted}
-                    />
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Worker</TableHead>
-                        <TableHead>Job</TableHead>
-                        <TableHead>Nationality</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Submitted</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {workers?.map((worker) => (
-                        <TableRow key={worker.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{worker.full_name}</p>
-                              <p className="text-sm text-muted-foreground">{worker.email}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {worker.job ? (
-                              <div>
-                                <p className="font-medium">{worker.job.title}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {worker.job.client_company}
-                                </p>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{worker.nationality}</TableCell>
-                          <TableCell>
-                            <Badge className={getStageColor(worker.current_stage)}>
-                              {getStageLabel(worker.current_stage)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {format(new Date(worker.submitted_at), 'MMM d, yyyy')}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/agency/workers/${worker.id}`)}
-                            >
-                              <FileText className="h-4 w-4 mr-1" />
-                              Documents
-                            </Button>
-                          </TableCell>
+        <main className="container mx-auto px-4 py-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-6">
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              {canViewProjects && (
+                <TabsTrigger value="projects">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Projects
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="jobs">
+                <Briefcase className="h-4 w-4 mr-2" />
+                Available Jobs
+              </TabsTrigger>
+              {isOwner && (
+                <TabsTrigger value="billing">
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Billing
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </TabsTrigger>
+              <TabsTrigger value="analytics">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                My Analytics
+              </TabsTrigger>
+              {isOwner && (
+                <TabsTrigger value="team">
+                  <Users className="h-4 w-4 mr-2" />
+                  Team
+                </TabsTrigger>
+              )}
+            </TabsList>
+
+            {/* Dashboard Tab */}
+            <TabsContent value="dashboard" className="space-y-6">
+              {/* Workers Table */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    Submitted Workers
+                    <Badge variant="outline" className="text-[10px] ml-1">{totalWorkers}</Badge>
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Click any worker to view details
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {workersLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : workers?.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No workers submitted yet</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Start by submitting a worker for an open position
+                      </p>
+                      <SubmitWorkerDialog
+                        agencyId={activeProfile.id}
+                        onSuccess={handleWorkerSubmitted}
+                      />
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Worker</TableHead>
+                          <TableHead>Job</TableHead>
+                          <TableHead>Nationality</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Submitted</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Projects Tab */}
-          <TabsContent value="projects">
-            <AgencyProjectsView agencyId={activeProfile.id} />
-          </TabsContent>
-
-          {/* Jobs Tab */}
-          <TabsContent value="jobs">
-            <AgencyJobsList agencyId={activeProfile.id} />
-          </TabsContent>
-
-          {/* Billing Tab */}
-          {isOwner && (
-            <TabsContent value="billing">
-              <AgencyBillingView agencyId={activeProfile.id} />
+                      </TableHeader>
+                      <TableBody>
+                        {workers?.map((worker) => (
+                          <TableRow
+                            key={worker.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => setDetailItem({
+                              type: 'worker',
+                              id: worker.id,
+                              title: worker.full_name,
+                              subtitle: worker.email,
+                              backLabel: 'Submitted Workers',
+                              data: {
+                                full_name: worker.full_name,
+                                email: worker.email,
+                                nationality: worker.nationality,
+                                current_stage: worker.current_stage,
+                                job_title: worker.job?.title,
+                                job_company: worker.job?.client_company,
+                                submitted_at: worker.submitted_at,
+                              },
+                            })}
+                          >
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{worker.full_name}</p>
+                                <p className="text-sm text-muted-foreground">{worker.email}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {worker.job ? (
+                                <div>
+                                  <p className="font-medium">{worker.job.title}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {worker.job.client_company}
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{worker.nationality}</TableCell>
+                            <TableCell>
+                              <Badge className={getStageColor(worker.current_stage)}>
+                                {getStageLabel(worker.current_stage)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {format(new Date(worker.submitted_at), 'MMM d, yyyy')}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
-          )}
 
-          {/* Settings Tab */}
-          <TabsContent value="settings">
-            <div className="max-w-4xl">
-              <AgencyProfileForm 
-                existingProfile={activeProfile}
-                onSubmit={handleUpdateProfile}
-                isLoading={updateProfile.isPending}
-              />
-            </div>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-8">
-            <AgencyOverviewCards agencyId={activeAgencyId || undefined} />
-            <Tabs defaultValue="pipeline" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="pipeline">My Pipeline</TabsTrigger>
-                <TabsTrigger value="my-projects">My Projects</TabsTrigger>
-              </TabsList>
-              <TabsContent value="pipeline">
-                <AgencyPipelineView agencyId={activeAgencyId || undefined} />
-              </TabsContent>
-              <TabsContent value="my-projects">
-                <AgencyAnalyticsProjectsView agencyId={activeAgencyId || undefined} />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          {/* Team Tab */}
-          {isOwner && (
-            <TabsContent value="team">
-              <TeamManagement
-                teamMembers={teamMembers}
-                invitations={invitations}
-                onInvite={handleInvite}
-                onCancelInvitation={handleCancelInvitation}
-                isOwner={isOwner}
-              />
+            {/* Projects Tab */}
+            <TabsContent value="projects">
+              <AgencyProjectsView agencyId={activeProfile.id} />
             </TabsContent>
-          )}
-        </Tabs>
-      </main>
+
+            {/* Jobs Tab */}
+            <TabsContent value="jobs">
+              <AgencyJobsList agencyId={activeProfile.id} />
+            </TabsContent>
+
+            {/* Billing Tab */}
+            {isOwner && (
+              <TabsContent value="billing">
+                <AgencyBillingView agencyId={activeProfile.id} />
+              </TabsContent>
+            )}
+
+            {/* Settings Tab */}
+            <TabsContent value="settings">
+              <div className="max-w-4xl">
+                <AgencyProfileForm
+                  existingProfile={activeProfile}
+                  onSubmit={handleUpdateProfile}
+                  isLoading={updateProfile.isPending}
+                />
+              </div>
+            </TabsContent>
+
+            {/* Analytics Tab */}
+            <TabsContent value="analytics" className="space-y-8">
+              <AgencyOverviewCards agencyId={activeAgencyId || undefined} />
+              <Tabs defaultValue="pipeline" className="space-y-6">
+                <TabsList>
+                  <TabsTrigger value="pipeline">My Pipeline</TabsTrigger>
+                  <TabsTrigger value="my-projects">My Projects</TabsTrigger>
+                </TabsList>
+                <TabsContent value="pipeline">
+                  <AgencyPipelineView agencyId={activeAgencyId || undefined} />
+                </TabsContent>
+                <TabsContent value="my-projects">
+                  <AgencyAnalyticsProjectsView agencyId={activeAgencyId || undefined} />
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+
+            {/* Team Tab */}
+            {isOwner && (
+              <TabsContent value="team">
+                <TeamManagement
+                  teamMembers={teamMembers}
+                  invitations={invitations}
+                  onInvite={handleInvite}
+                  onCancelInvitation={handleCancelInvitation}
+                  isOwner={isOwner}
+                />
+              </TabsContent>
+            )}
+          </Tabs>
+        </main>
+      </div>
+
+      {/* Detail Panel */}
+      {detailItem && (
+        <div className="w-[35%] shrink-0">
+          <DashboardDetailPanel item={detailItem} onClose={() => setDetailItem(null)} />
+        </div>
+      )}
     </div>
   );
 }
