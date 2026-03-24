@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Building2, Users, Briefcase, FolderOpen, Loader2, LogOut, ArrowLeft, Eye, CalendarDays, FileText,
+  Building2, Users, FolderOpen, Loader2, LogOut, ArrowLeft, Eye, CalendarDays,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { PERMISSIONS_BY_ROLE, type EmployerRole } from '@/config/permissions';
@@ -28,6 +28,17 @@ const EMPLOYER_ROLES: { value: EmployerRole; label: string }[] = [
   { value: 'employer_viewer', label: 'Employer Viewer' },
 ];
 
+function safeFormatDate(dateStr: string | null | undefined, fmt: string): string {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '—';
+    return format(d, fmt);
+  } catch {
+    return '—';
+  }
+}
+
 export default function EmployerDashboard() {
   const { user, signOut, isRealAdmin } = useAuth();
   const navigate = useNavigate();
@@ -37,6 +48,11 @@ export default function EmployerDashboard() {
   const [detailItem, setDetailItem] = useState<DashboardDetailItem | null>(null);
 
   const effectiveIsAdmin = isRealAdmin;
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setDetailItem(null);
+  };
 
   // Fetch all companies for admin preview
   const { data: allCompanies = [] } = useQuery({
@@ -73,30 +89,31 @@ export default function EmployerDashboard() {
         .order('created_at', { ascending: false });
       return data || [];
     },
-    enabled: !!adminPreviewCompanyId,
+    enabled: effectiveIsAdmin && !!adminPreviewCompanyId,
   });
+
+  // Stable project IDs for dependent query keys
+  const projectIds = useMemo(() => projects.map(p => p.id), [projects]);
 
   // Fetch candidates via workflow for these projects
   const { data: candidates = [], isLoading: candidatesLoading } = useQuery({
-    queryKey: ['employer-candidates', adminPreviewCompanyId, projects],
+    queryKey: ['employer-candidates', adminPreviewCompanyId, projectIds],
     queryFn: async () => {
-      if (!projects.length) return [];
-      const projectIds = projects.map(p => p.id);
+      if (!projectIds.length) return [];
       const { data } = await supabase
         .from('candidate_workflow')
         .select('*, candidates(*)')
         .in('project_id', projectIds);
       return data || [];
     },
-    enabled: !!adminPreviewCompanyId && projects.length > 0,
+    enabled: effectiveIsAdmin && !!adminPreviewCompanyId && projectIds.length > 0,
   });
 
   // Fetch interviews for these projects
   const { data: interviews = [] } = useQuery({
-    queryKey: ['employer-interviews', adminPreviewCompanyId, projects],
+    queryKey: ['employer-interviews', adminPreviewCompanyId, projectIds],
     queryFn: async () => {
-      if (!projects.length) return [];
-      const projectIds = projects.map(p => p.id);
+      if (!projectIds.length) return [];
       const { data } = await supabase
         .from('candidate_interviews')
         .select('*, candidates(full_name, email)')
@@ -104,12 +121,15 @@ export default function EmployerDashboard() {
         .order('scheduled_date', { ascending: true });
       return data || [];
     },
-    enabled: !!adminPreviewCompanyId && projects.length > 0,
+    enabled: effectiveIsAdmin && !!adminPreviewCompanyId && projectIds.length > 0,
   });
 
   const previewPerms = effectiveIsAdmin ? PERMISSIONS_BY_ROLE[employerRolePreview] : null;
+  const canViewInterviews = previewPerms?.viewInterviews ?? false;
 
-  const upcomingInterviews = interviews.filter(i => new Date(i.scheduled_date) > new Date());
+  const upcomingInterviews = interviews.filter(i => {
+    try { return new Date(i.scheduled_date) > new Date(); } catch { return false; }
+  });
 
   // Admin: company picker
   if (effectiveIsAdmin && !adminPreviewCompanyId) {
@@ -197,7 +217,7 @@ export default function EmployerDashboard() {
               </Select>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-6 text-xs text-amber-700 hover:text-amber-900" onClick={() => setAdminPreviewCompanyId(null)}>
+              <Button variant="ghost" size="sm" className="h-6 text-xs text-amber-700 hover:text-amber-900" onClick={() => { setAdminPreviewCompanyId(null); setDetailItem(null); }}>
                 Switch Company
               </Button>
               <Button variant="outline" size="sm" className="h-6 text-xs text-amber-700 border-amber-300" onClick={() => navigate('/')}>
@@ -261,24 +281,26 @@ export default function EmployerDashboard() {
                   <span className="text-lg font-bold">{candidates.length}</span>
                   <span className="text-xs text-muted-foreground">Candidates</span>
                 </button>
-                <button
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors"
-                  onClick={() => setDetailItem({
-                    type: 'list',
-                    title: `Upcoming Interviews (${upcomingInterviews.length})`,
-                    backLabel: 'Employer Dashboard',
-                    listItems: upcomingInterviews.map((i: any) => ({
-                      id: i.id,
-                      title: i.candidates?.full_name || 'Unknown',
-                      subtitle: `${i.interview_type} — ${format(new Date(i.scheduled_date), 'MMM d, HH:mm')}`,
-                      badge: i.status,
-                    })),
-                  })}
-                >
-                  <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-lg font-bold">{upcomingInterviews.length}</span>
-                  <span className="text-xs text-muted-foreground">Interviews</span>
-                </button>
+                {canViewInterviews && (
+                  <button
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 hover:bg-muted transition-colors"
+                    onClick={() => setDetailItem({
+                      type: 'list',
+                      title: `Upcoming Interviews (${upcomingInterviews.length})`,
+                      backLabel: 'Employer Dashboard',
+                      listItems: upcomingInterviews.map((i: any) => ({
+                        id: i.id,
+                        title: i.candidates?.full_name || 'Unknown',
+                        subtitle: `${i.interview_type} — ${safeFormatDate(i.scheduled_date, 'MMM d, HH:mm')}`,
+                        badge: i.status,
+                      })),
+                    })}
+                  >
+                    <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-lg font-bold">{upcomingInterviews.length}</span>
+                    <span className="text-xs text-muted-foreground">Interviews</span>
+                  </button>
+                )}
               </div>
               {!effectiveIsAdmin && (
                 <Button variant="ghost" size="sm" onClick={signOut}>
@@ -291,7 +313,7 @@ export default function EmployerDashboard() {
         </header>
 
         <main className="container mx-auto px-4 py-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-6">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="projects">
@@ -302,7 +324,7 @@ export default function EmployerDashboard() {
                 <Users className="h-4 w-4 mr-2" />
                 Candidates
               </TabsTrigger>
-              {(previewPerms?.viewInterviews ?? true) && (
+              {canViewInterviews && (
                 <TabsTrigger value="interviews">
                   <CalendarDays className="h-4 w-4 mr-2" />
                   Interviews
@@ -338,6 +360,7 @@ export default function EmployerDashboard() {
                               title: project.name,
                               subtitle: project.location,
                               backLabel: 'Recent Projects',
+                              route: `/employer/projects/${project.id}`,
                               data: project,
                             })}
                           >
@@ -357,47 +380,49 @@ export default function EmployerDashboard() {
                 </Card>
 
                 {/* Upcoming Interviews */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                      Upcoming Interviews
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="max-h-[240px]">
-                      <div className="space-y-1.5">
-                        {upcomingInterviews.slice(0, 6).map((interview: any) => (
-                          <div
-                            key={interview.id}
-                            className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                            onClick={() => setDetailItem({
-                              type: 'list',
-                              title: interview.candidates?.full_name || 'Interview',
-                              subtitle: `${interview.interview_type} — ${format(new Date(interview.scheduled_date), 'MMM d, yyyy HH:mm')}`,
-                              backLabel: 'Upcoming Interviews',
-                              listItems: [{
-                                title: `Type: ${interview.interview_type}`,
-                                subtitle: `Scheduled: ${format(new Date(interview.scheduled_date), 'MMM d, yyyy HH:mm')}`,
-                              }, {
-                                title: `Status: ${interview.status}`,
-                              }],
-                            })}
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium truncate">{interview.candidates?.full_name}</p>
-                              <p className="text-xs text-muted-foreground">{interview.interview_type} — {format(new Date(interview.scheduled_date), 'MMM d, HH:mm')}</p>
+                {canViewInterviews && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                        Upcoming Interviews
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="max-h-[240px]">
+                        <div className="space-y-1.5">
+                          {upcomingInterviews.slice(0, 6).map((interview: any) => (
+                            <div
+                              key={interview.id}
+                              className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                              onClick={() => setDetailItem({
+                                type: 'list',
+                                title: interview.candidates?.full_name || 'Interview',
+                                subtitle: `${interview.interview_type} — ${safeFormatDate(interview.scheduled_date, 'MMM d, yyyy HH:mm')}`,
+                                backLabel: 'Upcoming Interviews',
+                                listItems: [{
+                                  title: `Type: ${interview.interview_type}`,
+                                  subtitle: `Scheduled: ${safeFormatDate(interview.scheduled_date, 'MMM d, yyyy HH:mm')}`,
+                                }, {
+                                  title: `Status: ${interview.status}`,
+                                }],
+                              })}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{interview.candidates?.full_name}</p>
+                                <p className="text-xs text-muted-foreground">{interview.interview_type} — {safeFormatDate(interview.scheduled_date, 'MMM d, HH:mm')}</p>
+                              </div>
+                              <Badge variant="secondary" className="text-[10px] ml-2">{interview.status}</Badge>
                             </div>
-                            <Badge variant="secondary" className="text-[10px] ml-2">{interview.status}</Badge>
-                          </div>
-                        ))}
-                        {upcomingInterviews.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center py-6">No upcoming interviews</p>
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
+                          ))}
+                          {upcomingInterviews.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-6">No upcoming interviews</p>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </TabsContent>
 
@@ -439,6 +464,7 @@ export default function EmployerDashboard() {
                               title: project.name,
                               subtitle: project.location,
                               backLabel: 'Projects',
+                              route: `/employer/projects/${project.id}`,
                               data: project,
                             })}
                           >
@@ -448,7 +474,7 @@ export default function EmployerDashboard() {
                               <Badge variant="secondary">{project.status}</Badge>
                             </TableCell>
                             <TableCell className="text-muted-foreground">
-                              {format(new Date(project.created_at), 'MMM d, yyyy')}
+                              {safeFormatDate(project.created_at, 'MMM d, yyyy')}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -497,6 +523,7 @@ export default function EmployerDashboard() {
                               title: cw.candidates?.full_name || 'Unknown',
                               subtitle: cw.candidates?.email,
                               backLabel: 'Candidates',
+                              route: `/employer/candidates/${cw.candidate_id}`,
                               data: { ...cw.candidates, current_stage: cw.current_phase },
                             })}
                           >
@@ -516,51 +543,53 @@ export default function EmployerDashboard() {
             </TabsContent>
 
             {/* Interviews */}
-            <TabsContent value="interviews" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Interviews</CardTitle>
-                  <CardDescription>Scheduled and completed interviews</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {interviews.length === 0 ? (
-                    <div className="text-center py-12">
-                      <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">No interviews scheduled</p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Candidate</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {interviews.map((interview: any) => (
-                          <TableRow key={interview.id} className="cursor-pointer hover:bg-muted/50">
-                            <TableCell className="font-medium">
-                              {interview.candidates?.full_name}
-                            </TableCell>
-                            <TableCell>{interview.interview_type}</TableCell>
-                            <TableCell>
-                              {format(new Date(interview.scheduled_date), 'MMM d, yyyy HH:mm')}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={interview.status === 'completed' ? 'default' : 'secondary'}>
-                                {interview.status}
-                              </Badge>
-                            </TableCell>
+            {canViewInterviews && (
+              <TabsContent value="interviews" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Interviews</CardTitle>
+                    <CardDescription>Scheduled and completed interviews</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {interviews.length === 0 ? (
+                      <div className="text-center py-12">
+                        <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">No interviews scheduled</p>
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Candidate</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                        </TableHeader>
+                        <TableBody>
+                          {interviews.map((interview: any) => (
+                            <TableRow key={interview.id}>
+                              <TableCell className="font-medium">
+                                {interview.candidates?.full_name || '—'}
+                              </TableCell>
+                              <TableCell>{interview.interview_type}</TableCell>
+                              <TableCell>
+                                {safeFormatDate(interview.scheduled_date, 'MMM d, yyyy HH:mm')}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={interview.status === 'completed' ? 'default' : 'secondary'}>
+                                  {interview.status}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
 
             {/* Company Info */}
             <TabsContent value="company" className="space-y-4">
@@ -572,7 +601,7 @@ export default function EmployerDashboard() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Company Name</label>
-                      <p className="font-medium">{activeCompany?.company_name}</p>
+                      <p className="font-medium">{activeCompany?.company_name || '—'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Legal Name</label>
@@ -584,11 +613,11 @@ export default function EmployerDashboard() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Headquarters</label>
-                      <p>{activeCompany?.headquarters_city ? `${activeCompany.headquarters_city}, ` : ''}{activeCompany?.headquarters_country}</p>
+                      <p>{activeCompany?.headquarters_city ? `${activeCompany.headquarters_city}, ` : ''}{activeCompany?.headquarters_country || '—'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Primary Contact</label>
-                      <p>{activeCompany?.primary_contact_name} ({activeCompany?.primary_contact_email})</p>
+                      <p>{activeCompany?.primary_contact_name || '—'}{activeCompany?.primary_contact_email ? ` (${activeCompany.primary_contact_email})` : ''}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Company Size</label>

@@ -27,7 +27,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Building2, Users, Briefcase, Settings, Loader2, UserPlus, FileText,
+  Building2, Users, Briefcase, Settings, Loader2, UserPlus,
   LogOut, Receipt, ArrowLeft, Eye, FolderOpen, BarChart3,
 } from 'lucide-react';
 import { getStageLabel, getStageColor } from '@/types/database';
@@ -51,6 +51,17 @@ const AGENCY_ROLES: { value: AgencyRole; label: string }[] = [
   { value: 'agency_viewer', label: 'Agency Viewer' },
 ];
 
+function safeFormatDate(dateStr: string | null | undefined, fmt: string): string {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '—';
+    return format(d, fmt);
+  } catch {
+    return '—';
+  }
+}
+
 export default function AgencyDashboard() {
   const { user, signOut, isAdmin, isRealAdmin } = useAuth();
   const navigate = useNavigate();
@@ -60,6 +71,11 @@ export default function AgencyDashboard() {
   const [detailItem, setDetailItem] = useState<DashboardDetailItem | null>(null);
 
   const effectiveIsAdmin = isRealAdmin;
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setDetailItem(null);
+  };
 
   // For admin preview: fetch all agencies
   const { data: allAgencies = [] } = useQuery({
@@ -94,7 +110,7 @@ export default function AgencyDashboard() {
   const createProfile = useCreateAgencyProfile();
   const updateProfile = useUpdateAgencyProfile();
 
-  const { data: teamMembers = [] } = useAgencyTeamMembers(activeAgencyId || undefined);
+  const { data: teamMembers = [], isLoading: teamLoading } = useAgencyTeamMembers(activeAgencyId || undefined);
   const { data: invitations = [] } = useAgencyTeamInvitations(activeAgencyId || undefined);
   const sendInvitation = useSendAgencyInvitation();
   const cancelInvitation = useCancelAgencyInvitation();
@@ -123,9 +139,13 @@ export default function AgencyDashboard() {
   };
 
   const previewPerms = effectiveIsAdmin ? PERMISSIONS_BY_ROLE[agencyRolePreview] : null;
+
+  // Fix: Don't default to owner when teamMembers is still loading
   const isOwner = effectiveIsAdmin
     ? agencyRolePreview === 'agency_owner'
-    : teamMembers.some((m) => m.id === user?.id && m.agencyTeamRole === 'agency_owner') || teamMembers.length === 0;
+    : teamLoading
+      ? false
+      : teamMembers.some((m) => m.id === user?.id && m.agencyTeamRole === 'agency_owner') || teamMembers.length === 0;
 
   const canSubmitWorkers = effectiveIsAdmin
     ? previewPerms?.createCandidates ?? false
@@ -135,9 +155,13 @@ export default function AgencyDashboard() {
     ? previewPerms?.viewAllProjects ?? false
     : true;
 
-  const canUploadDocs = effectiveIsAdmin
-    ? previewPerms?.uploadDocuments ?? false
-    : true;
+  const canEditSettings = effectiveIsAdmin
+    ? previewPerms?.editAgencyDetails ?? false
+    : isOwner;
+
+  const canViewAnalytics = effectiveIsAdmin
+    ? (previewPerms?.viewSalesAnalytics ?? false) || agencyRolePreview === 'agency_owner'
+    : isOwner || teamMembers.some((m) => m.id === user?.id && (m.agencyTeamRole === 'agency_owner' || m.agencyTeamRole === 'agency_recruiter'));
 
   // Admin preview: show agency picker if no agency selected
   if (effectiveIsAdmin && !adminPreviewAgencyId) {
@@ -256,7 +280,7 @@ export default function AgencyDashboard() {
               </Select>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-6 text-xs text-amber-700 hover:text-amber-900" onClick={() => setAdminPreviewAgencyId(null)}>
+              <Button variant="ghost" size="sm" className="h-6 text-xs text-amber-700 hover:text-amber-900" onClick={() => { setAdminPreviewAgencyId(null); setDetailItem(null); }}>
                 Switch Agency
               </Button>
               <Button variant="outline" size="sm" className="h-6 text-xs text-amber-700 border-amber-300" onClick={() => navigate('/')}>
@@ -337,7 +361,7 @@ export default function AgencyDashboard() {
         </header>
 
         <main className="container mx-auto px-4 py-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-6">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               {canViewProjects && (
@@ -356,14 +380,18 @@ export default function AgencyDashboard() {
                   Billing
                 </TabsTrigger>
               )}
-              <TabsTrigger value="settings">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </TabsTrigger>
-              <TabsTrigger value="analytics">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                My Analytics
-              </TabsTrigger>
+              {canEditSettings && (
+                <TabsTrigger value="settings">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </TabsTrigger>
+              )}
+              {canViewAnalytics && (
+                <TabsTrigger value="analytics">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  My Analytics
+                </TabsTrigger>
+              )}
               {isOwner && (
                 <TabsTrigger value="team">
                   <Users className="h-4 w-4 mr-2" />
@@ -398,10 +426,12 @@ export default function AgencyDashboard() {
                       <p className="text-sm text-muted-foreground mb-4">
                         Start by submitting a worker for an open position
                       </p>
-                      <SubmitWorkerDialog
-                        agencyId={activeProfile.id}
-                        onSuccess={handleWorkerSubmitted}
-                      />
+                      {canSubmitWorkers && (
+                        <SubmitWorkerDialog
+                          agencyId={activeProfile.id}
+                          onSuccess={handleWorkerSubmitted}
+                        />
+                      )}
                     </div>
                   ) : (
                     <Table>
@@ -461,7 +491,7 @@ export default function AgencyDashboard() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-muted-foreground">
-                              {format(new Date(worker.submitted_at), 'MMM d, yyyy')}
+                              {safeFormatDate(worker.submitted_at, 'MMM d, yyyy')}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -473,9 +503,11 @@ export default function AgencyDashboard() {
             </TabsContent>
 
             {/* Projects Tab */}
-            <TabsContent value="projects">
-              <AgencyProjectsView agencyId={activeProfile.id} />
-            </TabsContent>
+            {canViewProjects && (
+              <TabsContent value="projects">
+                <AgencyProjectsView agencyId={activeProfile.id} />
+              </TabsContent>
+            )}
 
             {/* Jobs Tab */}
             <TabsContent value="jobs">
@@ -490,32 +522,36 @@ export default function AgencyDashboard() {
             )}
 
             {/* Settings Tab */}
-            <TabsContent value="settings">
-              <div className="max-w-4xl">
-                <AgencyProfileForm
-                  existingProfile={activeProfile}
-                  onSubmit={handleUpdateProfile}
-                  isLoading={updateProfile.isPending}
-                />
-              </div>
-            </TabsContent>
+            {canEditSettings && (
+              <TabsContent value="settings">
+                <div className="max-w-4xl">
+                  <AgencyProfileForm
+                    existingProfile={activeProfile}
+                    onSubmit={handleUpdateProfile}
+                    isLoading={updateProfile.isPending}
+                  />
+                </div>
+              </TabsContent>
+            )}
 
             {/* Analytics Tab */}
-            <TabsContent value="analytics" className="space-y-8">
-              <AgencyOverviewCards agencyId={activeAgencyId || undefined} />
-              <Tabs defaultValue="pipeline" className="space-y-6">
-                <TabsList>
-                  <TabsTrigger value="pipeline">My Pipeline</TabsTrigger>
-                  <TabsTrigger value="my-projects">My Projects</TabsTrigger>
-                </TabsList>
-                <TabsContent value="pipeline">
-                  <AgencyPipelineView agencyId={activeAgencyId || undefined} />
-                </TabsContent>
-                <TabsContent value="my-projects">
-                  <AgencyAnalyticsProjectsView agencyId={activeAgencyId || undefined} />
-                </TabsContent>
-              </Tabs>
-            </TabsContent>
+            {canViewAnalytics && (
+              <TabsContent value="analytics" className="space-y-8">
+                <AgencyOverviewCards agencyId={activeAgencyId || undefined} />
+                <Tabs defaultValue="pipeline" className="space-y-6">
+                  <TabsList>
+                    <TabsTrigger value="pipeline">My Pipeline</TabsTrigger>
+                    <TabsTrigger value="my-projects">My Projects</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="pipeline">
+                    <AgencyPipelineView agencyId={activeAgencyId || undefined} />
+                  </TabsContent>
+                  <TabsContent value="my-projects">
+                    <AgencyAnalyticsProjectsView agencyId={activeAgencyId || undefined} />
+                  </TabsContent>
+                </Tabs>
+              </TabsContent>
+            )}
 
             {/* Team Tab */}
             {isOwner && (

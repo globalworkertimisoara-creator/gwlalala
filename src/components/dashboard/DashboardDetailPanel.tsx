@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, ArrowRight, Users, Briefcase, FolderOpen, FileText, MapPin, Clock, Building2 } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,7 @@ export type DashboardDetailItem = {
   subtitle?: string;
   data?: any;
   backLabel?: string;
+  route?: string;
   listItems?: Array<{
     id?: string;
     title: string;
@@ -68,7 +69,7 @@ export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProp
               <Button
                 className="w-full gap-1.5 mt-4"
                 size="sm"
-                onClick={() => goTo(`/candidates/${item.id}`)}
+                onClick={() => goTo(item.route || `/candidates/${item.id}`)}
               >
                 Go to Candidate <ArrowRight className="h-3.5 w-3.5" />
               </Button>
@@ -101,7 +102,7 @@ export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProp
               <Button
                 className="w-full gap-1.5 mt-4"
                 size="sm"
-                onClick={() => goTo(`/projects/${item.id}`)}
+                onClick={() => goTo(item.route || `/projects/${item.id}`)}
               >
                 Go to Project <ArrowRight className="h-3.5 w-3.5" />
               </Button>
@@ -123,7 +124,7 @@ export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProp
                 <Button
                   className="w-full gap-1.5 mt-4"
                   size="sm"
-                  onClick={() => goTo(`/jobs/${item.id}`)}
+                  onClick={() => goTo(item.route || `/jobs/${item.id}`)}
                 >
                   Go to Job <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
@@ -143,10 +144,35 @@ export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProp
               <Button
                 className="w-full gap-1.5 mt-4"
                 size="sm"
-                onClick={() => goTo(`/contracts?highlight=${item.id}`)}
+                onClick={() => goTo(item.route || `/contracts?highlight=${item.id}`)}
               >
                 Go to Contract <ArrowRight className="h-3.5 w-3.5" />
               </Button>
+            </>
+          )}
+
+          {/* Worker detail */}
+          {item.type === 'worker' && item.data && (
+            <>
+              <div className="space-y-3">
+                <DetailRow label="Name" value={item.data.full_name} />
+                <DetailRow label="Email" value={item.data.email} />
+                <DetailRow label="Nationality" value={item.data.nationality} />
+                <DetailRow label="Stage" value={item.data.current_stage?.replace(/_/g, ' ')} />
+                {item.data.job_title && <DetailRow label="Job" value={item.data.job_title} />}
+                {item.data.job_company && <DetailRow label="Company" value={item.data.job_company} />}
+                {item.data.submitted_at && <DetailRow label="Submitted" value={new Date(item.data.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} />}
+                {item.data.phone && <DetailRow label="Phone" value={item.data.phone} />}
+              </div>
+              {item.id && (
+                <Button
+                  className="w-full gap-1.5 mt-4"
+                  size="sm"
+                  onClick={() => goTo(item.route || `/agency/workers/${item.id}`)}
+                >
+                  View Worker <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </>
           )}
 
