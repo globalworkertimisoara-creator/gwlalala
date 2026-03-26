@@ -644,7 +644,7 @@ export default function EmployerDashboard() {
       {/* Detail Panel */}
       {detailItem && (
         <div className="w-[35%] shrink-0">
-          <DashboardDetailPanel item={detailItem} onClose={() => setDetailItem(null)} />
+          <DashboardDetailPanel item={detailItem} onClose={() => setDetailItem(null)} routePrefix="/employer" />
         </div>
       )}
     </div>

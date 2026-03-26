@@ -35,17 +35,29 @@ export function useLogEmployerAction() {
   });
 }
 
-export function useEmployerAuditLog(candidateId: string | undefined) {
+/**
+ * Fetch audit log for a candidate, scoped to the user's company.
+ * @param candidateId - candidate ID
+ * @param companyId - optional company_id for scoping (only shows entries from this company)
+ */
+export function useEmployerAuditLog(candidateId: string | undefined, companyId?: string | null) {
   return useQuery({
-    queryKey: ['employer-audit-log', candidateId],
+    queryKey: ['employer-audit-log', candidateId, companyId],
     queryFn: async () => {
       if (!candidateId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from('employer_candidate_audit_log')
         .select('*')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false })
         .limit(50);
+
+      // Scope to company if provided — prevents cross-company audit log leakage
+      if (companyId) {
+        query = query.eq('company_id', companyId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as AuditLogEntry[];
     },

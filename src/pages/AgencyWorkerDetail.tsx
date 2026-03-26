@@ -14,21 +14,22 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { 
-  ArrowLeft, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Briefcase, 
-  Loader2, 
-  ClipboardCheck, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Briefcase,
+  Loader2,
+  ClipboardCheck,
+  CheckCircle,
   FileWarning,
   Sparkles,
   Save,
-  X
+  X,
+  ShieldAlert
 } from 'lucide-react';
 import { getStageLabel, getStageColor } from '@/types/database';
 import { getApprovalStatusColor, getApprovalStatusLabel, INITIAL_REQUIRED_DOCS, getDocTypeLabel } from '@/types/agency';
@@ -44,11 +45,17 @@ export default function AgencyWorkerDetail() {
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isApplyingData, setIsApplyingData] = useState(false);
-  
+
   const { data: profile } = useAgencyProfile();
   const { data: worker, isLoading } = useAgencyWorker(id);
   const { data: documents } = useWorkerDocuments(id);
   const updateWorker = useUpdateAgencyWorker();
+
+  const isAgencyView = role === 'agency';
+
+  // Ownership check: when accessed from agency route, verify worker belongs to this agency
+  const isOwnerVerified = !isAgencyView || (worker && profile && worker.agency_id === profile.id);
+  const ownerCheckDone = !isAgencyView || (worker !== undefined && worker !== null && profile !== undefined);
 
   // Look up the candidate ID by matching worker email
   const { data: candidateId } = useQuery({
@@ -62,13 +69,11 @@ export default function AgencyWorkerDetail() {
         .maybeSingle();
       return data?.id || null;
     },
-    enabled: !!worker?.email,
+    enabled: !!worker?.email && isOwnerVerified === true,
   });
 
   const { data: activityLog = [], isLoading: activityLoading } = useCandidateActivityLog(candidateId ?? undefined);
 
-  const isAgencyView = role === 'agency';
-  
   // Check document completeness
   const uploadedDocTypes = documents?.map(d => d.doc_type) || [];
   const missingDocs = INITIAL_REQUIRED_DOCS.filter(doc => !uploadedDocTypes.includes(doc));
@@ -80,79 +85,43 @@ export default function AgencyWorkerDetail() {
 
   const applyExtractedData = async () => {
     if (!extractedData || !worker) return;
-    
+
     setIsApplyingData(true);
     try {
       const updates: Record<string, any> = {};
-      
-      // Map extracted data to worker fields
-      if (extractedData.full_name && !worker.full_name) {
-        updates.full_name = extractedData.full_name;
-      }
-      if (extractedData.email && !worker.email) {
-        updates.email = extractedData.email;
-      }
-      if (extractedData.phone && !worker.phone) {
-        updates.phone = extractedData.phone;
-      }
-      if (extractedData.nationality && !worker.nationality) {
-        updates.nationality = extractedData.nationality;
-      }
-      if (extractedData.current_country && !worker.current_country) {
-        updates.current_country = extractedData.current_country;
-      }
-      if (extractedData.date_of_birth && !worker.date_of_birth) {
-        updates.date_of_birth = extractedData.date_of_birth;
-      }
-      if (extractedData.skills && !worker.skills) {
-        updates.skills = extractedData.skills;
-      }
-      if (extractedData.experience_years && !worker.experience_years) {
-        updates.experience_years = extractedData.experience_years;
-      }
-      
-      // Merge with existing notes if any passport/visa info
+
+      if (extractedData.full_name && !worker.full_name) updates.full_name = extractedData.full_name;
+      if (extractedData.email && !worker.email) updates.email = extractedData.email;
+      if (extractedData.phone && !worker.phone) updates.phone = extractedData.phone;
+      if (extractedData.nationality && !worker.nationality) updates.nationality = extractedData.nationality;
+      if (extractedData.current_country && !worker.current_country) updates.current_country = extractedData.current_country;
+      if (extractedData.date_of_birth && !worker.date_of_birth) updates.date_of_birth = extractedData.date_of_birth;
+      if (extractedData.skills && !worker.skills) updates.skills = extractedData.skills;
+      if (extractedData.experience_years && !worker.experience_years) updates.experience_years = extractedData.experience_years;
+
       const additionalNotes: string[] = [];
-      if (extractedData.passport_number) {
-        additionalNotes.push(`Passport: ${extractedData.passport_number}`);
-      }
-      if (extractedData.passport_expiry) {
-        additionalNotes.push(`Passport Expiry: ${extractedData.passport_expiry}`);
-      }
-      if (extractedData.visa_type) {
-        additionalNotes.push(`Visa Type: ${extractedData.visa_type}`);
-      }
-      if (extractedData.visa_expiry) {
-        additionalNotes.push(`Visa Expiry: ${extractedData.visa_expiry}`);
-      }
-      
+      if (extractedData.passport_number) additionalNotes.push(`Passport: ${extractedData.passport_number}`);
+      if (extractedData.passport_expiry) additionalNotes.push(`Passport Expiry: ${extractedData.passport_expiry}`);
+      if (extractedData.visa_type) additionalNotes.push(`Visa Type: ${extractedData.visa_type}`);
+      if (extractedData.visa_expiry) additionalNotes.push(`Visa Expiry: ${extractedData.visa_expiry}`);
+
       if (additionalNotes.length > 0) {
         const existingNotes = worker.notes || '';
-        updates.notes = existingNotes 
+        updates.notes = existingNotes
           ? `${existingNotes}\n\n[Extracted from documents]\n${additionalNotes.join('\n')}`
           : `[Extracted from documents]\n${additionalNotes.join('\n')}`;
       }
-      
+
       if (Object.keys(updates).length > 0) {
         await updateWorker.mutateAsync({ id: worker.id, ...updates });
-        toast({
-          title: 'Data applied',
-          description: 'Extracted information has been saved to the worker profile.',
-        });
+        toast({ title: 'Data applied', description: 'Extracted information has been saved to the worker profile.' });
       } else {
-        toast({
-          title: 'No new data to apply',
-          description: 'All extracted fields already have values.',
-        });
+        toast({ title: 'No new data to apply', description: 'All extracted fields already have values.' });
       }
-      
+
       setExtractedData(null);
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to apply data',
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
+      toast({ variant: 'destructive', title: 'Failed to apply data', description: error instanceof Error ? error.message : 'An error occurred' });
     } finally {
       setIsApplyingData(false);
     }
@@ -184,12 +153,28 @@ export default function AgencyWorkerDetail() {
     );
   }
 
+  // Agency user trying to view another agency's worker → access denied
+  if (isAgencyView && ownerCheckDone && !isOwnerVerified) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <ShieldAlert className="h-12 w-12 mx-auto mb-4 text-destructive/40" />
+          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <p className="text-muted-foreground mb-4">You don't have access to this worker.</p>
+          <Button onClick={() => navigate('/agency')}>
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Back Button */}
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={() => navigate(isAgencyView ? '/agency' : '/agency-workers')}
           className="mb-6"
         >
@@ -212,78 +197,39 @@ export default function AgencyWorkerDetail() {
             <CardContent>
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 text-sm mb-4">
                 {extractedData.full_name && (
-                  <div>
-                    <span className="text-muted-foreground">Name:</span>{' '}
-                    <span className="font-medium">{extractedData.full_name}</span>
-                  </div>
+                  <div><span className="text-muted-foreground">Name:</span> <span className="font-medium">{extractedData.full_name}</span></div>
                 )}
                 {extractedData.email && (
-                  <div>
-                    <span className="text-muted-foreground">Email:</span>{' '}
-                    <span className="font-medium">{extractedData.email}</span>
-                  </div>
+                  <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{extractedData.email}</span></div>
                 )}
                 {extractedData.phone && (
-                  <div>
-                    <span className="text-muted-foreground">Phone:</span>{' '}
-                    <span className="font-medium">{extractedData.phone}</span>
-                  </div>
+                  <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium">{extractedData.phone}</span></div>
                 )}
                 {extractedData.nationality && (
-                  <div>
-                    <span className="text-muted-foreground">Nationality:</span>{' '}
-                    <span className="font-medium">{extractedData.nationality}</span>
-                  </div>
+                  <div><span className="text-muted-foreground">Nationality:</span> <span className="font-medium">{extractedData.nationality}</span></div>
                 )}
                 {extractedData.date_of_birth && (
-                  <div>
-                    <span className="text-muted-foreground">DOB:</span>{' '}
-                    <span className="font-medium">{extractedData.date_of_birth}</span>
-                  </div>
+                  <div><span className="text-muted-foreground">DOB:</span> <span className="font-medium">{extractedData.date_of_birth}</span></div>
                 )}
                 {extractedData.passport_number && (
-                  <div>
-                    <span className="text-muted-foreground">Passport:</span>{' '}
-                    <span className="font-medium">{extractedData.passport_number}</span>
-                  </div>
+                  <div><span className="text-muted-foreground">Passport:</span> <span className="font-medium">{extractedData.passport_number}</span></div>
                 )}
                 {extractedData.skills && (
-                  <div className="md:col-span-2">
-                    <span className="text-muted-foreground">Skills:</span>{' '}
-                    <span className="font-medium">{extractedData.skills}</span>
-                  </div>
+                  <div className="md:col-span-2"><span className="text-muted-foreground">Skills:</span> <span className="font-medium">{extractedData.skills}</span></div>
                 )}
                 {extractedData.experience_years && (
-                  <div>
-                    <span className="text-muted-foreground">Experience:</span>{' '}
-                    <span className="font-medium">{extractedData.experience_years} years</span>
-                  </div>
+                  <div><span className="text-muted-foreground">Experience:</span> <span className="font-medium">{extractedData.experience_years} years</span></div>
                 )}
                 {extractedData.confidence && (
-                  <div>
-                    <span className="text-muted-foreground">Confidence:</span>{' '}
-                    <span className="font-medium">{extractedData.confidence}%</span>
-                  </div>
+                  <div><span className="text-muted-foreground">Confidence:</span> <span className="font-medium">{extractedData.confidence}%</span></div>
                 )}
               </div>
               <div className="flex gap-2">
-                <Button 
-                  onClick={applyExtractedData}
-                  disabled={isApplyingData}
-                  className="gap-2"
-                >
-                  {isApplyingData ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
+                <Button onClick={applyExtractedData} disabled={isApplyingData} className="gap-2">
+                  {isApplyingData ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   Apply to Profile
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={dismissExtractedData}
-                  className="gap-2"
-                >
+                <Button variant="outline" onClick={dismissExtractedData} className="gap-2">
                   <X className="h-4 w-4" />
                   Dismiss
                 </Button>
@@ -442,7 +388,7 @@ export default function AgencyWorkerDetail() {
         </Card>
 
         {/* Documents Section */}
-        <WorkerDocumentUpload 
+        <WorkerDocumentUpload
           workerId={worker.id}
           currentStage={worker.current_stage}
           isAgencyView={isAgencyView}
@@ -461,7 +407,7 @@ export default function AgencyWorkerDetail() {
           </div>
         )}
       </div>
-      
+
       {/* Review Dialog */}
       {!isAgencyView && worker && (
         <WorkerReviewDialog

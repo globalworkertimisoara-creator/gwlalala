@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import {
   ArrowLeft, Building2, MapPin, Users, Briefcase, Loader2, FolderOpen,
-  FileText, Award, Plane, Home,
+  FileText, Award, Plane, Home, ShieldAlert,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getProjectStatusLabel } from '@/types/project';
@@ -45,6 +46,40 @@ const PHASE_ORDER = ['recruitment', 'documentation', 'visa', 'arrival', 'residen
 export default function EmployerProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, isRealAdmin } = useAuth();
+
+  // Get user's company_id for scoping
+  const { data: userProfile } = useQuery({
+    queryKey: ['employer-user-profile', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const companyId = userProfile?.company_id;
+
+  // Verify this project belongs to the user's company
+  const { data: isAuthorized, isLoading: authLoading } = useQuery({
+    queryKey: ['employer-project-auth', id, companyId],
+    queryFn: async () => {
+      if (isRealAdmin) return true;
+      if (!companyId) return false;
+      const { data } = await supabase
+        .from('company_projects')
+        .select('project_id')
+        .eq('company_id', companyId)
+        .eq('project_id', id!)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!id && (!!companyId || isRealAdmin),
+  });
 
   const { data: project, isLoading: projLoading } = useQuery({
     queryKey: ['employer-project-detail', id],
@@ -57,7 +92,7 @@ export default function EmployerProjectDetail() {
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && isAuthorized === true,
   });
 
   const { data: jobs = [] } = useQuery({
@@ -69,7 +104,7 @@ export default function EmployerProjectDetail() {
         .eq('project_id', id!);
       return data || [];
     },
-    enabled: !!id,
+    enabled: !!id && isAuthorized === true,
   });
 
   const { data: workflows = [] } = useQuery({
@@ -81,13 +116,27 @@ export default function EmployerProjectDetail() {
         .eq('project_id', id!);
       return data || [];
     },
-    enabled: !!id,
+    enabled: !!id && isAuthorized === true,
   });
 
-  if (projLoading) {
+  if (projLoading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Access denied — project doesn't belong to user's company
+  if (isAuthorized === false) {
+    return (
+      <div className="text-center py-12">
+        <ShieldAlert className="h-12 w-12 mx-auto mb-4 text-destructive/40" />
+        <p className="text-lg font-semibold">Access Denied</p>
+        <p className="text-sm text-muted-foreground mt-1">You don't have access to this project.</p>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/employer')}>
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Employer Portal
+        </Button>
       </div>
     );
   }
@@ -170,7 +219,6 @@ export default function EmployerProjectDetail() {
               <CardDescription>{workflows.length} candidate(s) in workflow</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              {/* Overall completion */}
               {workflows.length > 0 && (() => {
                 const completed = workflows.filter((w: any) => w.current_phase === 'residence_permit').length;
                 const pct = Math.round((completed / workflows.length) * 100);
@@ -185,7 +233,6 @@ export default function EmployerProjectDetail() {
                 );
               })()}
 
-              {/* Per-phase breakdown */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Current Phase Distribution</p>
                 <div className="grid gap-2">
@@ -276,7 +323,7 @@ export default function EmployerProjectDetail() {
                   </TableHeader>
                   <TableBody>
                     {jobs.map((job: any) => (
-                      <TableRow 
+                      <TableRow
                         key={job.id}
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => navigate(`/employer/jobs/${job.id}`)}
