@@ -26,15 +26,22 @@ export type DashboardDetailItem = {
 interface DashboardDetailPanelProps {
   item: DashboardDetailItem | null;
   onClose: () => void;
+  /** Route prefix for fallback navigation (e.g. '/employer' or '/agency'). Defaults to '' (admin). */
+  routePrefix?: string;
 }
 
-export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProps) {
+export function DashboardDetailPanel({ item, onClose, routePrefix = '' }: DashboardDetailPanelProps) {
   const navigate = useNavigate();
 
   if (!item) return null;
 
   const goTo = (route: string) => {
     navigate(route);
+  };
+
+  // Build fallback route using the prefix so employer/agency contexts never land on admin pages
+  const fallbackRoute = (entityPath: string) => {
+    return item.route || `${routePrefix}${entityPath}`;
   };
 
   return (
@@ -69,7 +76,7 @@ export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProp
               <Button
                 className="w-full gap-1.5 mt-4"
                 size="sm"
-                onClick={() => goTo(item.route || `/candidates/${item.id}`)}
+                onClick={() => goTo(fallbackRoute(`/candidates/${item.id}`))}
               >
                 Go to Candidate <ArrowRight className="h-3.5 w-3.5" />
               </Button>
@@ -102,7 +109,7 @@ export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProp
               <Button
                 className="w-full gap-1.5 mt-4"
                 size="sm"
-                onClick={() => goTo(item.route || `/projects/${item.id}`)}
+                onClick={() => goTo(fallbackRoute(`/projects/${item.id}`))}
               >
                 Go to Project <ArrowRight className="h-3.5 w-3.5" />
               </Button>
@@ -124,7 +131,7 @@ export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProp
                 <Button
                   className="w-full gap-1.5 mt-4"
                   size="sm"
-                  onClick={() => goTo(item.route || `/jobs/${item.id}`)}
+                  onClick={() => goTo(fallbackRoute(`/jobs/${item.id}`))}
                 >
                   Go to Job <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
@@ -144,7 +151,7 @@ export function DashboardDetailPanel({ item, onClose }: DashboardDetailPanelProp
               <Button
                 className="w-full gap-1.5 mt-4"
                 size="sm"
-                onClick={() => goTo(item.route || `/contracts?highlight=${item.id}`)}
+                onClick={() => goTo(fallbackRoute(`/contracts?highlight=${item.id}`))}
               >
                 Go to Contract <ArrowRight className="h-3.5 w-3.5" />
               </Button>

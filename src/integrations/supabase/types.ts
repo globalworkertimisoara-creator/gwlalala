@@ -1570,6 +1570,56 @@ export type Database = {
         }
         Relationships: []
       }
+      company_projects: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          project_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          project_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "company_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_activity_log: {
         Row: {
           action: string

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useInvitedJobs } from '@/hooks/useAgencyInvitations';
+import { useAgencyProfile } from '@/hooks/useAgency';
+import { SubmitWorkerDialog } from '@/components/agency/SubmitWorkerDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -14,12 +15,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Loader2, Search, Briefcase, MapPin, Building2 } from 'lucide-react';
 
 export default function AgencyJobs() {
-  const navigate = useNavigate();
   const { data: jobs, isLoading } = useInvitedJobs();
+  const { data: agencyProfile } = useAgencyProfile();
   const [search, setSearch] = useState('');
+  const [selectedJob, setSelectedJob] = useState<any | null>(null);
 
   const filteredJobs = jobs?.filter(job =>
     job.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -104,9 +112,9 @@ export default function AgencyJobs() {
                         {job.salary_range || <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          size="sm" 
-                          onClick={() => navigate(`/agency/jobs/${job.id}`)}
+                        <Button
+                          size="sm"
+                          onClick={() => setSelectedJob(job)}
                         >
                           View & Submit
                         </Button>
@@ -118,6 +126,65 @@ export default function AgencyJobs() {
             </CardContent>
           </Card>
         )}
+
+        {/* Job Detail Dialog (instead of navigating to non-existent /agency/jobs/:id) */}
+        <Dialog open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                {selectedJob?.title}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedJob && (
+              <div className="space-y-4">
+                <div className="grid gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Client</span>
+                    <span className="text-sm font-medium">{selectedJob.client_company}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Country</span>
+                    <span className="text-sm font-medium">{selectedJob.country}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Status</span>
+                    <Badge variant={selectedJob.status === 'open' ? 'default' : 'secondary'}>{selectedJob.status}</Badge>
+                  </div>
+                  {selectedJob.salary_range && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Salary Range</span>
+                      <span className="text-sm font-medium">{selectedJob.salary_range}</span>
+                    </div>
+                  )}
+                  {selectedJob.required_skills && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Required Skills</span>
+                      <p className="text-sm mt-1">{selectedJob.required_skills}</p>
+                    </div>
+                  )}
+                  {selectedJob.description && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Description</span>
+                      <p className="text-sm mt-1 whitespace-pre-wrap">{selectedJob.description}</p>
+                    </div>
+                  )}
+                </div>
+                {agencyProfile && (
+                  <div className="flex justify-end pt-2 border-t">
+                    <SubmitWorkerDialog
+                      agencyId={agencyProfile.id}
+                      onSuccess={() => setSelectedJob(null)}
+                      trigger={
+                        <Button>Submit Worker for This Role</Button>
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );

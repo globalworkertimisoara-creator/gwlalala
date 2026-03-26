@@ -12,16 +12,28 @@ export interface EmployerNote {
   author_name?: string | null;
 }
 
-export function useEmployerNotes(candidateId: string | undefined) {
+/**
+ * Fetch employer notes for a candidate, scoped to the user's company.
+ * @param candidateId - candidate ID
+ * @param companyId - optional company_id for scoping (only shows notes from this company)
+ */
+export function useEmployerNotes(candidateId: string | undefined, companyId?: string | null) {
   return useQuery({
-    queryKey: ['employer-notes', candidateId],
+    queryKey: ['employer-notes', candidateId, companyId],
     queryFn: async (): Promise<EmployerNote[]> => {
       if (!candidateId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from('employer_notes')
         .select('*')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false });
+
+      // Scope to company if provided — prevents cross-company note leakage
+      if (companyId) {
+        query = query.eq('company_id', companyId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       if (!data || data.length === 0) return [];
 

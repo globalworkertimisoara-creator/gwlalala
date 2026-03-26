@@ -162,7 +162,7 @@ serve(async (req: Request) => {
         .in("role", ["admin", "operations_manager", "project_manager"]);
 
       for (const wf of stalledWorkflows) {
-        const candidateName = (wf.candidate as Record<string, unknown>)?.full_name || "Unknown";
+        const candidateName = (wf.candidate as unknown as Record<string, unknown>)?.full_name || "Unknown";
         for (const op of ops || []) {
           await supabase.from("notifications").insert({
             user_id: op.user_id,

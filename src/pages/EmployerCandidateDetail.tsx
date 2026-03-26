@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   ArrowLeft, Loader2, Mail, Phone, MapPin, Users, CalendarDays, FileText,
-  MessageSquare, Download, Clock, Trash2, Send, Activity,
+  MessageSquare, Download, Clock, Trash2, Send, Activity, ShieldAlert,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -35,9 +35,51 @@ function getInitials(name: string) {
 export default function EmployerCandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isRealAdmin } = useAuth();
   const [noteContent, setNoteContent] = useState('');
   const hasLoggedView = useRef(false);
+
+  // Get user's company_id for scoping
+  const { data: userProfile } = useQuery({
+    queryKey: ['employer-user-profile', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const companyId = userProfile?.company_id;
+
+  // Verify candidate belongs to employer's company (via candidate_workflow -> project -> company_projects)
+  const { data: isAuthorized, isLoading: authLoading } = useQuery({
+    queryKey: ['employer-candidate-auth', id, companyId],
+    queryFn: async () => {
+      if (isRealAdmin) return true;
+      if (!companyId) return false;
+      // Get all project IDs belonging to this company
+      const { data: companyProjects } = await supabase
+        .from('company_projects')
+        .select('project_id')
+        .eq('company_id', companyId);
+      if (!companyProjects || companyProjects.length === 0) return false;
+      const projectIds = companyProjects.map(cp => cp.project_id);
+      // Check if this candidate has a workflow in any of the company's projects
+      const { data: wf } = await supabase
+        .from('candidate_workflow')
+        .select('id')
+        .eq('candidate_id', id!)
+        .in('project_id', projectIds)
+        .limit(1);
+      return (wf && wf.length > 0);
+    },
+    enabled: !!id && (!!companyId || isRealAdmin),
+  });
+
   const { data: workflowData, isLoading } = useQuery({
     queryKey: ['employer-candidate-detail', id],
     queryFn: async () => {
@@ -48,10 +90,24 @@ export default function EmployerCandidateDetail() {
         .single();
       if (cErr) throw cErr;
 
-      const { data: workflows } = await supabase
+      // Scope workflows to the employer's company projects
+      let workflowQuery = supabase
         .from('candidate_workflow')
         .select('id, current_phase, workflow_type, project_id, projects(name)')
         .eq('candidate_id', id!);
+
+      if (!isRealAdmin && companyId) {
+        const { data: companyProjects } = await supabase
+          .from('company_projects')
+          .select('project_id')
+          .eq('company_id', companyId);
+        const projectIds = (companyProjects || []).map(cp => cp.project_id);
+        if (projectIds.length > 0) {
+          workflowQuery = workflowQuery.in('project_id', projectIds);
+        }
+      }
+
+      const { data: workflows } = await workflowQuery;
 
       const { data: interviews } = await supabase
         .from('candidate_interviews')
@@ -70,28 +126,29 @@ export default function EmployerCandidateDetail() {
         .eq('candidate_id', id!)
         .order('uploaded_at', { ascending: false });
 
-      // Get company_id for notes
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', user?.id ?? '')
-        .single();
-
       return {
         candidate,
         workflows: workflows || [],
         interviews: interviews || [],
         offers: offers || [],
         documents: documents || [],
-        companyId: profile?.company_id,
+        companyId,
       };
     },
-    enabled: !!id,
+    enabled: !!id && isAuthorized === true,
   });
 
-  const { data: notes = [], isLoading: notesLoading } = useEmployerNotes(id);
-  const { data: auditLog = [] } = useEmployerAuditLog(id);
-  const { data: activityLog = [], isLoading: activityLoading } = useCandidateActivityLog(id);
+  const { data: notes = [], isLoading: notesLoading } = useEmployerNotes(
+    isAuthorized ? id : undefined,
+    companyId
+  );
+  const { data: auditLog = [] } = useEmployerAuditLog(
+    isAuthorized ? id : undefined,
+    companyId
+  );
+  const { data: activityLog = [], isLoading: activityLoading } = useCandidateActivityLog(
+    isAuthorized ? id : undefined
+  );
   const createNote = useCreateEmployerNote();
   const deleteNote = useDeleteEmployerNote();
   const logAction = useLogEmployerAction();
@@ -99,32 +156,32 @@ export default function EmployerCandidateDetail() {
 
   // Log profile view once
   useEffect(() => {
-    if (id && workflowData?.companyId && !hasLoggedView.current) {
+    if (id && companyId && isAuthorized && !hasLoggedView.current) {
       hasLoggedView.current = true;
       logAction.mutate({
         candidate_id: id,
-        company_id: workflowData.companyId,
+        company_id: companyId,
         action_type: 'profile_view',
       });
       logCandidateActivity.mutate({
         candidate_id: id,
         event_type: 'profile_view',
         summary: 'Employer viewed candidate profile',
-        company_id: workflowData.companyId,
+        company_id: companyId,
       });
     }
-  }, [id, workflowData?.companyId]);
+  }, [id, companyId, isAuthorized]);
 
   const handleAddNote = () => {
-    if (!noteContent.trim() || !id || !workflowData?.companyId) return;
+    if (!noteContent.trim() || !id || !companyId) return;
     createNote.mutate(
-      { candidate_id: id, content: noteContent.trim(), company_id: workflowData.companyId },
+      { candidate_id: id, content: noteContent.trim(), company_id: companyId },
       {
         onSuccess: () => {
           setNoteContent('');
           logAction.mutate({
             candidate_id: id!,
-            company_id: workflowData!.companyId!,
+            company_id: companyId!,
             action_type: 'note_added',
           });
         },
@@ -138,11 +195,10 @@ export default function EmployerCandidateDetail() {
       .download(storagePath);
     if (error || !data) return;
 
-    // Log download
-    if (id && workflowData?.companyId) {
+    if (id && companyId) {
       logAction.mutate({
         candidate_id: id,
-        company_id: workflowData.companyId,
+        company_id: companyId,
         action_type: 'document_download',
         details: { file_name: fileName },
       });
@@ -156,10 +212,23 @@ export default function EmployerCandidateDetail() {
     URL.revokeObjectURL(url);
   };
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) {
+    return (
+      <div className="text-center py-12">
+        <ShieldAlert className="h-12 w-12 mx-auto mb-4 text-destructive/40" />
+        <p className="text-lg font-semibold">Access Denied</p>
+        <p className="text-sm text-muted-foreground mt-1">You don't have access to this candidate.</p>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/employer')}>
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Employer Portal
+        </Button>
       </div>
     );
   }
@@ -354,7 +423,7 @@ export default function EmployerCandidateDetail() {
         </CardContent>
       </Card>
 
-      {/* Employer Notes (separate from internal notes) */}
+      {/* Employer Notes */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
