@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AgencyJobInvitation } from '@/types/project';
 import { useToast } from '@/hooks/use-toast';
+import { useAgencyProfile } from '@/hooks/useAgency';
 
 export function useAgencyInvitations(jobId?: string) {
   return useQuery({
@@ -25,21 +26,39 @@ export function useAgencyInvitations(jobId?: string) {
   });
 }
 
+/**
+ * Fetch jobs the current agency has been invited to.
+ * Scoped to the agency's own invitations — not all agencies.
+ */
 export function useInvitedJobs() {
+  const { data: agencyProfile } = useAgencyProfile();
+  const agencyId = agencyProfile?.id;
+
   return useQuery({
-    queryKey: ['invited-jobs'],
+    queryKey: ['invited-jobs', agencyId],
     queryFn: async () => {
+      if (!agencyId) return [];
+      // Only fetch jobs where THIS agency has an invitation
+      const { data: invitations, error: invErr } = await supabase
+        .from('agency_job_invitations')
+        .select('job_id')
+        .eq('agency_id', agencyId);
+
+      if (invErr) throw invErr;
+      if (!invitations || invitations.length === 0) return [];
+
+      const jobIds = invitations.map(inv => inv.job_id);
+
       const { data, error } = await supabase
         .from('jobs')
-        .select(`
-          *,
-          agency_job_invitations!inner(id)
-        `)
+        .select('*')
+        .in('id', jobIds)
         .eq('status', 'open');
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
+    enabled: !!agencyId,
   });
 }
 
@@ -50,7 +69,7 @@ export function useCreateInvitation() {
   return useMutation({
     mutationFn: async ({ agencyId, jobId }: { agencyId: string; jobId: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { data, error } = await supabase
         .from('agency_job_invitations')
         .insert({
