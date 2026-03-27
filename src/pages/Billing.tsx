@@ -21,7 +21,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DollarSign, Plus, FileText, History, MessageSquare,
-  Loader2, AlertTriangle, Milestone,
+  Loader2, AlertTriangle, Receipt,
 } from 'lucide-react';
 import { PaymentMilestones } from '@/components/billing/PaymentMilestones';
 import { useAuth } from '@/contexts/AuthContext';
@@ -73,107 +73,124 @@ export default function Billing() {
     );
   }
 
+  // Stats
+  const totalAmount = records.reduce((s, r) => s + Number(r.total_amount), 0);
+  const draftCount = records.filter(r => r.status === 'draft').length;
+  const activeCount = records.filter(r => r.status === 'in_progress' || r.status === 'agreed').length;
+  const completedCount = records.filter(r => r.status === 'completed').length;
+
   return (
     <AppLayout>
-      <div className="p-6 lg:p-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-2">
-              <DollarSign className="h-7 w-7" />
-              Billing
-            </h1>
-            <p className="text-muted-foreground">
-              Track candidate payments, payment milestones, and billing agreements
-            </p>
-          </div>
-          {can('manageBilling') && (
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" /> New Billing Record
-                </Button>
-              </DialogTrigger>
-              <CreateBillingDialog onClose={() => setShowCreateDialog(false)} />
-            </Dialog>
-          )}
-        </div>
+      <div className="h-[calc(100vh-64px)] flex overflow-hidden">
+        {/* Main content */}
+        <div className={`flex-1 overflow-y-auto p-4 lg:p-6 transition-all duration-300 ${selectedRecord ? 'w-[65%]' : 'w-full'}`}>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Receipt className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl lg:text-2xl font-bold text-foreground">Billing</h1>
+                <p className="text-xs text-muted-foreground">Track payments, milestones, and billing agreements</p>
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Stat chips + action */}
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-3">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50">
+                  <span className="text-lg font-bold">{records.length}</span>
+                  <span className="text-xs text-muted-foreground">Records</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50">
+                  <span className="text-lg font-bold">{activeCount}</span>
+                  <span className="text-xs text-muted-foreground">Active</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50">
+                  <span className="text-lg font-bold text-green-700">{completedCount}</span>
+                  <span className="text-xs text-muted-foreground">Completed</span>
+                </div>
+              </div>
+              {can('manageBilling') && (
+                <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="h-8">
+                      <Plus className="mr-1.5 h-3.5 w-3.5" /> New Record
+                    </Button>
+                  </DialogTrigger>
+                  <CreateBillingDialog onClose={() => setShowCreateDialog(false)} />
+                </Dialog>
+              )}
+            </div>
+          </div>
+
           {/* Records list */}
-          <div className="xl:col-span-1">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Billing Records</CardTitle>
-                <CardDescription>{records.length} records</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="h-[600px]">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : records.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">No billing records yet</p>
-                  ) : (
-                    <div className="divide-y">
-                      {records.map((record) => (
-                        <button
-                          key={record.id}
-                          onClick={() => setSelectedRecord(record)}
-                          className={`w-full text-left px-4 py-3 hover:bg-accent transition-colors ${
-                            selectedRecord?.id === record.id ? 'bg-accent' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-sm truncate">
-                              {(record.candidate as any)?.full_name || 'Unknown Candidate'}
-                            </span>
-                            <Badge className={`text-[10px] ${STATUS_COLORS[record.status] || ''}`}>
-                              {record.status}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground truncate">
-                              {(record.agency as any)?.company_name || 'Unknown Agency'}
-                            </span>
-                            <span className="text-sm font-semibold">
-                              {Number(record.total_amount).toLocaleString()} {record.currency}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {format(new Date(record.created_at), 'dd MMM yyyy')}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Detail panel */}
-          <div className="xl:col-span-2">
-            {selectedRecord ? (
-              <BillingDetail record={selectedRecord} onUpdate={setSelectedRecord} />
-            ) : (
-              <Card>
-                <CardContent className="flex items-center justify-center h-[600px]">
-                  <div className="text-center text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Select a billing record to view details</p>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Billing Records
+                <Badge variant="secondary" className="text-[10px] ml-1">{records.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className={selectedRecord ? 'h-[calc(100vh-220px)]' : 'h-[calc(100vh-200px)]'}>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                ) : records.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">No billing records yet</p>
+                ) : (
+                  <div className="divide-y">
+                    {records.map((record) => (
+                      <button
+                        key={record.id}
+                        onClick={() => setSelectedRecord(record)}
+                        className={`w-full text-left px-4 py-2.5 hover:bg-accent transition-colors ${
+                          selectedRecord?.id === record.id ? 'bg-accent' : ''
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="font-medium text-xs truncate">
+                            {(record.candidate as any)?.full_name || 'Unknown Candidate'}
+                          </span>
+                          <Badge className={`text-[10px] ${STATUS_COLORS[record.status] || ''}`}>
+                            {record.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            {(record.agency as any)?.company_name || 'Unknown Agency'}
+                          </span>
+                          <span className="text-xs font-semibold">
+                            {Number(record.total_amount).toLocaleString()} {record.currency}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {format(new Date(record.created_at), 'dd MMM yyyy')}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Detail panel */}
+        {selectedRecord && (
+          <div className="w-[35%] border-l bg-muted/30 overflow-y-auto">
+            <BillingDetail record={selectedRecord} onUpdate={setSelectedRecord} onClose={() => setSelectedRecord(null)} />
+          </div>
+        )}
       </div>
     </AppLayout>
   );
 }
 
-function BillingDetail({ record, onUpdate }: { record: BillingRecord; onUpdate: (r: BillingRecord) => void }) {
+function BillingDetail({ record, onUpdate, onClose }: { record: BillingRecord; onUpdate: (r: BillingRecord) => void; onClose: () => void }) {
   const { can } = usePermissions();
   const { data: payments = [] } = useBillingPayments(record.id);
   const { data: changeLog = [] } = useBillingChangeLog(record.id);
@@ -188,116 +205,111 @@ function BillingDetail({ record, onUpdate }: { record: BillingRecord; onUpdate: 
     .reduce((sum, p) => sum + Number(p.percentage), 0);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">
-              {(record.candidate as any)?.full_name}
-            </CardTitle>
-            <CardDescription>
-              {(record.agency as any)?.company_name}
-              {record.job && ` • ${(record.job as any)?.title}`}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge className={STATUS_COLORS[record.status] || ''}>
-              {record.status}
-            </Badge>
-            {can('manageBilling') && (
-              <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">Edit</Button>
-                </DialogTrigger>
-                <EditBillingDialog
-                  record={record}
-                  onClose={() => setShowEditDialog(false)}
-                  onUpdated={onUpdate}
-                />
-              </Dialog>
-            )}
-          </div>
+    <div className="p-4 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Billing Record</p>
+          <h3 className="text-sm font-semibold">{(record.candidate as any)?.full_name}</h3>
+          <p className="text-xs text-muted-foreground">
+            {(record.agency as any)?.company_name}
+            {record.job && ` · ${(record.job as any)?.title}`}
+          </p>
         </div>
-
-        {/* Summary bar */}
-        <div className="grid grid-cols-3 gap-4 mt-4">
-          <div className="text-center p-3 rounded-lg bg-muted/50">
-            <p className="text-xs text-muted-foreground">Total Amount</p>
-            <p className="text-lg font-bold">{Number(record.total_amount).toLocaleString()} {record.currency}</p>
-          </div>
-          <div className="text-center p-3 rounded-lg bg-muted/50">
-            <p className="text-xs text-muted-foreground">Paid</p>
-            <p className="text-lg font-bold text-green-700">{totalPaid.toLocaleString()} {record.currency}</p>
-          </div>
-          <div className="text-center p-3 rounded-lg bg-muted/50">
-            <p className="text-xs text-muted-foreground">Progress</p>
-            <p className="text-lg font-bold">{Math.min(totalPercentage, 100).toFixed(1)}%</p>
-          </div>
+        <div className="flex items-center gap-2">
+          <Badge className={STATUS_COLORS[record.status] || ''}>{record.status}</Badge>
+          {can('manageBilling') && (
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-xs">Edit</Button>
+              </DialogTrigger>
+              <EditBillingDialog
+                record={record}
+                onClose={() => setShowEditDialog(false)}
+                onUpdated={onUpdate}
+              />
+            </Dialog>
+          )}
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onClose}>×</Button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent>
-        <Tabs defaultValue="payments" className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
-            <TabsTrigger value="payments">
-              <DollarSign className="h-4 w-4 mr-1" /> Payments
-            </TabsTrigger>
-            <TabsTrigger value="log">
-              <History className="h-4 w-4 mr-1" /> Change Log
-            </TabsTrigger>
-            <TabsTrigger value="notes">
-              <MessageSquare className="h-4 w-4 mr-1" /> Notes
-            </TabsTrigger>
-          </TabsList>
+      {/* Summary bar */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="text-center p-2 rounded-lg bg-background border">
+          <p className="text-[10px] text-muted-foreground">Total</p>
+          <p className="text-sm font-bold">{Number(record.total_amount).toLocaleString()} {record.currency}</p>
+        </div>
+        <div className="text-center p-2 rounded-lg bg-background border">
+          <p className="text-[10px] text-muted-foreground">Paid</p>
+          <p className="text-sm font-bold text-green-700">{totalPaid.toLocaleString()} {record.currency}</p>
+        </div>
+        <div className="text-center p-2 rounded-lg bg-background border">
+          <p className="text-[10px] text-muted-foreground">Progress</p>
+          <p className="text-sm font-bold">{Math.min(totalPercentage, 100).toFixed(1)}%</p>
+        </div>
+      </div>
 
-          <TabsContent value="payments" className="mt-4">
-            <PaymentMilestones
-              billingRecordId={record.id}
-              totalAmount={Number(record.total_amount)}
-              currency={record.currency}
-              payments={payments}
-            />
-          </TabsContent>
+      {/* Tabs */}
+      <Tabs defaultValue="payments" className="w-full">
+        <TabsList className="w-full grid grid-cols-3 h-8">
+          <TabsTrigger value="payments" className="text-xs h-6">
+            <DollarSign className="h-3 w-3 mr-1" /> Payments
+          </TabsTrigger>
+          <TabsTrigger value="log" className="text-xs h-6">
+            <History className="h-3 w-3 mr-1" /> Log
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="text-xs h-6">
+            <MessageSquare className="h-3 w-3 mr-1" /> Notes
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="log" className="mt-4">
-            <ScrollArea className="h-[380px]">
-              <div className="space-y-3">
-                {changeLog.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No changes logged</p>
-                ) : (
-                  changeLog.map((log) => (
-                    <div key={log.id} className="border rounded-lg p-3 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[10px]">{log.action}</Badge>
-                          <span className="text-xs font-medium">{log.changed_by_name}</span>
-                          <Badge variant="secondary" className="text-[10px]">{log.changed_by_role}</Badge>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(log.created_at), 'dd MMM yyyy HH:mm')}
-                        </span>
+        <TabsContent value="payments" className="mt-3">
+          <PaymentMilestones
+            billingRecordId={record.id}
+            totalAmount={Number(record.total_amount)}
+            currency={record.currency}
+            payments={payments}
+          />
+        </TabsContent>
+
+        <TabsContent value="log" className="mt-3">
+          <ScrollArea className="h-[320px]">
+            <div className="space-y-2">
+              {changeLog.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">No changes logged</p>
+              ) : (
+                changeLog.map((log) => (
+                  <div key={log.id} className="border rounded-lg p-2.5 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="text-[10px]">{log.action}</Badge>
+                        <span className="text-[10px] font-medium">{log.changed_by_name}</span>
                       </div>
-                      {log.field_changed && (
-                        <p className="text-xs">
-                          <span className="text-muted-foreground">{log.field_changed}:</span>{' '}
-                          <span className="line-through text-destructive">{log.old_value}</span>{' → '}
-                          <span className="text-green-700">{log.new_value}</span>
-                        </p>
-                      )}
-                      {log.note && <p className="text-xs text-muted-foreground">{log.note}</p>}
+                      <span className="text-[10px] text-muted-foreground">
+                        {format(new Date(log.created_at), 'dd MMM HH:mm')}
+                      </span>
                     </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
+                    {log.field_changed && (
+                      <p className="text-[10px]">
+                        <span className="text-muted-foreground">{log.field_changed}:</span>{' '}
+                        <span className="line-through text-destructive">{log.old_value}</span>{' → '}
+                        <span className="text-green-700">{log.new_value}</span>
+                      </p>
+                    )}
+                    {log.note && <p className="text-[10px] text-muted-foreground">{log.note}</p>}
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
 
-          <TabsContent value="notes" className="mt-4">
-            <BillingNotesSection billingRecordId={record.id} notes={notes} />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+        <TabsContent value="notes" className="mt-3">
+          <BillingNotesSection billingRecordId={record.id} notes={notes} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
 
@@ -318,35 +330,35 @@ function BillingNotesSection({ billingRecordId, notes }: { billingRecordId: stri
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex gap-2">
         <Textarea
           placeholder="Add a note..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="min-h-[60px]"
+          className="min-h-[50px] text-xs"
         />
-        <Button onClick={handleSubmit} disabled={addNote.isPending || !content.trim()} className="shrink-0">
-          {addNote.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add'}
+        <Button onClick={handleSubmit} disabled={addNote.isPending || !content.trim()} className="shrink-0" size="sm">
+          {addNote.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Add'}
         </Button>
       </div>
-      <ScrollArea className="h-[300px]">
+      <ScrollArea className="h-[260px]">
         <div className="space-y-2">
           {notes.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No notes yet</p>
+            <p className="text-xs text-muted-foreground text-center py-4">No notes yet</p>
           ) : (
             notes.map((note) => (
-              <div key={note.id} className="border rounded-lg p-3">
+              <div key={note.id} className="border rounded-lg p-2.5">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium">{note.created_by_name}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-medium">{note.created_by_name}</span>
                     <Badge variant="secondary" className="text-[10px]">{note.created_by_role}</Badge>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(note.created_at), 'dd MMM yyyy HH:mm')}
+                  <span className="text-[10px] text-muted-foreground">
+                    {format(new Date(note.created_at), 'dd MMM HH:mm')}
                   </span>
                 </div>
-                <p className="text-sm">{note.content}</p>
+                <p className="text-xs">{note.content}</p>
               </div>
             ))
           )}
@@ -365,7 +377,6 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
   const [currency, setCurrency] = useState('EUR');
   const [description, setDescription] = useState('');
 
-  // Fetch candidates and agencies for dropdowns
   const { data: candidates = [] } = useQuery({
     queryKey: ['billing-candidates'],
     queryFn: async () => {
@@ -402,59 +413,59 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>New Billing Record</DialogTitle>
-        <DialogDescription>Create a billing record for a candidate</DialogDescription>
+        <DialogTitle className="text-sm">New Billing Record</DialogTitle>
+        <DialogDescription className="text-xs">Create a billing record for a candidate</DialogDescription>
       </DialogHeader>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>Candidate</Label>
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Candidate</Label>
           <Select value={candidateId} onValueChange={setCandidateId}>
-            <SelectTrigger><SelectValue placeholder="Select candidate" /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select candidate" /></SelectTrigger>
             <SelectContent>
               {candidates.map((c: any) => (
-                <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+                <SelectItem key={c.id} value={c.id} className="text-xs">{c.full_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>Agency</Label>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Agency</Label>
           <Select value={agencyId} onValueChange={setAgencyId}>
-            <SelectTrigger><SelectValue placeholder="Select agency" /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select agency" /></SelectTrigger>
             <SelectContent>
               {agencies.map((a: any) => (
-                <SelectItem key={a.id} value={a.id}>{a.company_name}</SelectItem>
+                <SelectItem key={a.id} value={a.id} className="text-xs">{a.company_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2 space-y-2">
-            <Label>Total Amount</Label>
-            <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} placeholder="0.00" />
+        <div className="grid grid-cols-3 gap-2">
+          <div className="col-span-2 space-y-1.5">
+            <Label className="text-xs">Total Amount</Label>
+            <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} placeholder="0.00" className="h-8 text-xs" />
           </div>
-          <div className="space-y-2">
-            <Label>Currency</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Currency</Label>
             <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="EUR">EUR</SelectItem>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="GBP">GBP</SelectItem>
-                <SelectItem value="RON">RON</SelectItem>
+                <SelectItem value="EUR" className="text-xs">EUR</SelectItem>
+                <SelectItem value="USD" className="text-xs">USD</SelectItem>
+                <SelectItem value="GBP" className="text-xs">GBP</SelectItem>
+                <SelectItem value="RON" className="text-xs">RON</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
-        <div className="space-y-2">
-          <Label>Description (optional)</Label>
-          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Billing description..." />
+        <div className="space-y-1.5">
+          <Label className="text-xs">Description (optional)</Label>
+          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Billing description..." className="text-xs min-h-[50px]" />
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} disabled={createRecord.isPending || !candidateId || !agencyId || !totalAmount}>
-          {createRecord.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+        <Button size="sm" onClick={handleSubmit} disabled={createRecord.isPending || !candidateId || !agencyId || !totalAmount}>
+          {createRecord.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
           Create
         </Button>
       </DialogFooter>
@@ -493,48 +504,47 @@ function EditBillingDialog({ record, onClose, onUpdated }: { record: BillingReco
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Edit Billing Record</DialogTitle>
-        <DialogDescription>
+        <DialogTitle className="text-sm">Edit Billing Record</DialogTitle>
+        <DialogDescription className="text-xs">
           Changes to agreed amounts will trigger notifications to both parties
         </DialogDescription>
       </DialogHeader>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>Total Amount ({record.currency})</Label>
-          <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} />
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Total Amount ({record.currency})</Label>
+          <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} className="h-8 text-xs" />
           {parseFloat(totalAmount) !== Number(record.total_amount) && record.status === 'agreed' && (
-            <p className="text-xs text-destructive flex items-center gap-1">
+            <p className="text-[10px] text-destructive flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
               Changing an agreed amount will notify both parties
             </p>
           )}
         </div>
-        <div className="space-y-2">
-          <Label>Status</Label>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Status</Label>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="agreed">Agreed</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="disputed">Disputed</SelectItem>
+              <SelectItem value="draft" className="text-xs">Draft</SelectItem>
+              <SelectItem value="agreed" className="text-xs">Agreed</SelectItem>
+              <SelectItem value="in_progress" className="text-xs">In Progress</SelectItem>
+              <SelectItem value="completed" className="text-xs">Completed</SelectItem>
+              <SelectItem value="disputed" className="text-xs">Disputed</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>Description</Label>
-          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+        <div className="space-y-1.5">
+          <Label className="text-xs">Description</Label>
+          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="text-xs min-h-[50px]" />
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} disabled={updateRecord.isPending}>
-          {updateRecord.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+        <Button size="sm" onClick={handleSubmit} disabled={updateRecord.isPending}>
+          {updateRecord.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
           Save Changes
         </Button>
       </DialogFooter>
     </DialogContent>
   );
 }
-
