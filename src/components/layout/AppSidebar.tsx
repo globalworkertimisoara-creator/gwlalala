@@ -121,7 +121,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: 'Agency Contracts', url: '/admin/agency-contracts', icon: Shield, requirePermission: 'accessAdminPanel' },
       { title: 'Organization', url: '/organization', icon: Building2, requirePermission: 'viewAllUsers' },
-      { title: 'Settings', url: '/settings', icon: Settings, requirePermission: 'modifySettings' },
+      { title: 'Settings', url: '/settings', icon: Settings },
     ],
   },
 ];
@@ -384,13 +384,9 @@ export function AppSidebar() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/profile')}>
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/settings')}>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
+              <User className="mr-2 h-4 w-4" />
+              Profile & Settings
             </DropdownMenuItem>
             {isRealAdmin && (
               <>
