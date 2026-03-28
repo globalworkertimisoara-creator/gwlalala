@@ -34,6 +34,7 @@ export function useNotifications() {
           team:teams(id, name),
           project:projects(id, name)
         `)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -58,6 +59,7 @@ export function useUnreadNotificationCount() {
       const { count, error } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
         .eq('is_read', false);
 
       if (error) throw error;
@@ -72,13 +74,16 @@ export function useUnreadNotificationCount() {
 
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
+      if (!user) throw new Error('Not authenticated');
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
-        .eq('id', notificationId);
+        .eq('id', notificationId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
     },
@@ -101,6 +106,7 @@ export function useMarkAllNotificationsRead() {
       const { data: notifications } = await supabase
         .from('notifications')
         .select('id')
+        .eq('user_id', user!.id)
         .eq('is_read', false);
 
       if (notifications && notifications.length > 0) {
