@@ -242,13 +242,15 @@ function SectionHeader({ title, expanded, onToggle }: { title: string; expanded:
 }
 
 function ContactRow({ icon: Icon, label, value, href, external }: { icon: any; label: string; value: string; href?: string; external?: boolean }) {
+  // Validate href to prevent javascript: XSS — only allow http(s), mailto, and tel protocols
+  const safeHref = href && /^(https?:\/\/|mailto:|tel:)/i.test(href) ? href : undefined;
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground text-xs flex items-center gap-1">
         <Icon className="h-3 w-3" /> {label}
       </span>
-      {href ? (
-        <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined} className="text-xs font-medium text-primary hover:underline">{value}</a>
+      {safeHref ? (
+        <a href={safeHref} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined} className="text-xs font-medium text-primary hover:underline">{value}</a>
       ) : (
         <span className="text-xs font-medium">{value}</span>
       )}
