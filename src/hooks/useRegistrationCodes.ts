@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RegistrationCode {
   id: string;
@@ -11,6 +12,8 @@ interface RegistrationCode {
 }
 
 export function useRegistrationCodes() {
+  const { isAdmin } = useAuth();
+
   return useQuery({
     queryKey: ['registration-codes'],
     queryFn: async () => {
@@ -22,6 +25,7 @@ export function useRegistrationCodes() {
       if (error) throw error;
       return data as RegistrationCode[];
     },
+    enabled: isAdmin,
   });
 }
 
@@ -57,7 +61,7 @@ export function useUpdateRegistrationCode() {
       toast({
         variant: 'destructive',
         title: 'Failed to update code',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -70,7 +74,6 @@ export async function verifyRegistrationCode(codeType: 'staff' | 'agency', codeV
   });
 
   if (error) {
-    console.error('Error verifying registration code:', error);
     return false;
   }
 
