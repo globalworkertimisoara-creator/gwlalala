@@ -140,7 +140,7 @@ export function useSendAgencyInvitation() {
     onError: (error: Error) => {
       toast({
         title: 'Failed to send invitation',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },
@@ -169,7 +169,7 @@ export function useCancelAgencyInvitation() {
     onError: (error: Error) => {
       toast({
         title: 'Failed to cancel invitation',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },
@@ -236,7 +236,7 @@ export function useAcceptInvitation() {
     onError: (error: Error) => {
       toast({
         title: 'Failed to accept invitation',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },

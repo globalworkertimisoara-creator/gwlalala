@@ -85,7 +85,7 @@ export function useCreateJob() {
       toast({
         variant: 'destructive',
         title: 'Failed to create job',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -119,7 +119,7 @@ export function useUpdateJob() {
       toast({
         variant: 'destructive',
         title: 'Failed to update job',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -149,7 +149,7 @@ export function useDeleteJob() {
       toast({
         variant: 'destructive',
         title: 'Failed to delete job',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -262,7 +262,7 @@ export function useLinkCandidateToJob() {
       toast({
         variant: 'destructive',
         title: 'Failed to link candidate',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -295,7 +295,7 @@ export function useUnlinkCandidateFromJob() {
       toast({
         variant: 'destructive',
         title: 'Failed to unlink candidate',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });

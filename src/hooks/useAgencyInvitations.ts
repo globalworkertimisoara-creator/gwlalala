@@ -88,7 +88,7 @@ export function useCreateInvitation() {
       toast({ title: 'Agency invited to job' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Error inviting agency', description: error.message, variant: 'destructive' });
+      toast({ title: 'Error inviting agency', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }
@@ -111,7 +111,7 @@ export function useDeleteInvitation() {
       toast({ title: 'Invitation removed' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Error removing invitation', description: error.message, variant: 'destructive' });
+      toast({ title: 'Error removing invitation', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }

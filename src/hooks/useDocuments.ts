@@ -76,7 +76,7 @@ export function useUploadDocument() {
       toast({
         variant: 'destructive',
         title: 'Failed to upload document',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -155,7 +155,7 @@ export function useUploadDocumentWithOCR() {
       toast({
         variant: 'destructive',
         title: 'Failed to upload document',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -208,7 +208,7 @@ export function useDeleteDocument() {
       toast({
         variant: 'destructive',
         title: 'Failed to delete document',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
