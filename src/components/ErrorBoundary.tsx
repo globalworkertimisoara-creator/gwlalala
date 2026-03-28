@@ -22,8 +22,8 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[ErrorBoundary] Caught:', error, info.componentStack);
+  componentDidCatch(_error: Error, _info: React.ErrorInfo) {
+    // TODO: integrate with monitoring service (e.g. Sentry)
   }
 
   handleRetry = () => {
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
           <h2 className="text-lg font-semibold text-foreground mb-2">Something went wrong</h2>
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
-            {this.state.error?.message || 'An unexpected error occurred.'}
+            An unexpected error occurred. Please try again or contact support.
           </p>
           <Button onClick={this.handleRetry} variant="outline">
             Try Again
