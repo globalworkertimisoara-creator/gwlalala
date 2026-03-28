@@ -85,7 +85,7 @@ export function useCreateWorkflow() {
         title: isDuplicate ? 'Already linked' : 'Failed to create workflow',
         description: isDuplicate
           ? 'This candidate is already linked to the selected project.'
-          : error.message,
+          : 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },
