@@ -18,7 +18,11 @@ export function useContracts(filters?: { status?: string; party_type?: string; c
       if (filters?.contract_type && filters.contract_type !== 'all') query = query.eq('contract_type', filters.contract_type);
       
       if (filters?.search) {
-        query = query.or(`contract_number.ilike.%${filters.search}%,title.ilike.%${filters.search}%,client_name.ilike.%${filters.search}%`);
+        // Sanitize search input to prevent PostgREST filter injection
+        const sanitized = filters.search.replace(/[,.()"'\\]/g, '');
+        if (sanitized) {
+          query = query.or(`contract_number.ilike.%${sanitized}%,title.ilike.%${sanitized}%,client_name.ilike.%${sanitized}%`);
+        }
       }
       
       if (filters?.year) {
