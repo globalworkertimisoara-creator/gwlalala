@@ -258,7 +258,7 @@ export function CandidateDocumentUpload({
       toast({
         variant: 'destructive',
         title: 'Upload failed',
-        description: error instanceof Error ? error.message : 'Failed to upload',
+        description: 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setUploading(false);

@@ -376,7 +376,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       setUploadProgress(100);
     } catch (error) {
       console.error('Upload/extract error:', error);
-      toast({ variant: 'destructive', title: 'Upload failed', description: error instanceof Error ? error.message : 'Failed to upload' });
+      toast({ variant: 'destructive', title: 'Upload failed', description: 'An unexpected error occurred. Please try again.' });
       setPendingDocuments(prev => prev.filter((_, i) => i !== index));
     } finally {
       setIsUploading(false); setTimeout(() => setUploadProgress(0), 1000);

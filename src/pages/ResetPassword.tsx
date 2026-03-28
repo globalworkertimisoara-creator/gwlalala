@@ -92,7 +92,7 @@ export default function ResetPassword() {
       toast({
         variant: 'destructive',
         title: 'Password reset failed',
-        description: error.message,
+        description: 'Unable to reset password. Please try again or request a new reset link.',
       });
     } else {
       setIsSuccess(true);
