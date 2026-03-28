@@ -281,7 +281,7 @@ export default function CandidateDetail() {
                         {candidate.current_country}
                       </span>
                     )}
-                    {candidate.linkedin && (
+                    {candidate.linkedin && /^https?:\/\//i.test(candidate.linkedin) && (
                       <a
                         href={candidate.linkedin}
                         target="_blank"
