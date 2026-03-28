@@ -85,7 +85,7 @@ export function useCreateWorkflow() {
         title: isDuplicate ? 'Already linked' : 'Failed to create workflow',
         description: isDuplicate
           ? 'This candidate is already linked to the selected project.'
-          : error.message,
+          : 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },
@@ -118,7 +118,7 @@ export function useDeleteWorkflow() {
     onError: (error) => {
       toast({
         title: 'Failed to unlink',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },
@@ -238,7 +238,7 @@ export function useUploadDocument() {
     onError: (error) => {
       toast({
         title: 'Upload failed',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },
@@ -287,7 +287,7 @@ export function useReviewDocument() {
     onError: (error) => {
       toast({
         title: 'Review failed',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },
@@ -325,7 +325,7 @@ export function useAdvancePhase() {
     onError: (error) => {
       toast({
         title: 'Failed to advance phase',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
     },

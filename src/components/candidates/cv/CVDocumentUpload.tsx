@@ -74,7 +74,7 @@ export function CVDocumentUpload({ candidateId, onDataApplied }: Props) {
       toast({
         variant: 'destructive',
         title: 'Upload failed',
-        description: error instanceof Error ? error.message : 'Failed to upload document',
+        description: 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setUploading(false);
@@ -198,7 +198,7 @@ export function CVDocumentUpload({ candidateId, onDataApplied }: Props) {
       toast({
         variant: 'destructive',
         title: 'Failed to apply data',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description: 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setApplyingData(false);

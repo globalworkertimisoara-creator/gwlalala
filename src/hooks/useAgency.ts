@@ -71,7 +71,7 @@ export function useCreateAgencyProfile() {
       toast({
         variant: 'destructive',
         title: 'Failed to create profile',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -105,7 +105,7 @@ export function useUpdateAgencyProfile() {
       toast({
         variant: 'destructive',
         title: 'Failed to update profile',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -213,7 +213,7 @@ export function useCreateAgencyWorker() {
       toast({
         variant: 'destructive',
         title: 'Failed to submit worker',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -257,7 +257,7 @@ export function useUpdateAgencyWorker() {
       toast({
         variant: 'destructive',
         title: 'Failed to update worker',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -369,7 +369,7 @@ export function useReviewWorker() {
       toast({
         variant: 'destructive',
         title: 'Failed to review worker',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -500,7 +500,7 @@ export function useUploadWorkerDocument() {
       toast({
         variant: 'destructive',
         title: 'Failed to upload document',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -565,7 +565,7 @@ export function useDeleteWorkerDocument() {
       toast({
         variant: 'destructive',
         title: 'Failed to delete document',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });

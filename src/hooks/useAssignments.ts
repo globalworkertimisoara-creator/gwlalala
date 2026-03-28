@@ -78,7 +78,7 @@ export function useCreateProjectAssignment() {
       toast({ title: 'Assignment created successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to create assignment', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to create assignment', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }
@@ -111,7 +111,7 @@ export function useCreateJobAssignment() {
       toast({ title: 'Assignment created successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to create assignment', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to create assignment', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }
@@ -135,7 +135,7 @@ export function useDeleteProjectAssignment() {
       toast({ title: 'Assignment removed successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to remove assignment', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to remove assignment', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }
@@ -159,7 +159,7 @@ export function useDeleteJobAssignment() {
       toast({ title: 'Assignment removed successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to remove assignment', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to remove assignment', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }

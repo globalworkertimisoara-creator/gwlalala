@@ -171,7 +171,7 @@ export function useUpdatePipelineStage() {
       toast({
         variant: 'destructive',
         title: 'Failed to update stage',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
     onSettled: () => {
@@ -263,7 +263,7 @@ export function useAddCandidateToPipeline() {
       toast({
         variant: 'destructive',
         title: 'Failed to add candidate',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });

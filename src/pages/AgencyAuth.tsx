@@ -32,7 +32,7 @@ export default function AgencyAuth() {
         toast({
           variant: 'destructive',
           title: 'Google sign-in failed',
-          description: error.message,
+          description: 'Unable to sign in with Google. Please try again.',
         });
       } else if (!redirected) {
         toast({
@@ -69,7 +69,7 @@ export default function AgencyAuth() {
       toast({
         variant: 'destructive',
         title: 'Sign in failed',
-        description: error.message,
+        description: 'Invalid email or password. Please try again.',
       });
     } else {
       if (!rememberMe) {
@@ -130,7 +130,7 @@ export default function AgencyAuth() {
       toast({
         variant: 'destructive',
         title: 'Sign up failed',
-        description: error.message,
+        description: 'Unable to create account. Please check your details and try again.',
       });
     } else {
       toast({
@@ -157,7 +157,7 @@ export default function AgencyAuth() {
       toast({
         variant: 'destructive',
         title: 'Request failed',
-        description: error.message,
+        description: 'Unable to send reset link. Please try again.',
       });
     } else {
       toast({

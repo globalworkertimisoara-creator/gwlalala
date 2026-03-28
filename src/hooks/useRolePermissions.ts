@@ -100,7 +100,7 @@ export function useTogglePermission() {
       if (context?.previous) {
         queryClient.setQueryData(['role-permissions'], context.previous);
       }
-      toast({ title: 'Failed to update permission', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to update permission', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }

@@ -121,7 +121,7 @@ export default function AgencyWorkerDetail() {
 
       setExtractedData(null);
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Failed to apply data', description: error instanceof Error ? error.message : 'An error occurred' });
+      toast({ variant: 'destructive', title: 'Failed to apply data', description: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsApplyingData(false);
     }

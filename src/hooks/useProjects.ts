@@ -172,7 +172,7 @@ export function useCreateProject() {
       toast({ title: 'Project created successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Error creating project', description: error.message, variant: 'destructive' });
+      toast({ title: 'Error creating project', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }
@@ -199,7 +199,7 @@ export function useUpdateProject() {
       toast({ title: 'Project updated successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Error updating project', description: error.message, variant: 'destructive' });
+      toast({ title: 'Error updating project', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }
@@ -222,7 +222,7 @@ export function useDeleteProject() {
       toast({ title: 'Project deleted successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Error deleting project', description: error.message, variant: 'destructive' });
+      toast({ title: 'Error deleting project', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }
@@ -247,7 +247,7 @@ export function useLinkJobToProject() {
       toast({ title: 'Job linked to project' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Error linking job', description: error.message, variant: 'destructive' });
+      toast({ title: 'Error linking job', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }

@@ -90,7 +90,7 @@ export function useCreateCandidate() {
       toast({
         variant: 'destructive',
         title: 'Failed to create candidate',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -124,7 +124,7 @@ export function useUpdateCandidate() {
       toast({
         variant: 'destructive',
         title: 'Failed to update candidate',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -186,7 +186,7 @@ export function useUpdateCandidateStage() {
       toast({
         variant: 'destructive',
         title: 'Failed to update stage',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -216,7 +216,7 @@ export function useDeleteCandidate() {
       toast({
         variant: 'destructive',
         title: 'Failed to delete candidate',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });

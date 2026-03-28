@@ -184,7 +184,7 @@ export function useCreateEscalation() {
       toast({ title: 'Escalation created successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to create escalation', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to create escalation', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }
@@ -234,7 +234,7 @@ export function useUpdateEscalation() {
       toast({ title: 'Escalation updated successfully' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Failed to update escalation', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to update escalation', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     },
   });
 }

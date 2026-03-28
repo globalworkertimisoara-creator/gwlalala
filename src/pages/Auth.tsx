@@ -37,7 +37,7 @@ export default function Auth() {
         toast({
           variant: 'destructive',
           title: 'Google sign-in failed',
-          description: error.message,
+          description: 'Unable to sign in with Google. Please try again.',
         });
       } else if (!redirected) {
         toast({
@@ -74,7 +74,7 @@ export default function Auth() {
       toast({
         variant: 'destructive',
         title: 'Sign in failed',
-        description: error.message,
+        description: 'Invalid email or password. Please try again.',
       });
     } else {
       // If "Remember me" is not checked, store session in sessionStorage instead
@@ -123,7 +123,7 @@ export default function Auth() {
       toast({
         variant: 'destructive',
         title: 'Sign up failed',
-        description: error.message,
+        description: 'Unable to create account. Please check your details and try again.',
       });
     } else {
       toast({
@@ -150,7 +150,7 @@ export default function Auth() {
       toast({
         variant: 'destructive',
         title: 'Request failed',
-        description: error.message,
+        description: 'Unable to send reset link. Please try again.',
       });
     } else {
       toast({

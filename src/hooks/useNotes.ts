@@ -71,7 +71,7 @@ export function useCreateNote() {
       toast({
         variant: 'destructive',
         title: 'Failed to add note',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -105,7 +105,7 @@ export function useDeleteNote() {
       toast({
         variant: 'destructive',
         title: 'Failed to delete note',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });

@@ -83,7 +83,7 @@ export function useUpdateContractNumber() {
       toast.success('Contract number updated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update contract number');
+      toast.error('Failed to update contract number. Please try again.');
     },
   });
 }

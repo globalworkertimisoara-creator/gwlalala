@@ -81,7 +81,7 @@ export function useCreateEmployerNote() {
       toast({ title: 'Note added' });
     },
     onError: (error: Error) => {
-      toast({ variant: 'destructive', title: 'Failed to add note', description: error.message });
+      toast({ variant: 'destructive', title: 'Failed to add note', description: 'An unexpected error occurred. Please try again.' });
     },
   });
 }
@@ -101,7 +101,7 @@ export function useDeleteEmployerNote() {
       toast({ title: 'Note deleted' });
     },
     onError: (error: Error) => {
-      toast({ variant: 'destructive', title: 'Failed to delete note', description: error.message });
+      toast({ variant: 'destructive', title: 'Failed to delete note', description: 'An unexpected error occurred. Please try again.' });
     },
   });
 }

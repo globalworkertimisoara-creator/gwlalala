@@ -148,7 +148,7 @@ export function useTeams() {
       toast.success('Team created successfully');
     },
     onError: (error) => {
-      toast.error('Failed to create team: ' + error.message);
+      toast.error('Failed to create team. Please try again.');
     },
   });
 
@@ -167,7 +167,7 @@ export function useTeams() {
       toast.success('Team deleted successfully');
     },
     onError: (error) => {
-      toast.error('Failed to delete team: ' + error.message);
+      toast.error('Failed to delete team. Please try again.');
     },
   });
 
@@ -188,7 +188,7 @@ export function useTeams() {
       toast.success('Member added to team');
     },
     onError: (error) => {
-      toast.error('Failed to add member: ' + error.message);
+      toast.error('Failed to add member. Please try again.');
     },
   });
 
@@ -207,7 +207,7 @@ export function useTeams() {
       toast.success('Member removed from team');
     },
     onError: (error) => {
-      toast.error('Failed to remove member: ' + error.message);
+      toast.error('Failed to remove member. Please try again.');
     },
   });
 

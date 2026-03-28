@@ -130,7 +130,7 @@ export function UserManagementCard() {
       toast({
         variant: 'destructive',
         title: 'Failed to update role',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });
@@ -162,7 +162,7 @@ export function UserManagementCard() {
       toast({
         variant: 'destructive',
         title: 'Failed to remove user',
-        description: error.message,
+        description: 'An unexpected error occurred. Please try again.',
       });
     },
   });

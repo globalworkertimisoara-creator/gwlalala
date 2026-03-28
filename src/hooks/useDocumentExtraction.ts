@@ -156,21 +156,19 @@ export function useDocumentExtraction() {
       return null;
 
     } catch (error) {
-      console.error('Document extraction error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to extract data';
+      const message = error instanceof Error ? error.message : '';
       
-      // Don't show error toast for rate limits - those are handled differently
       if (!message.includes('Rate limit') && !message.includes('credits')) {
         toast({
           variant: 'destructive',
           title: 'Extraction failed',
-          description: message,
+          description: 'Failed to extract data from this document. Please try again.',
         });
       } else {
         toast({
           variant: 'destructive',
           title: 'Service unavailable',
-          description: message,
+          description: 'Extraction service is temporarily unavailable. Please try again later.',
         });
       }
       return null;
