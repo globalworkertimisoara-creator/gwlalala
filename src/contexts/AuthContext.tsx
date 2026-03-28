@@ -44,21 +44,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Defer to avoid Supabase auth deadlock, but keep loading=true until role resolves
           setTimeout(async () => {
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            setRealRole(roleData?.role as AppRole ?? null);
+            try {
+              const { data: roleData } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .single();
+
+              setRealRole(roleData?.role as AppRole ?? null);
+            } catch {
+              setRealRole(null);
+            } finally {
+              setLoading(false);
+            }
           }, 0);
         } else {
           setRealRole(null);
           setRoleOverride(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
