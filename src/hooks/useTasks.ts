@@ -111,13 +111,19 @@ export function useCreateTask() {
 
 export function useUpdateTask() {
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string }) => {
       const payload: any = { ...updates };
-      delete payload.assignee_name; // Don't send computed field
+      delete payload.assignee_name;
       if (updates.status === 'done') payload.completed_at = new Date().toISOString();
-      const { data, error } = await supabase.from('tasks' as any).update(payload).eq('id', id).select().single();
+      // Scope update: only the creator or the assignee can update
+      let query = supabase.from('tasks' as any).update(payload).eq('id', id);
+      if (user) {
+        query = query.or(`created_by.eq.${user.id},assigned_to.eq.${user.id}`);
+      }
+      const { data, error } = await query.select().single();
       if (error) throw error;
       return data as unknown as Task;
     },
@@ -127,10 +133,16 @@ export function useUpdateTask() {
 
 export function useDeleteTask() {
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('tasks' as any).delete().eq('id', id);
+      // Only the creator can delete a task
+      let query = supabase.from('tasks' as any).delete().eq('id', id);
+      if (user) {
+        query = query.eq('created_by', user.id);
+      }
+      const { error } = await query;
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),

@@ -176,6 +176,10 @@ export function useDeleteDocument() {
       storagePath: string;
       candidateId: string;
     }) => {
+      // Verify auth before any destructive operations
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('Not authenticated');
+
       // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('candidate-documents')
@@ -183,11 +187,12 @@ export function useDeleteDocument() {
 
       if (storageError) throw storageError;
 
-      // Delete document record
+      // Delete document record — scoped to uploader for ownership check
       const { error } = await supabase
         .from('documents')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('uploaded_by', currentUser.id);
 
       if (error) throw error;
       return candidateId;

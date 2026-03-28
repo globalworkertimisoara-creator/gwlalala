@@ -83,10 +83,13 @@ export function useDeleteNote() {
 
   return useMutation({
     mutationFn: async ({ id, candidateId }: { id: string; candidateId: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
       const { error } = await supabase
         .from('notes')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('created_by', user.id);
 
       if (error) throw error;
       return candidateId;
