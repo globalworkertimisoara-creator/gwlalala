@@ -136,7 +136,7 @@ export function useTeams() {
           .insert(memberInserts);
 
         if (membersError) {
-          console.error('Failed to add initial members:', membersError);
+          throw membersError;
         }
       }
 

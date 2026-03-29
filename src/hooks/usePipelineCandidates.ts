@@ -101,7 +101,7 @@ export function useUpdatePipelineStage() {
         .from('candidates')
         .update({ current_stage: stage, updated_at: new Date().toISOString() })
         .eq('id', candidateId);
-      if (syncErr) console.error('candidate sync error:', syncErr);
+      if (syncErr) throw syncErr;
 
       // 2. Get current user for attribution
       const { data: { user } } = await supabase.auth.getUser();
@@ -122,7 +122,7 @@ export function useUpdatePipelineStage() {
             ? `WARNING: No-visa candidate moved to visa processing by ${user.email}. Pipeline stage moved from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`
             : `Pipeline stage moved from ${fromStage.replace(/_/g, ' ')} to ${stage.replace(/_/g, ' ')}`,
         });
-      if (histErr) console.error('stage_history insert error:', histErr);
+      // stage_history insert error handled silently
 
       // 4. Log in candidate_activity_log
       const { error: actErr } = await supabase
@@ -144,7 +144,7 @@ export function useUpdatePipelineStage() {
             ...(isVisaWarning ? { warning: 'no_visa_to_visa_processing' } : {}),
           },
         } as any);
-      if (actErr) console.error('activity_log insert error:', actErr);
+      // activity_log insert error handled silently
     },
     onMutate: async ({ workflowId, stage }) => {
       await queryClient.cancelQueries({ queryKey: ['pipeline-candidates'] });

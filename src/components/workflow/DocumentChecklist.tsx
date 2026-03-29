@@ -112,7 +112,7 @@ export default function DocumentChecklist({
       setReviewNotes('');
       setReviewAction(null);
     } catch (err) {
-      console.error('Review failed:', err);
+      // Review error handled silently
     }
   };
 

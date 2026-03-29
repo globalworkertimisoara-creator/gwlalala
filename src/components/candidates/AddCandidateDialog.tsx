@@ -375,7 +375,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       if (extracted) applyExtractedData(extracted);
       setUploadProgress(100);
     } catch (error) {
-      console.error('Upload/extract error:', error);
+      // Upload error handled silently
       toast({ variant: 'destructive', title: 'Upload failed', description: 'An unexpected error occurred. Please try again.' });
       setPendingDocuments(prev => prev.filter((_, i) => i !== index));
     } finally {
@@ -463,7 +463,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
         if (doc.storagePath && doc.uploaded) {
           const newPath = `${candidate.id}/${Date.now()}-${doc.file.name}`;
           const { error: moveError } = await supabase.storage.from('candidate-documents').move(doc.storagePath, newPath);
-          if (moveError) { console.error('Move error:', moveError); continue; }
+          if (moveError) { continue; }
           await supabase.from('documents').insert({ candidate_id: candidate.id, file_name: doc.file.name, storage_path: newPath, doc_type: doc.docType });
         }
       }
@@ -476,7 +476,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
       resetForm();
       onOpenChange(false);
     } catch (error) {
-      console.error('Create candidate error:', error);
+      // Create candidate error handled silently
     }
   };
 

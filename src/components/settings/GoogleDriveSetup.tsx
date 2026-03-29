@@ -37,7 +37,7 @@ export default function GoogleDriveSetup() {
         try {
           // Use window.location.origin + window.location.pathname to match what we send
           const redirectUri = window.location.origin + window.location.pathname;
-          console.log('[GoogleDriveSetup] Handling OAuth callback with redirect_uri:', redirectUri);
+          // OAuth callback redirect_uri intentionally not logged in production
           await handleOAuthCallback(code, redirectUri);
           setConnected(true);
           // Remove the code from the URL so a page refresh doesn't re-exchange
@@ -57,7 +57,7 @@ export default function GoogleDriveSetup() {
     try {
       // Send the same redirect URI format: origin + pathname
       const redirectUri = window.location.origin + window.location.pathname;
-      console.log('[GoogleDriveSetup] Starting OAuth with redirect_uri:', redirectUri);
+      // OAuth redirect_uri intentionally not logged in production
       await initGoogleDriveAuth(redirectUri);
       // Page will redirect — loading stays true
     } catch (e) {
