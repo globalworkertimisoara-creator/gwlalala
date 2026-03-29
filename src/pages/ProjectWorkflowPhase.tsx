@@ -83,16 +83,12 @@ function CandidateWorkflowCard({
 
     if (uploadError) return;
 
-    const { data: urlData } = supabase.storage
-      .from('candidate-documents')
-      .getPublicUrl(filePath);
-
     uploadDocument.mutate({
       workflowId: workflow.id,
       templateId,
       documentName: template.document_name,
       phase,
-      fileUrl: urlData.publicUrl,
+      fileUrl: filePath,
       fileSize: file.size,
       mimeType: file.type,
     });
