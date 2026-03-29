@@ -81,8 +81,8 @@ export default function Settings() {
       toast({ variant: 'destructive', title: 'Passwords do not match', description: 'Please make sure both passwords are identical.' });
       return;
     }
-    if (newPassword.length < 6) {
-      toast({ variant: 'destructive', title: 'Password too short', description: 'Password must be at least 6 characters long.' });
+    if (newPassword.length < 8) {
+      toast({ variant: 'destructive', title: 'Password too short', description: 'Password must be at least 8 characters long.' });
       return;
     }
     setIsUpdatingPassword(true);
@@ -212,11 +212,11 @@ export default function Settings() {
                   <form onSubmit={handleChangePassword} className="space-y-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="newPassword" className="text-xs">New Password</Label>
-                      <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Enter new password" minLength={6} required className="h-8 text-sm" />
+                      <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Enter new password" minLength={8} required className="h-8 text-sm" />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="confirmPassword" className="text-xs">Confirm New Password</Label>
-                      <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm new password" minLength={6} required className="h-8 text-sm" />
+                      <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm new password" minLength={8} required className="h-8 text-sm" />
                     </div>
                     <Button type="submit" size="sm" disabled={isUpdatingPassword}>
                       {isUpdatingPassword && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
