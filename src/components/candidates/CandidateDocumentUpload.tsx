@@ -197,7 +197,7 @@ export function CandidateDocumentUpload({
           details: { fields_updated: Object.keys(autoUpdates) },
         });
       } catch (err) {
-        console.error('Auto-apply error:', err);
+        // Auto-apply error handled silently
       }
     }
 
@@ -254,7 +254,7 @@ export function CandidateDocumentUpload({
         await processExtraction(data);
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      // Upload error handled via toast
       toast({
         variant: 'destructive',
         title: 'Upload failed',
@@ -465,7 +465,7 @@ export function CandidateDocumentUpload({
       setPreviewStoragePath(storagePath);
       setPreviewOpenUrl(signedUrlResult.error ? '' : (signedUrlResult.data?.signedUrl ?? ''));
     } catch (err) {
-      console.error('View error:', err);
+      // View error handled via toast
       toast({
         variant: 'destructive',
         title: 'Failed to open document',
@@ -503,7 +503,7 @@ export function CandidateDocumentUpload({
         details: { file_name: fileName },
       });
     } catch (err) {
-      console.error('Download error:', err);
+      // Download error handled silently
     }
   };
 

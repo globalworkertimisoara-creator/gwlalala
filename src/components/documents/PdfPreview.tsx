@@ -53,7 +53,7 @@ export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPrevie
         });
         setPageNumber(1);
       } catch (err) {
-        console.error('PDF load error:', err);
+        // PDF load error handled via error state
         if (!cancelled) {
           setPdfDoc(null);
           setError('This PDF cannot be rendered inline in your browser.');
@@ -104,7 +104,7 @@ export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPrevie
 
         await renderTask.promise;
       } catch (err) {
-        console.error('PDF render error:', err);
+        // PDF render error handled via error state
         if (!cancelled) {
           setError('This PDF cannot be rendered inline in your browser.');
         }

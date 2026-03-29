@@ -64,7 +64,7 @@ export default function Upload() {
             <FileUploader
               multiple={true}
               onUploadComplete={(results) => {
-                console.log('Upload complete:', results);
+                // Upload results handled silently
               }}
             />
           </CardContent>
