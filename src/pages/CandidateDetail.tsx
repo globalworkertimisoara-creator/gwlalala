@@ -804,16 +804,12 @@ function CandidateWorkflowSection({ candidateId }: { candidateId: string }) {
       return;
     }
 
-    const { data: urlData } = supabase.storage
-      .from('candidate-documents')
-      .getPublicUrl(filePath);
-
     await uploadDocument.mutateAsync({
       workflowId: workflow.id,
       templateId,
       documentName: template.document_name,
       phase: currentPhase,
-      fileUrl: urlData.publicUrl || filePath,
+      fileUrl: filePath,
       fileSize: file.size,
       mimeType: file.type,
     });
