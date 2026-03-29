@@ -13,7 +13,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     <SidebarProvider>
       <div className={`flex min-h-screen w-full ${overridePadding}`}>
         <AppSidebar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-hidden">
           {children}
         </main>
       </div>

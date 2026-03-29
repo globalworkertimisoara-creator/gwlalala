@@ -36,7 +36,7 @@ export default function Upload() {
 
   return (
     <AppLayout>
-      <div className="p-6 lg:p-8 space-y-8 max-w-4xl">
+      <div className="h-[calc(100vh-64px)] overflow-y-auto p-6 lg:p-8 space-y-8 max-w-4xl">
         <Button
           variant="ghost"
           className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"

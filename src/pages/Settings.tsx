@@ -69,7 +69,7 @@ export default function Settings() {
       await supabase.from('profiles').update({ full_name: fullName }).eq('user_id', user?.id);
       toast({ title: 'Profile updated', description: 'Your profile has been updated successfully.' });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Update failed', description: error.message });
+      toast({ variant: 'destructive', title: 'Update failed', description: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -93,7 +93,7 @@ export default function Settings() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Password update failed', description: error.message });
+      toast({ variant: 'destructive', title: 'Password update failed', description: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -105,7 +105,7 @@ export default function Settings() {
       toast({ title: 'Account deletion requested', description: 'Please contact an administrator to complete account deletion.' });
       await signOut();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+      toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred. Please try again.' });
     } finally {
       setIsDeletingAccount(false);
     }
