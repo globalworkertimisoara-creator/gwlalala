@@ -374,7 +374,7 @@ export default function Auth() {
                     name="password"
                     type="password"
                     placeholder="••••••••"
-                    minLength={6}
+                    minLength={8}
                     required
                     disabled={isLoading}
                   />
