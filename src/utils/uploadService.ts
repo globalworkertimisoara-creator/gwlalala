@@ -93,7 +93,7 @@ export async function uploadFile(
         compressionRatio = result.compressionRatio;
         // Compression stats logged silently
       } else {
-        console.log('[uploadService] File under threshold — skipped compression.');
+        // File under threshold — skipped compression
       }
     } catch (err) {
       // Compression failure is non-fatal — upload the original
