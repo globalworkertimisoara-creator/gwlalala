@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogContractActivity } from '@/hooks/useContractActivityLog';
+import { escapePostgRESTFilter } from '@/lib/searchUtils';
+import type { Contract, CreateContractInput } from '@/types/contract';
 import type { Contract, CreateContractInput } from '@/types/contract';
 
 // Re-export types for backward compatibility
