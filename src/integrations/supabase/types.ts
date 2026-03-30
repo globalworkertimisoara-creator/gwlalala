@@ -3728,6 +3728,10 @@ export type Database = {
       is_authenticated: { Args: never; Returns: boolean }
       is_employer: { Args: { _user_id: string }; Returns: boolean }
       is_employer_admin: { Args: { _user_id: string }; Returns: boolean }
+      owns_contract_file: {
+        Args: { _object_name: string; _user_id: string }
+        Returns: boolean
+      }
       verify_registration_code: {
         Args: { _code_type: string; _code_value: string }
         Returns: boolean
