@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLogContractActivity } from '@/hooks/useContractActivityLog';
 import { escapePostgRESTFilter } from '@/lib/searchUtils';
 import type { Contract, CreateContractInput } from '@/types/contract';
-import type { Contract, CreateContractInput } from '@/types/contract';
 
 // Re-export types for backward compatibility
 export type { Contract, CreateContractInput } from '@/types/contract';
