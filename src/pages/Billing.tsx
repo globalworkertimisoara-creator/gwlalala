@@ -325,7 +325,7 @@ function BillingNotesSection({ billingRecordId, notes }: { billingRecordId: stri
       setContent('');
       toast({ title: 'Note added' });
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
+      toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred. Please try again.' });
     }
   };
 
