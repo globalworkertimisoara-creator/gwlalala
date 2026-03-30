@@ -114,7 +114,7 @@ export default function CreateCandidate() {
 
       navigate(`/candidates/${candidate?.id || ''}`);
     } catch (err: any) {
-      toast({ title: 'Failed to create candidate', description: err.message, variant: 'destructive' });
+      toast({ title: 'Failed to create candidate', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     }
   };
 

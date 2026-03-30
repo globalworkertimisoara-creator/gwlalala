@@ -42,6 +42,11 @@ export default function ResetPassword() {
           window.location.search.includes('type=recovery') ||
           window.location.hash.includes('access_token');
 
+        // Clean sensitive tokens from URL to prevent leakage via Referer/history
+        if (hasRecoveryParams) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+
         // Give more time if we detect recovery params in the URL
         const timeout = hasRecoveryParams ? 8000 : 3000;
         timeoutId = setTimeout(() => {

@@ -164,7 +164,7 @@ export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPrevie
     iframe.style.border = '0';
     popup.document.body.appendChild(iframe);
 
-    if (openUrl && openUrl !== targetUrl) {
+    if (openUrl && openUrl !== targetUrl && /^(https?:\/\/|blob:)/i.test(openUrl)) {
       const fallback = popup.document.createElement('a');
       fallback.href = openUrl;
       fallback.target = '_blank';

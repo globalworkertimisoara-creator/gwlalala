@@ -112,7 +112,7 @@ export async function compressFileForUpload(file: File): Promise<File> {
     try {
       return await compressImage(file);
     } catch (err) {
-      console.warn('[Compression] Failed to compress image, using original:', err);
+      // Compression failed — returning original file
       return file;
     }
   }

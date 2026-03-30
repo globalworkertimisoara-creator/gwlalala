@@ -327,7 +327,7 @@ function DocumentsSection({ contractId }: { contractId: string }) {
           await uploadDoc.mutateAsync({ contractId, file, fileType });
           toast({ title: `${file.name} uploaded` });
         } catch (err: any) {
-          toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+          toast({ title: 'Upload failed', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
         }
       }
     },

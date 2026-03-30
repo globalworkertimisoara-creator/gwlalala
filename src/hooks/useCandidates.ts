@@ -198,6 +198,9 @@ export function useDeleteCandidate() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase
         .from('candidates')
         .delete()

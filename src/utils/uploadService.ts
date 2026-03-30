@@ -97,7 +97,7 @@ export async function uploadFile(
       }
     } catch (err) {
       // Compression failure is non-fatal — upload the original
-      console.warn('[uploadService] Compression failed, uploading original:', err);
+      // Compression failed — uploading original (non-fatal)
     }
   }
 

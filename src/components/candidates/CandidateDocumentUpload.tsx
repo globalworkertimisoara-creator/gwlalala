@@ -416,7 +416,7 @@ export function CandidateDocumentUpload({
       toast({
         variant: 'destructive',
         title: 'Failed to apply',
-        description: err instanceof Error ? err.message : 'An error occurred',
+        description: 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setIsApplying(false);

@@ -76,9 +76,15 @@ export function useDeleteContractDocument() {
 
   return useMutation({
     mutationFn: async ({ id, storagePath, contractId }: { id: string; storagePath: string; contractId: string }) => {
-      await supabase.storage.from('contract-documents').remove([storagePath]);
-      const { error } = await supabase.from('contract_documents').delete().eq('id', id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Scope delete to documents uploaded by current user
+      const { error } = await supabase.from('contract_documents').delete().eq('id', id).eq('uploaded_by', user.id);
       if (error) throw error;
+
+      // Only remove from storage after DB delete succeeds
+      await supabase.storage.from('contract-documents').remove([storagePath]);
       return contractId;
     },
     onSuccess: (contractId) => {

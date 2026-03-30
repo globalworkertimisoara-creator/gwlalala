@@ -81,6 +81,12 @@ export async function initGoogleDriveAuth(redirectUri: string): Promise<void> {
     );
   }
 
+  // Validate redirect URI against the current origin to prevent open redirect
+  const allowedOrigin = window.location.origin;
+  if (!redirectUri.startsWith(allowedOrigin)) {
+    throw new Error('Invalid redirect URI.');
+  }
+
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: redirectUri,
