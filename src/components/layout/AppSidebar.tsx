@@ -280,7 +280,12 @@ export function AppSidebar() {
                   <>
                     {/* Group header - clickable to expand/collapse */}
                     <button
-                      onClick={() => toggleGroup(group.label)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleGroup(group.label);
+                        // Prevent browser from scrolling the sidebar to top
+                        (e.currentTarget as HTMLElement).focus({ preventScroll: true });
+                      }}
                       className="flex items-center gap-2 w-full px-3 py-2 mt-2 rounded-md text-xs font-medium tracking-wide text-sidebar-muted hover:text-sidebar-foreground transition-colors group"
                     >
                       <group.icon className={`h-4 w-4 shrink-0 ${group.accentColor}`} />
