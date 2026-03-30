@@ -212,7 +212,7 @@ function AddMilestoneDialog({
       toast({ title: `Milestone ${milestoneNumber} added` });
       onClose();
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
+      toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred. Please try again.' });
     }
   };
 

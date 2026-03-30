@@ -138,6 +138,9 @@ export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPrevie
 
     if (!targetUrl) return;
 
+    // Validate URL protocol to prevent javascript:/data: XSS
+    if (!/^(https?:\/\/|blob:)/i.test(targetUrl)) return;
+
     const popup = window.open('', '_blank');
     if (!popup) {
       const link = document.createElement('a');
@@ -161,7 +164,7 @@ export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPrevie
     iframe.style.border = '0';
     popup.document.body.appendChild(iframe);
 
-    if (openUrl && openUrl !== targetUrl) {
+    if (openUrl && openUrl !== targetUrl && /^(https?:\/\/|blob:)/i.test(openUrl)) {
       const fallback = popup.document.createElement('a');
       fallback.href = openUrl;
       fallback.target = '_blank';

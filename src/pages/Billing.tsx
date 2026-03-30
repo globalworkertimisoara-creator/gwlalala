@@ -325,7 +325,7 @@ function BillingNotesSection({ billingRecordId, notes }: { billingRecordId: stri
       setContent('');
       toast({ title: 'Note added' });
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
+      toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred. Please try again.' });
     }
   };
 
@@ -406,7 +406,7 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
       toast({ title: 'Billing record created' });
       onClose();
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
+      toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred. Please try again.' });
     }
   };
 
@@ -497,7 +497,7 @@ function EditBillingDialog({ record, onClose, onUpdated }: { record: BillingReco
       toast({ title: 'Billing record updated' });
       onClose();
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
+      toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred. Please try again.' });
     }
   };
 

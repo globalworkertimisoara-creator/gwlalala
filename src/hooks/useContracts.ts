@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogContractActivity } from '@/hooks/useContractActivityLog';
+import { escapePostgRESTFilter } from '@/lib/searchUtils';
 import type { Contract, CreateContractInput } from '@/types/contract';
 
 // Re-export types for backward compatibility
@@ -18,10 +19,9 @@ export function useContracts(filters?: { status?: string; party_type?: string; c
       if (filters?.contract_type && filters.contract_type !== 'all') query = query.eq('contract_type', filters.contract_type);
       
       if (filters?.search) {
-        // Sanitize search input to prevent PostgREST filter injection
-        const sanitized = filters.search.replace(/[,.()"'\\]/g, '');
-        if (sanitized) {
-          query = query.or(`contract_number.ilike.%${sanitized}%,title.ilike.%${sanitized}%,client_name.ilike.%${sanitized}%`);
+        const escaped = escapePostgRESTFilter(filters.search);
+        if (escaped) {
+          query = query.or(`contract_number.ilike.%${escaped}%,title.ilike.%${escaped}%,client_name.ilike.%${escaped}%`);
         }
       }
       

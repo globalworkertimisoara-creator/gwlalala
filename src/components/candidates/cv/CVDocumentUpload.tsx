@@ -70,7 +70,7 @@ export function CVDocumentUpload({ candidateId, onDataApplied }: Props) {
         setExtractedData(data);
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      // Upload error handled via toast
       toast({
         variant: 'destructive',
         title: 'Upload failed',

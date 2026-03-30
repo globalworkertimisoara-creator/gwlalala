@@ -91,17 +91,13 @@ export async function uploadFile(
       if (!result.skipped) {
         fileToUpload = result.file;
         compressionRatio = result.compressionRatio;
-        console.log(
-          `[uploadService] Compressed: ${formatFileSize(result.originalSize)} → ` +
-          `${formatFileSize(result.compressedSize)} ` +
-          `(${((1 - result.compressionRatio) * 100).toFixed(0)}% smaller)`
-        );
+        // Compression stats logged silently
       } else {
-        console.log('[uploadService] File under threshold — skipped compression.');
+        // File under threshold — skipped compression
       }
     } catch (err) {
       // Compression failure is non-fatal — upload the original
-      console.warn('[uploadService] Compression failed, uploading original:', err);
+      // Compression failed — uploading original (non-fatal)
     }
   }
 

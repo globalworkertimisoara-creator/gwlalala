@@ -74,7 +74,7 @@ export default function CreateCandidate() {
         toast({ title: 'Data extracted from CV', description: 'Form fields have been auto-filled' });
       }
     } catch (err: any) {
-      toast({ title: 'Extraction failed', description: err.message, variant: 'destructive' });
+      toast({ title: 'Extraction failed', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     }
   };
 
@@ -114,7 +114,7 @@ export default function CreateCandidate() {
 
       navigate(`/candidates/${candidate?.id || ''}`);
     } catch (err: any) {
-      toast({ title: 'Failed to create candidate', description: err.message, variant: 'destructive' });
+      toast({ title: 'Failed to create candidate', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
     }
   };
 

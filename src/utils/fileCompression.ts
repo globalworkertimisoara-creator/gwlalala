@@ -86,9 +86,7 @@ async function compressImage(file: File): Promise<File> {
           type: outputType,
           lastModified: Date.now(),
         });
-        console.log(
-          `[Compression] ${file.name}: ${formatBytes(file.size)} → ${formatBytes(compressed.size)} (${Math.round((1 - compressed.size / file.size) * 100)}% reduction)`
-        );
+        // Compression stats logged silently
         resolve(compressed);
       },
       outputType,
@@ -114,7 +112,7 @@ export async function compressFileForUpload(file: File): Promise<File> {
     try {
       return await compressImage(file);
     } catch (err) {
-      console.warn('[Compression] Failed to compress image, using original:', err);
+      // Compression failed — returning original file
       return file;
     }
   }

@@ -90,7 +90,7 @@ export function DownloadCVDialog({ candidateId, open, onOpenChange }: Props) {
 
       toast({ title: 'CV generated', description: `${format.toUpperCase()} file is ready.` });
     } catch (error) {
-      console.error('CV generation error:', error);
+      // CV generation error handled via toast
       toast({ variant: 'destructive', title: 'Generation failed', description: 'An unexpected error occurred. Please try again.' });
     } finally {
       setGenerating(false);
