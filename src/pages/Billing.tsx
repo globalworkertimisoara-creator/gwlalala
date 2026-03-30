@@ -406,7 +406,7 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
       toast({ title: 'Billing record created' });
       onClose();
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
+      toast({ variant: 'destructive', title: 'Error', description: 'An unexpected error occurred. Please try again.' });
     }
   };
 
