@@ -138,6 +138,9 @@ export function PdfPreview({ fileUrl, openUrl, fileName, onDownload }: PdfPrevie
 
     if (!targetUrl) return;
 
+    // Validate URL protocol to prevent javascript:/data: XSS
+    if (!/^(https?:\/\/|blob:)/i.test(targetUrl)) return;
+
     const popup = window.open('', '_blank');
     if (!popup) {
       const link = document.createElement('a');
