@@ -86,9 +86,7 @@ async function compressImage(file: File): Promise<File> {
           type: outputType,
           lastModified: Date.now(),
         });
-        console.log(
-          `[Compression] ${file.name}: ${formatBytes(file.size)} → ${formatBytes(compressed.size)} (${Math.round((1 - compressed.size / file.size) * 100)}% reduction)`
-        );
+        // Compression stats logged silently
         resolve(compressed);
       },
       outputType,
