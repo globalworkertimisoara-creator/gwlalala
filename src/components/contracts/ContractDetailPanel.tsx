@@ -126,6 +126,7 @@ export function ContractDetailPanel({ contract, onClose }: ContractDetailPanelPr
                   View Client
                 </Button>
               )}
+              <DetailRow label="Sales Person" value={salesName} />
               <DetailRow label="Value" value={contract.total_value ? `€${contract.total_value.toLocaleString()}` : '—'} />
               <DetailRow label="Start" value={contract.start_date ? format(new Date(contract.start_date), 'MMM d, yyyy') : '—'} />
               <DetailRow label="End" value={contract.end_date ? format(new Date(contract.end_date), 'MMM d, yyyy') : '—'} />
