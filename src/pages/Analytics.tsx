@@ -84,6 +84,10 @@ const Analytics = () => {
                 <TabsContent value="agencies">
                   <AgencyAnalytics onOpenDetail={openDetail} />
                 </TabsContent>
+
+                <TabsContent value="clients">
+                  <ClientAnalytics onOpenDetail={openDetail} />
+                </TabsContent>
               </Tabs>
             </div>
           </div>
