@@ -157,6 +157,64 @@ const CONTRACT_SALES = {
   changeContractStatus: false,
 };
 
+// ─── Client permission defaults by role type ──────────────────────────────────
+const CLIENT_NONE = {
+  viewClients: false,
+  createClients: false,
+  editClients: false,
+  deleteClients: false,
+  viewClientBilling: false,
+  manageClientBilling: false,
+};
+const CLIENT_FULL = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: true,
+  viewClientBilling: true,
+  manageClientBilling: true,
+};
+const CLIENT_VIEW_EDIT = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: false,
+  viewClientBilling: false,
+  manageClientBilling: false,
+};
+const CLIENT_SALES_MANAGER = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: false,
+  viewClientBilling: true,
+  manageClientBilling: true,
+};
+const CLIENT_SALES_AGENT = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: false,
+  viewClientBilling: true,
+  manageClientBilling: false,
+};
+const CLIENT_OPS = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: false,
+  viewClientBilling: true,
+  manageClientBilling: false,
+};
+const CLIENT_PM = {
+  viewClients: true,
+  createClients: false,
+  editClients: false,
+  deleteClients: false,
+  viewClientBilling: false,
+  manageClientBilling: false,
+};
+
 // ─── Internal Staff Permissions ───────────────────────────────────────────────
 
 const ADMIN_PERMISSIONS: RolePermissions = {
