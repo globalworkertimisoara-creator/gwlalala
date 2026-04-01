@@ -32,7 +32,6 @@ export function useClientRevenueByClient() {
         byClient.set(row.client_id, (byClient.get(row.client_id) || 0) + Number(row.total_amount));
       }
 
-      // Get client names
       const clientIds = [...byClient.keys()];
       if (clientIds.length === 0) return [];
 
@@ -85,15 +84,43 @@ export function useTopClients(limit = 20) {
   return useQuery({
     queryKey: ['top-clients', limit],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('', {});
-      // Fallback: use the view
-      const { data: viewData, error: viewError } = await supabase
-        .from('v_client_analytics' as any)
-        .select('*')
-        .order('total_invoiced', { ascending: false })
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, client_type, status, first_name, last_name, company_id, companies(company_name), created_at')
+        .order('created_at', { ascending: false })
         .limit(limit);
-      if (viewError) throw viewError;
-      return viewData || [];
+      if (error) throw error;
+
+      // Get invoice aggregates
+      const clientIds = (data || []).map(c => c.id);
+      if (clientIds.length === 0) return [];
+
+      const { data: invoices } = await supabase
+        .from('client_invoices')
+        .select('client_id, total_amount, paid_amount')
+        .in('client_id', clientIds);
+
+      const metrics = new Map<string, { total: number; paid: number }>();
+      for (const inv of invoices || []) {
+        const m = metrics.get(inv.client_id) || { total: 0, paid: 0 };
+        m.total += Number(inv.total_amount) || 0;
+        m.paid += Number(inv.paid_amount) || 0;
+        metrics.set(inv.client_id, m);
+      }
+
+      return (data || []).map(c => {
+        const m = metrics.get(c.id) || { total: 0, paid: 0 };
+        return {
+          id: c.id,
+          client_type: c.client_type,
+          status: c.status,
+          display_name: c.client_type === 'company'
+            ? (c as any).companies?.company_name || 'Unknown'
+            : `${c.first_name} ${c.last_name}`,
+          total_invoiced: m.total,
+          outstanding_amount: m.total - m.paid,
+        };
+      }).sort((a, b) => b.total_invoiced - a.total_invoiced);
     },
   });
 }

@@ -34,9 +34,10 @@ export function useCreateClientInvoice() {
     mutationFn: async (input: Record<string, any>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      const insertData = { ...input, created_by: user.id } as any;
       const { data, error } = await supabase
         .from('client_invoices')
-        .insert({ ...input, created_by: user.id })
+        .insert(insertData)
         .select()
         .single();
       if (error) throw error;
