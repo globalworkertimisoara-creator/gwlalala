@@ -106,6 +106,7 @@ function ContractMetadata({ contract }: { contract: Contract }) {
           </Button>
         </div>
       )}
+      <div><span className="text-muted-foreground">Sales Person:</span> <span className="font-medium">{salesName}</span></div>
       <div><span className="text-muted-foreground">Value:</span> <span className="font-medium">{contract.total_value ? `${contract.total_value.toLocaleString()} ${contract.currency}` : '—'}</span></div>
       <div><span className="text-muted-foreground">Start:</span> <span>{contract.start_date ? format(new Date(contract.start_date), 'MMM d, yyyy') : '—'}</span></div>
       <div><span className="text-muted-foreground">End:</span> <span>{contract.end_date ? format(new Date(contract.end_date), 'MMM d, yyyy') : '—'}</span></div>
