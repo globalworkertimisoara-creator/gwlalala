@@ -172,6 +172,7 @@ function OverviewTab({ client, companyData }: { client: any; companyData: any })
 }
 
 function ProjectsTab({ clientId }: { clientId: string }) {
+  const navigate = useNavigate();
   const { data: clientProjects = [] } = useClientProjects(clientId);
   const linkProject = useLinkClientToProject();
   const unlinkProject = useUnlinkClientFromProject();
