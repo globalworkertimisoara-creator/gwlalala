@@ -100,7 +100,7 @@ const navGroups: NavGroup[] = [
     icon: Building2,
     accentColor: 'text-emerald-400',
     items: [
-      { title: 'Clients', url: '/clients', icon: Handshake },
+      { title: 'Clients', url: '/clients', icon: Handshake, requirePermission: 'viewClients' },
       { title: 'Contracts', url: '/contracts', icon: FileText },
       { title: 'Agency Workers', url: '/agency-workers', icon: Building2, requirePermission: 'viewAgencyWorkers' },
       { title: 'Reports', url: '/reports', icon: FileDown },

@@ -124,7 +124,7 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
           />
 
           <div>
-            <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : 'Worker'}</Label>
+            <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : form.party_type === 'individual' ? 'Individual' : 'Worker'}</Label>
             <Select value={form.party_id || 'none'} onValueChange={v => setForm(p => ({ ...p, party_id: v === 'none' ? '' : v }))}>
               <SelectTrigger><SelectValue placeholder={`Select ${form.party_type}`} /></SelectTrigger>
               <SelectContent>
