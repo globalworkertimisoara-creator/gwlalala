@@ -7,7 +7,7 @@
 export type ContractType = 'recruitment' | 'partnership' | 'consultancy' | 'service';
 export type ContractPrefix = 'REC' | 'PAR' | 'CON' | 'SRV';
 export type ContractStatus = 'draft' | 'sent' | 'signed' | 'active' | 'expired' | 'terminated';
-export type PartyType = 'employer' | 'agency' | 'worker';
+export type PartyType = 'employer' | 'agency' | 'worker' | 'individual';
 
 export interface Contract {
   id: string;
