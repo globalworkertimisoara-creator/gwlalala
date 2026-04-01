@@ -68,6 +68,7 @@ export function ContractDetailDialog({ contract, open, onOpenChange }: ContractD
 }
 
 function ContractMetadata({ contract }: { contract: Contract }) {
+  const navigate = useNavigate();
   const updateContract = useUpdateContract();
   const partyLookup = usePartyNameLookup();
   const salesLookup = useSalesPersonLookup();
