@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useCreateContract } from '@/hooks/useContracts';
 import { useSalesStaff } from '@/hooks/useSalesCommissions';
-import { useCompanies, useAgencies, useCandidatesList } from '@/hooks/useContractParties';
+import { useCompanies, useAgencies, useCandidatesList, useIndividualClients } from '@/hooks/useContractParties';
 import { useProjects } from '@/hooks/useProjects';
 import ContractNumberInput from './ContractNumberInput';
 import { getContractPrefix } from '@/types/contract';
