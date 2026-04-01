@@ -110,6 +110,7 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
                   <SelectItem value="employer">Employer</SelectItem>
                   <SelectItem value="agency">Agency</SelectItem>
                   <SelectItem value="worker">Worker</SelectItem>
+                  <SelectItem value="individual">Individual</SelectItem>
                 </SelectContent>
               </Select>
             </div>
