@@ -46,6 +46,9 @@ import CreateJob from "./pages/CreateJob";
 import AdminAgencyContracts from "./pages/AdminAgencyContracts";
 import SalesAnalytics from "./pages/SalesAnalytics";
 import Reports from "./pages/Reports";
+import Clients from "./pages/Clients";
+import CreateClient from "./pages/CreateClient";
+import ClientDetail from "./pages/ClientDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
