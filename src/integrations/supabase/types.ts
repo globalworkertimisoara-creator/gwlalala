@@ -1474,6 +1474,421 @@ export type Database = {
         }
         Relationships: []
       }
+      client_activity_log: {
+        Row: {
+          action: string
+          client_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          performed_by: string | null
+        }
+        Insert: {
+          action: string
+          client_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          performed_by?: string | null
+        }
+        Update: {
+          action?: string
+          client_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_activity_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_activity_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_documents: {
+        Row: {
+          client_id: string
+          created_at: string
+          doc_type: string
+          file_size: number | null
+          id: string
+          name: string
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          doc_type: string
+          file_size?: number | null
+          id?: string
+          name: string
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          doc_type?: string
+          file_size?: number | null
+          id?: string
+          name?: string
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_invoices: {
+        Row: {
+          client_id: string
+          contract_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          issue_date: string | null
+          line_items: Json | null
+          notes: string | null
+          paid_amount: number | null
+          paid_date: string | null
+          project_id: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_amount: number | null
+          tax_rate: number | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          issue_date?: string | null
+          line_items?: Json | null
+          notes?: string | null
+          paid_amount?: number | null
+          paid_date?: string | null
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          issue_date?: string | null
+          line_items?: Json | null
+          notes?: string | null
+          paid_amount?: number | null
+          paid_date?: string | null
+          project_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "v_contracts_with_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "client_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_notes: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_projects: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          project_id: string
+          role: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          project_id: string
+          role?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_agency_own_projects"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "client_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "v_project_statistics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          assigned_to: string | null
+          billing_address: string | null
+          billing_email: string | null
+          billing_name: string | null
+          city: string | null
+          client_type: Database["public"]["Enums"]["client_type"]
+          company_id: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          date_of_birth: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          id_document_expiry: string | null
+          id_document_number: string | null
+          id_document_type: string | null
+          last_name: string | null
+          nationality: string | null
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["client_status"]
+          tags: string[] | null
+          tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          assigned_to?: string | null
+          billing_address?: string | null
+          billing_email?: string | null
+          billing_name?: string | null
+          city?: string | null
+          client_type: Database["public"]["Enums"]["client_type"]
+          company_id?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          id_document_expiry?: string | null
+          id_document_number?: string | null
+          id_document_type?: string | null
+          last_name?: string | null
+          nationality?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          tags?: string[] | null
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          assigned_to?: string | null
+          billing_address?: string | null
+          billing_email?: string | null
+          billing_name?: string | null
+          city?: string | null
+          client_type?: Database["public"]["Enums"]["client_type"]
+          company_id?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          id_document_expiry?: string | null
+          id_document_number?: string | null
+          id_document_type?: string | null
+          last_name?: string | null
+          nationality?: string | null
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          tags?: string[] | null
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           allow_multi_agency: boolean | null
@@ -3333,6 +3748,22 @@ export type Database = {
         }
         Relationships: []
       }
+      v_client_analytics: {
+        Row: {
+          assigned_to: string | null
+          client_type: Database["public"]["Enums"]["client_type"] | null
+          contract_count: number | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          outstanding_amount: number | null
+          project_count: number | null
+          status: Database["public"]["Enums"]["client_status"] | null
+          total_invoiced: number | null
+          total_paid: number | null
+        }
+        Relationships: []
+      }
       v_contracts_with_details: {
         Row: {
           auto_renew: boolean | null
@@ -3790,6 +4221,8 @@ export type Database = {
         | "approved"
         | "rejected"
         | "needs_documents"
+      client_status: "lead" | "active" | "on_hold" | "inactive" | "churned"
+      client_type: "company" | "individual"
       doc_type:
         | "resume"
         | "passport"
@@ -3814,6 +4247,14 @@ export type Database = {
         | "in_progress"
         | "resolved"
         | "closed"
+      invoice_status:
+        | "draft"
+        | "sent"
+        | "paid"
+        | "partially_paid"
+        | "overdue"
+        | "cancelled"
+        | "void"
       job_status: "open" | "closed" | "filled"
       project_status: "draft" | "active" | "on_hold" | "completed" | "cancelled"
       recruitment_stage:
@@ -4029,6 +4470,8 @@ export const Constants = {
         "rejected",
         "needs_documents",
       ],
+      client_status: ["lead", "active", "on_hold", "inactive", "churned"],
+      client_type: ["company", "individual"],
       doc_type: [
         "resume",
         "passport",
@@ -4056,6 +4499,15 @@ export const Constants = {
         "in_progress",
         "resolved",
         "closed",
+      ],
+      invoice_status: [
+        "draft",
+        "sent",
+        "paid",
+        "partially_paid",
+        "overdue",
+        "cancelled",
+        "void",
       ],
       job_status: ["open", "closed", "filled"],
       project_status: ["draft", "active", "on_hold", "completed", "cancelled"],

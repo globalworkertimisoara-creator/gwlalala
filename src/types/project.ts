@@ -18,6 +18,7 @@ export interface Project {
   sales_person_name: string | null;
   status: ProjectStatus;
   default_workflow_type: WorkflowType;
+  company_id: string | null;
   contract_signed_at: string | null;
   notes: string | null;
   created_by: string | null;

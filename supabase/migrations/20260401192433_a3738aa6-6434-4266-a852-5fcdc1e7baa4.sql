@@ -1,0 +1,1 @@
+ALTER VIEW public.v_client_analytics SET (security_invoker = on);
