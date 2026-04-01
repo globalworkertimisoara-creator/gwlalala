@@ -114,6 +114,14 @@ export interface RolePermissions {
   uploadContractDocuments: boolean;
   approveContracts: boolean;
   changeContractStatus: boolean;
+
+  // Clients
+  viewClients: boolean;
+  createClients: boolean;
+  editClients: boolean;
+  deleteClients: boolean;
+  viewClientBilling: boolean;
+  manageClientBilling: boolean;
 }
 
 // ─── Contract permission defaults by role type ────────────────────────────────
