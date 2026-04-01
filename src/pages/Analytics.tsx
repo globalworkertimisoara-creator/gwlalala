@@ -133,6 +133,7 @@ const Analytics = () => {
                       >
                         Go to Client
                       </button>
+                    )}
                     <button
                       className="text-xs text-muted-foreground hover:text-foreground"
                       onClick={closeDetail}
