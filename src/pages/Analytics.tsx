@@ -7,7 +7,8 @@ import PipelineAnalytics from '@/components/analytics/PipelineAnalytics';
 import ProjectAnalytics from '@/components/analytics/ProjectAnalytics';
 import JobAnalytics from '@/components/analytics/JobAnalytics';
 import AgencyAnalytics from '@/components/analytics/AgencyAnalytics';
-import { BarChart3, GitBranch, FolderKanban, Briefcase, Building2 } from 'lucide-react';
+import { BarChart3, GitBranch, FolderKanban, Briefcase, Building2, Handshake } from 'lucide-react';
+import ClientAnalytics from '@/components/analytics/ClientAnalytics';
 
 export type AnalyticsDetailItem = {
   type: 'project' | 'candidate' | 'job' | 'agency' | 'conversion' | 'workflow' | 'phase' | 'client';
