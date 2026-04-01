@@ -55,9 +55,10 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
       case 'employer': return companies;
       case 'agency': return agencies;
       case 'worker': return candidates;
+      case 'individual': return individualClients;
       default: return [];
     }
-  }, [form.party_type, companies, agencies, candidates]);
+  }, [form.party_type, companies, agencies, candidates, individualClients]);
 
   const handleContractTypeChange = (type: string) => {
     setForm(p => ({ ...p, contract_type: type as any }));
