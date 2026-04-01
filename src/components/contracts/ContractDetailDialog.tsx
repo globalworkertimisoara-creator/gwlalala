@@ -101,7 +101,7 @@ function ContractMetadata({ contract }: { contract: Contract }) {
       <div><span className="text-muted-foreground">Party:</span> <span className="font-medium">{partyName}</span> <span className="text-muted-foreground capitalize text-xs">({contract.party_type})</span></div>
       {contract.party_type === 'individual' && (
         <div>
-          <Button variant="outline" size="sm" onClick={() => { const nav = document.querySelector('[data-navigate-to-client]'); window.location.href = `/clients/${contract.party_id}`; }}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/clients/${contract.party_id}`)}>
             View Client
           </Button>
         </div>
