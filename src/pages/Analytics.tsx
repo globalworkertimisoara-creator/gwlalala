@@ -323,6 +323,29 @@ const Analytics = () => {
                     </div>
                   </div>
                 )}
+
+                {detailItem.type === 'client' && detailItem.data && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-muted/50 rounded-lg text-center">
+                        <p className="text-xl font-bold">€{(detailItem.data.total_invoiced || 0).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Revenue</p>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg text-center">
+                        <p className="text-xl font-bold text-destructive">€{(detailItem.data.outstanding_amount || 0).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Outstanding</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <span className="text-xs text-muted-foreground">Type</span>
+                      <span className="text-sm font-medium capitalize">{detailItem.data.client_type}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <span className="text-xs text-muted-foreground">Status</span>
+                      <span className="text-sm font-medium capitalize">{detailItem.data.status}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
