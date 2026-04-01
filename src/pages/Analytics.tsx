@@ -10,7 +10,7 @@ import AgencyAnalytics from '@/components/analytics/AgencyAnalytics';
 import { BarChart3, GitBranch, FolderKanban, Briefcase, Building2 } from 'lucide-react';
 
 export type AnalyticsDetailItem = {
-  type: 'project' | 'candidate' | 'job' | 'agency' | 'conversion' | 'workflow' | 'phase';
+  type: 'project' | 'candidate' | 'job' | 'agency' | 'conversion' | 'workflow' | 'phase' | 'client';
   id?: string;
   data?: any;
   title: string;
