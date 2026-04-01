@@ -33,6 +33,7 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
   const { data: companies = [] } = useCompanies();
   const { data: agencies = [] } = useAgencies();
   const { data: candidates = [] } = useCandidatesList();
+  const { data: individualClients = [] } = useIndividualClients();
   const { data: projects = [] } = useProjects();
 
   const [form, setForm] = useState<CreateContractInput>({
