@@ -64,6 +64,9 @@ const Analytics = () => {
                   <TabsTrigger value="agencies" className="gap-1.5 text-sm">
                     <Building2 className="h-3.5 w-3.5" /> Agencies
                   </TabsTrigger>
+                  <TabsTrigger value="clients" className="gap-1.5 text-sm">
+                    <Handshake className="h-3.5 w-3.5" /> Clients
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="pipeline">
