@@ -7,10 +7,11 @@ import PipelineAnalytics from '@/components/analytics/PipelineAnalytics';
 import ProjectAnalytics from '@/components/analytics/ProjectAnalytics';
 import JobAnalytics from '@/components/analytics/JobAnalytics';
 import AgencyAnalytics from '@/components/analytics/AgencyAnalytics';
-import { BarChart3, GitBranch, FolderKanban, Briefcase, Building2 } from 'lucide-react';
+import { BarChart3, GitBranch, FolderKanban, Briefcase, Building2, Handshake } from 'lucide-react';
+import ClientAnalytics from '@/components/analytics/ClientAnalytics';
 
 export type AnalyticsDetailItem = {
-  type: 'project' | 'candidate' | 'job' | 'agency' | 'conversion' | 'workflow' | 'phase';
+  type: 'project' | 'candidate' | 'job' | 'agency' | 'conversion' | 'workflow' | 'phase' | 'client';
   id?: string;
   data?: any;
   title: string;
@@ -63,6 +64,9 @@ const Analytics = () => {
                   <TabsTrigger value="agencies" className="gap-1.5 text-sm">
                     <Building2 className="h-3.5 w-3.5" /> Agencies
                   </TabsTrigger>
+                  <TabsTrigger value="clients" className="gap-1.5 text-sm">
+                    <Handshake className="h-3.5 w-3.5" /> Clients
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="pipeline">
@@ -79,6 +83,10 @@ const Analytics = () => {
 
                 <TabsContent value="agencies">
                   <AgencyAnalytics onOpenDetail={openDetail} />
+                </TabsContent>
+
+                <TabsContent value="clients">
+                  <ClientAnalytics onOpenDetail={openDetail} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -116,6 +124,14 @@ const Analytics = () => {
                         onClick={() => navigate(`/candidates/${detailItem.id}?from=analytics`)}
                       >
                         Go to Candidate
+                      </button>
+                    )}
+                    {detailItem.type === 'client' && detailItem.id && (
+                      <button
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => navigate(`/clients/${detailItem.id}?from=analytics`)}
+                      >
+                        Go to Client
                       </button>
                     )}
                     <button
@@ -304,6 +320,29 @@ const Analytics = () => {
                         <p className="text-xl font-bold text-destructive">{detailItem.data.stalled_count || 0}</p>
                         <p className="text-xs text-muted-foreground">Stalled</p>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {detailItem.type === 'client' && detailItem.data && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-muted/50 rounded-lg text-center">
+                        <p className="text-xl font-bold">€{(detailItem.data.total_invoiced || 0).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Revenue</p>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg text-center">
+                        <p className="text-xl font-bold text-destructive">€{(detailItem.data.outstanding_amount || 0).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Outstanding</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <span className="text-xs text-muted-foreground">Type</span>
+                      <span className="text-sm font-medium capitalize">{detailItem.data.client_type}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <span className="text-xs text-muted-foreground">Status</span>
+                      <span className="text-sm font-medium capitalize">{detailItem.data.status}</span>
                     </div>
                   </div>
                 )}

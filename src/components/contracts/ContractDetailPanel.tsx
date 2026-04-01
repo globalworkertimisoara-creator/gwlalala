@@ -121,6 +121,11 @@ export function ContractDetailPanel({ contract, onClose }: ContractDetailPanelPr
           {expandedSections.details && (
             <div className="pb-3 space-y-2.5 text-sm">
               <DetailRow label="Party" value={partyName} sub={contract.party_type} />
+              {contract.party_type === 'individual' && (
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => navigate(`/clients/${contract.party_id}`)}>
+                  View Client
+                </Button>
+              )}
               <DetailRow label="Sales Person" value={salesName} />
               <DetailRow label="Value" value={contract.total_value ? `€${contract.total_value.toLocaleString()}` : '—'} />
               <DetailRow label="Start" value={contract.start_date ? format(new Date(contract.start_date), 'MMM d, yyyy') : '—'} />

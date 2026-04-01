@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useCreateContract } from '@/hooks/useContracts';
 import { useSalesStaff } from '@/hooks/useSalesCommissions';
-import { useCompanies, useAgencies, useCandidatesList } from '@/hooks/useContractParties';
+import { useCompanies, useAgencies, useCandidatesList, useIndividualClients } from '@/hooks/useContractParties';
 import { useProjects } from '@/hooks/useProjects';
 import ContractNumberInput from './ContractNumberInput';
 import { getContractPrefix } from '@/types/contract';
@@ -33,6 +33,7 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
   const { data: companies = [] } = useCompanies();
   const { data: agencies = [] } = useAgencies();
   const { data: candidates = [] } = useCandidatesList();
+  const { data: individualClients = [] } = useIndividualClients();
   const { data: projects = [] } = useProjects();
 
   const [form, setForm] = useState<CreateContractInput>({
@@ -54,9 +55,10 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
       case 'employer': return companies;
       case 'agency': return agencies;
       case 'worker': return candidates;
+      case 'individual': return individualClients;
       default: return [];
     }
-  }, [form.party_type, companies, agencies, candidates]);
+  }, [form.party_type, companies, agencies, candidates, individualClients]);
 
   const handleContractTypeChange = (type: string) => {
     setForm(p => ({ ...p, contract_type: type as any }));
@@ -108,6 +110,7 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
                   <SelectItem value="employer">Employer</SelectItem>
                   <SelectItem value="agency">Agency</SelectItem>
                   <SelectItem value="worker">Worker</SelectItem>
+                  <SelectItem value="individual">Individual</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -121,7 +124,7 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
           />
 
           <div>
-            <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : 'Worker'}</Label>
+            <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : form.party_type === 'individual' ? 'Individual' : 'Worker'}</Label>
             <Select value={form.party_id || 'none'} onValueChange={v => setForm(p => ({ ...p, party_id: v === 'none' ? '' : v }))}>
               <SelectTrigger><SelectValue placeholder={`Select ${form.party_type}`} /></SelectTrigger>
               <SelectContent>

@@ -114,6 +114,14 @@ export interface RolePermissions {
   uploadContractDocuments: boolean;
   approveContracts: boolean;
   changeContractStatus: boolean;
+
+  // Clients
+  viewClients: boolean;
+  createClients: boolean;
+  editClients: boolean;
+  deleteClients: boolean;
+  viewClientBilling: boolean;
+  manageClientBilling: boolean;
 }
 
 // ─── Contract permission defaults by role type ────────────────────────────────
@@ -147,6 +155,64 @@ const CONTRACT_SALES = {
   uploadContractDocuments: true,
   approveContracts: false,
   changeContractStatus: false,
+};
+
+// ─── Client permission defaults by role type ──────────────────────────────────
+const CLIENT_NONE = {
+  viewClients: false,
+  createClients: false,
+  editClients: false,
+  deleteClients: false,
+  viewClientBilling: false,
+  manageClientBilling: false,
+};
+const CLIENT_FULL = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: true,
+  viewClientBilling: true,
+  manageClientBilling: true,
+};
+const CLIENT_VIEW_EDIT = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: false,
+  viewClientBilling: false,
+  manageClientBilling: false,
+};
+const CLIENT_SALES_MANAGER = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: false,
+  viewClientBilling: true,
+  manageClientBilling: true,
+};
+const CLIENT_SALES_AGENT = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: false,
+  viewClientBilling: true,
+  manageClientBilling: false,
+};
+const CLIENT_OPS = {
+  viewClients: true,
+  createClients: true,
+  editClients: true,
+  deleteClients: false,
+  viewClientBilling: true,
+  manageClientBilling: false,
+};
+const CLIENT_PM = {
+  viewClients: true,
+  createClients: false,
+  editClients: false,
+  deleteClients: false,
+  viewClientBilling: false,
+  manageClientBilling: false,
 };
 
 // ─── Internal Staff Permissions ───────────────────────────────────────────────
@@ -216,6 +282,7 @@ const ADMIN_PERMISSIONS: RolePermissions = {
   approveOffers: true,
   viewSalesAnalytics: true,
   ...CONTRACT_FULL,
+  ...CLIENT_FULL,
 };
 
 const RECRUITER_PERMISSIONS: RolePermissions = {
@@ -283,6 +350,7 @@ const RECRUITER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_VIEW_ONLY,
+  ...CLIENT_VIEW_EDIT,
 };
 
 const OPERATIONS_MANAGER_PERMISSIONS: RolePermissions = {
@@ -350,6 +418,7 @@ const OPERATIONS_MANAGER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_FULL,
+  ...CLIENT_OPS,
 };
 
 const DOCUMENTATION_STAFF_PERMISSIONS: RolePermissions = {
@@ -417,6 +486,7 @@ const DOCUMENTATION_STAFF_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_VIEW_ONLY,
+  ...CLIENT_NONE,
 };
 
 // ─── Agency Team Permissions ──────────────────────────────────────────────────
@@ -486,6 +556,7 @@ const AGENCY_OWNER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_NONE,
 };
 
 const AGENCY_RECRUITER_PERMISSIONS: RolePermissions = {
@@ -553,6 +624,7 @@ const AGENCY_RECRUITER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_NONE,
 };
 
 const AGENCY_DOCUMENT_STAFF_PERMISSIONS: RolePermissions = {
@@ -620,6 +692,7 @@ const AGENCY_DOCUMENT_STAFF_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_NONE,
 };
 
 const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
@@ -687,6 +760,7 @@ const AGENCY_VIEWER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_NONE,
 };
 
 // ─── Documentation Lead Permissions ───────────────────────────────────────────
@@ -756,6 +830,7 @@ const DOCUMENTATION_LEAD_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: true,
   ...CONTRACT_VIEW_ONLY,
+  ...CLIENT_NONE,
 };
 
 // ─── Sales Manager Permissions ────────────────────────────────────────────────
@@ -825,6 +900,7 @@ const SALES_MANAGER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_SALES,
+  ...CLIENT_SALES_MANAGER,
 };
 
 // ─── Sales Agent Permissions ──────────────────────────────────────────────────
@@ -895,6 +971,7 @@ const SALES_AGENT_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: true,
   ...CONTRACT_SALES,
+  ...CLIENT_SALES_AGENT,
 };
 
 // ─── Project Manager Permissions ──────────────────────────────────────────────
@@ -965,6 +1042,7 @@ const PROJECT_MANAGER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_PM,
 };
 
 // ─── Employer Team Permissions ────────────────────────────────────────────────
@@ -1034,6 +1112,7 @@ const EMPLOYER_ADMIN_PERMISSIONS: RolePermissions = {
   approveOffers: true,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_NONE,
 };
 
 const EMPLOYER_HR_PERMISSIONS: RolePermissions = {
@@ -1101,6 +1180,7 @@ const EMPLOYER_HR_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_NONE,
 };
 
 const EMPLOYER_HIRING_MANAGER_PERMISSIONS: RolePermissions = {
@@ -1168,6 +1248,7 @@ const EMPLOYER_HIRING_MANAGER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_NONE,
 };
 
 const EMPLOYER_VIEWER_PERMISSIONS: RolePermissions = {
@@ -1235,6 +1316,7 @@ const EMPLOYER_VIEWER_PERMISSIONS: RolePermissions = {
   approveOffers: false,
   viewSalesAnalytics: false,
   ...CONTRACT_NONE,
+  ...CLIENT_NONE,
 };
 
 

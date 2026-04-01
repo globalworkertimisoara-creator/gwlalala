@@ -52,16 +52,34 @@ export function useCandidatesList() {
   });
 }
 
+/** Fetch individual clients for contract party selection */
+export function useIndividualClients() {
+  return useQuery({
+    queryKey: ['individual-clients-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, first_name, last_name')
+        .eq('client_type', 'individual')
+        .order('first_name');
+      if (error) throw error;
+      return (data ?? []).map((c) => ({ id: c.id, name: `${c.first_name || ''} ${c.last_name || ''}`.trim() })) as PartyOption[];
+    },
+  });
+}
+
 /** Build a lookup map from party_id -> name across all party types */
 export function usePartyNameLookup() {
   const { data: companies = [] } = useCompanies();
   const { data: agencies = [] } = useAgencies();
   const { data: candidates = [] } = useCandidatesList();
+  const { data: individualClients = [] } = useIndividualClients();
 
   const lookup = new Map<string, string>();
   for (const c of companies) lookup.set(c.id, c.name);
   for (const a of agencies) lookup.set(a.id, a.name);
   for (const c of candidates) lookup.set(c.id, c.name);
+  for (const ic of individualClients) lookup.set(ic.id, ic.name);
 
   return lookup;
 }
