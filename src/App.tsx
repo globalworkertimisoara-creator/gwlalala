@@ -46,6 +46,9 @@ import CreateJob from "./pages/CreateJob";
 import AdminAgencyContracts from "./pages/AdminAgencyContracts";
 import SalesAnalytics from "./pages/SalesAnalytics";
 import Reports from "./pages/Reports";
+import Clients from "./pages/Clients";
+import CreateClient from "./pages/CreateClient";
+import ClientDetail from "./pages/ClientDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -264,6 +267,22 @@ const App = () => (
             <Route path="/admin/agency-contracts" element={
               <ProtectedRoute>
                 <AdminAgencyContracts />
+              </ProtectedRoute>
+            } />
+            {/* Clients */}
+            <Route path="/clients" element={
+              <ProtectedRoute>
+                <Clients />
+              </ProtectedRoute>
+            } />
+            <Route path="/clients/new" element={
+              <ProtectedRoute>
+                <CreateClient />
+              </ProtectedRoute>
+            } />
+            <Route path="/clients/:id" element={
+              <ProtectedRoute>
+                <ClientDetail />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
