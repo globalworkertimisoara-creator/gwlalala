@@ -269,6 +269,22 @@ const App = () => (
                 <AdminAgencyContracts />
               </ProtectedRoute>
             } />
+            {/* Clients */}
+            <Route path="/clients" element={
+              <ProtectedRoute>
+                <Clients />
+              </ProtectedRoute>
+            } />
+            <Route path="/clients/new" element={
+              <ProtectedRoute>
+                <CreateClient />
+              </ProtectedRoute>
+            } />
+            <Route path="/clients/:id" element={
+              <ProtectedRoute>
+                <ClientDetail />
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
