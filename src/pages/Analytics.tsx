@@ -126,6 +126,13 @@ const Analytics = () => {
                         Go to Candidate
                       </button>
                     )}
+                    {detailItem.type === 'client' && detailItem.id && (
+                      <button
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => navigate(`/clients/${detailItem.id}?from=analytics`)}
+                      >
+                        Go to Client
+                      </button>
                     <button
                       className="text-xs text-muted-foreground hover:text-foreground"
                       onClick={closeDetail}
