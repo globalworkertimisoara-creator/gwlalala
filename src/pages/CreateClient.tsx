@@ -394,7 +394,7 @@ const CreateClient = () => {
                 </div>
                 <div>
                   <Label className="text-xs">Source</Label>
-                  <Select value={formData.source || ''} onValueChange={v => update('source', v)}>
+                  <Select value={formData.source || undefined} onValueChange={v => update('source', v)}>
                     <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="referral">Referral</SelectItem>
