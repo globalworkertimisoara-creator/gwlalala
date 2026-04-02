@@ -186,7 +186,7 @@ const CreateClient = () => {
   };
 
   const update = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
-  const isExistingClient = clientType === 'company' && formData.company_id && existingCompanyClients.includes(formData.company_id);
+  const isExistingClient = false; // Companies already linked are filtered out of the dropdown
 
   const companyFormValid = clientType === 'company' && (
     companyMode === 'existing'
