@@ -256,7 +256,7 @@ const CreateClient = () => {
                     <CardContent className="space-y-3">
                       <div>
                         <Label className="text-xs">Company *</Label>
-                        <Select value={formData.company_id || ''} onValueChange={handleCompanySelect}>
+                        <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
                           <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
                           <SelectContent>
                             {companies.map(c => (
@@ -286,7 +286,7 @@ const CreateClient = () => {
                         <div><Label className="text-xs">Industry</Label><Input maxLength={100} value={formData.industry || ''} onChange={e => update('industry', e.target.value)} className="h-9" /></div>
                         <div>
                           <Label className="text-xs">Company Size</Label>
-                          <Select value={formData.company_size || ''} onValueChange={v => update('company_size', v)}>
+                          <Select value={formData.company_size || undefined} onValueChange={v => update('company_size', v)}>
                             <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="1-10">1-10</SelectItem>
@@ -394,7 +394,7 @@ const CreateClient = () => {
                 </div>
                 <div>
                   <Label className="text-xs">Source</Label>
-                  <Select value={formData.source || ''} onValueChange={v => update('source', v)}>
+                  <Select value={formData.source || undefined} onValueChange={v => update('source', v)}>
                     <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="referral">Referral</SelectItem>
