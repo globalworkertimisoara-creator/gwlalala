@@ -260,7 +260,7 @@ const CreateClient = () => {
                             ))}
                           </SelectContent>
                         </Select>
-                        {isExistingClient && <p className="text-xs text-destructive mt-1">This company is already a client.</p>}
+                        
                         {formData.company_id && !isExistingClient && (
                           <Badge variant="outline" className="mt-2 text-[10px]">Editing will update the existing company record</Badge>
                         )}
