@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { escapePostgRESTFilter } from '@/lib/searchUtils';
 import type { ClientStatus, ClientType, ClientWithMetrics } from '@/types/client';
-import { getClientDisplayName } from '@/types/client';
+import { getClientDisplayName, isValidStatusTransition } from '@/types/client';
 
 interface ClientFilters {
   status?: ClientStatus;
