@@ -136,10 +136,10 @@ const CreateClient = () => {
                 <Card>
                   <CardHeader><CardTitle className="text-sm">Address</CardTitle></CardHeader>
                   <CardContent className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2"><Label className="text-xs">Address</Label><Input value={formData.address_line1 || ''} onChange={e => update('address_line1', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">City</Label><Input value={formData.city || ''} onChange={e => update('city', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Country</Label><Input value={formData.country || ''} onChange={e => update('country', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Postal Code</Label><Input value={formData.postal_code || ''} onChange={e => update('postal_code', e.target.value)} className="h-9" /></div>
+                    <div className="col-span-2"><Label className="text-xs">Address</Label><Input maxLength={500} value={formData.address_line1 || ''} onChange={e => update('address_line1', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">City</Label><Input maxLength={100} value={formData.city || ''} onChange={e => update('city', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Country</Label><Input maxLength={100} value={formData.country || ''} onChange={e => update('country', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Postal Code</Label><Input maxLength={20} value={formData.postal_code || ''} onChange={e => update('postal_code', e.target.value)} className="h-9" /></div>
                   </CardContent>
                 </Card>
                 <Card>
