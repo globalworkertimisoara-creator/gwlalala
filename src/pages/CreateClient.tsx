@@ -26,19 +26,19 @@ const CreateClient = () => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies-for-client-full'],
-    queryFn: async () => {
-      const { data } = await supabase.from('companies').select('*').order('company_name');
-      return data || [];
-    },
-  });
-
-  const { data: existingCompanyClients = [] } = useQuery({
-    queryKey: ['existing-company-clients'],
+  const { data: existingCompanyClientIds = [] } = useQuery({
+    queryKey: ['existing-company-client-ids'],
     queryFn: async () => {
       const { data } = await supabase.from('clients').select('company_id').eq('client_type', 'company').not('company_id', 'is', null);
       return (data || []).map(c => c.company_id);
+    },
+  });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies-for-client', existingCompanyClientIds],
+    queryFn: async () => {
+      const { data } = await supabase.from('companies').select('*').order('company_name');
+      return (data || []).filter(c => !existingCompanyClientIds.includes(c.id));
     },
   });
 
