@@ -145,9 +145,9 @@ const CreateClient = () => {
                 <Card>
                   <CardHeader><CardTitle className="text-sm">Billing Info</CardTitle></CardHeader>
                   <CardContent className="grid grid-cols-2 gap-3">
-                    <div><Label className="text-xs">Billing Name</Label><Input value={formData.billing_name || ''} onChange={e => update('billing_name', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Billing Email</Label><Input value={formData.billing_email || ''} onChange={e => update('billing_email', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Tax ID</Label><Input value={formData.tax_id || ''} onChange={e => update('tax_id', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Billing Name</Label><Input maxLength={200} value={formData.billing_name || ''} onChange={e => update('billing_name', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Billing Email</Label><Input maxLength={254} value={formData.billing_email || ''} onChange={e => update('billing_email', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Tax ID</Label><Input maxLength={50} value={formData.tax_id || ''} onChange={e => update('tax_id', e.target.value)} className="h-9" /></div>
                   </CardContent>
                 </Card>
               </>
