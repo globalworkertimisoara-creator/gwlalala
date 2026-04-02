@@ -25,7 +25,27 @@ export function useUploadClientDocument() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const filePath = `${clientId}/${Date.now()}_${file.name}`;
+      const ALLOWED_MIME_TYPES = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ];
+      const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.doc', '.docx'];
+      const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+      const fileExt = '.' + file.name.split('.').pop()?.toLowerCase();
+      if (!ALLOWED_MIME_TYPES.includes(file.type) || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+        throw new Error('FILE_TYPE_NOT_ALLOWED');
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error('FILE_TOO_LARGE');
+      }
+
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${user.id}/${clientId}/${Date.now()}_${sanitizedName}`;
       const { error: uploadError } = await supabase.storage
         .from('client-documents')
         .upload(filePath, file);
@@ -33,7 +53,7 @@ export function useUploadClientDocument() {
 
       const { error } = await supabase.from('client_documents').insert({
         client_id: clientId,
-        name: file.name,
+        name: sanitizedName,
         doc_type: docType,
         storage_path: filePath,
         file_size: file.size,
@@ -44,7 +64,7 @@ export function useUploadClientDocument() {
       await supabase.from('client_activity_log').insert({
         client_id: clientId,
         action: 'document_uploaded',
-        details: { file_name: file.name, doc_type: docType },
+        details: { file_name: sanitizedName, doc_type: docType },
         performed_by: user.id,
       });
     },
@@ -53,8 +73,14 @@ export function useUploadClientDocument() {
       queryClient.invalidateQueries({ queryKey: ['client-activity'] });
       toast({ title: 'Document uploaded successfully' });
     },
-    onError: () => {
-      toast({ title: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+    onError: (error: Error) => {
+      if (error.message === 'FILE_TYPE_NOT_ALLOWED') {
+        toast({ title: 'File type not allowed', description: 'Please upload PDF, image, or Word documents only.', variant: 'destructive' });
+      } else if (error.message === 'FILE_TOO_LARGE') {
+        toast({ title: 'File too large', description: 'Maximum file size is 10MB.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Upload failed', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+      }
     },
   });
 }

@@ -187,8 +187,12 @@ export function useUpdateClientStatus() {
       queryClient.invalidateQueries({ queryKey: ['client'] });
       toast({ title: 'Client status updated' });
     },
-    onError: () => {
-      toast({ title: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+    onError: (error: Error) => {
+      if (error.message === 'INVALID_STATUS_TRANSITION') {
+        toast({ title: 'Invalid status change', description: 'This status transition is not allowed.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Error', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+      }
     },
   });
 }

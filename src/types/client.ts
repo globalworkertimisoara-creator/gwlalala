@@ -122,3 +122,21 @@ export function getClientDisplayName(client: Client, companyName?: string): stri
   if (client.client_type === 'individual') return `${client.first_name || ''} ${client.last_name || ''}`.trim();
   return 'Unknown Client';
 }
+
+// Strip HTML tags from text inputs to prevent stored XSS
+export function sanitizeTextInput(value: string): string {
+  return value.replace(/<[^>]*>/g, '').trim();
+}
+
+// Valid status transitions — prevents arbitrary status jumps
+export const VALID_STATUS_TRANSITIONS: Record<ClientStatus, ClientStatus[]> = {
+  lead: ['active', 'inactive'],
+  active: ['on_hold', 'inactive', 'churned'],
+  on_hold: ['active', 'inactive', 'churned'],
+  inactive: ['active', 'lead'],
+  churned: ['lead'],
+};
+
+export function isValidStatusTransition(from: ClientStatus, to: ClientStatus): boolean {
+  return VALID_STATUS_TRANSITIONS[from]?.includes(to) ?? false;
+}

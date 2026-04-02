@@ -183,7 +183,7 @@ const CreateClient = () => {
                 </div>
                 <div className="col-span-2">
                   <Label className="text-xs">Notes</Label>
-                  <Textarea value={formData.notes || ''} onChange={e => update('notes', e.target.value)} rows={3} />
+                  <Textarea maxLength={5000} value={formData.notes || ''} onChange={e => update('notes', e.target.value)} rows={3} />
                 </div>
               </CardContent>
             </Card>
