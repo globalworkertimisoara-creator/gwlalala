@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { sanitizeTextInput } from '@/types/client';
 
 export function useClientNotes(clientId: string) {
   return useQuery({
@@ -24,9 +25,13 @@ export function useCreateClientNote() {
     mutationFn: async ({ clientId, content }: { clientId: string; content: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      const sanitizedContent = sanitizeTextInput(content);
+      if (!sanitizedContent) throw new Error('Note content cannot be empty');
+
       const { error } = await supabase.from('client_notes').insert({
         client_id: clientId,
-        content,
+        content: sanitizedContent,
         created_by: user.id,
       });
       if (error) throw error;

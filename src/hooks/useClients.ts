@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { escapePostgRESTFilter } from '@/lib/searchUtils';
 import type { ClientStatus, ClientType, ClientWithMetrics } from '@/types/client';
-import { getClientDisplayName } from '@/types/client';
+import { getClientDisplayName, isValidStatusTransition } from '@/types/client';
 
 interface ClientFilters {
   status?: ClientStatus;
@@ -147,7 +147,7 @@ export function useDeleteClient() {
     mutationFn: async (id: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      const { error } = await supabase.from('clients').delete().eq('id', id);
+      const { error } = await supabase.from('clients').delete().eq('id', id).eq('created_by', user.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -167,14 +167,18 @@ export function useUpdateClientStatus() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: oldClient } = await supabase.from('clients').select('status').eq('id', id).single();
+      const { data: currentClient } = await supabase.from('clients').select('status').eq('id', id).single();
+      if (!currentClient || !isValidStatusTransition(currentClient.status as ClientStatus, status)) {
+        throw new Error('INVALID_STATUS_TRANSITION');
+      }
+
       const { error } = await supabase.from('clients').update({ status }).eq('id', id);
       if (error) throw error;
 
       await supabase.from('client_activity_log').insert({
         client_id: id,
         action: 'status_changed',
-        details: { old_status: oldClient?.status, new_status: status },
+        details: { old_status: currentClient?.status, new_status: status },
         performed_by: user.id,
       });
     },
@@ -183,8 +187,12 @@ export function useUpdateClientStatus() {
       queryClient.invalidateQueries({ queryKey: ['client'] });
       toast({ title: 'Client status updated' });
     },
-    onError: () => {
-      toast({ title: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+    onError: (error: Error) => {
+      if (error.message === 'INVALID_STATUS_TRANSITION') {
+        toast({ title: 'Invalid status change', description: 'This status transition is not allowed.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Error', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+      }
     },
   });
 }

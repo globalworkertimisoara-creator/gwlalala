@@ -55,6 +55,15 @@ export function useUnlinkClientFromProject() {
     mutationFn: async ({ clientId, projectId }: { clientId: string; projectId: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      // Verify the user has access to this client (defense-in-depth — RLS also enforces this)
+      const { data: clientCheck } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('id', clientId)
+        .single();
+      if (!clientCheck) throw new Error('Client not found or access denied');
+
       const { error } = await supabase
         .from('client_projects')
         .delete()

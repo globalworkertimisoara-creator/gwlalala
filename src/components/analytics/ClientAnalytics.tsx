@@ -12,6 +12,7 @@ import {
   useTopClients,
 } from '@/hooks/useClientAnalytics';
 import { useClients } from '@/hooks/useClients';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Handshake, TrendingUp, DollarSign, AlertTriangle } from 'lucide-react';
 import type { AnalyticsDetailItem } from '@/pages/Analytics';
 
@@ -33,11 +34,16 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function ClientAnalytics({ onOpenDetail }: ClientAnalyticsProps) {
+  const { can } = usePermissions();
   const { data: byStatus = [] } = useClientsByStatus();
   const { data: allClients = [] } = useClients();
   const { data: revenueByClient = [] } = useClientRevenueByClient();
   const { data: acquisitionTrend = [] } = useClientAcquisitionTrend();
   const { data: topClients = [] } = useTopClients(20);
+
+  if (!can('viewClients')) {
+    return null;
+  }
 
   const totalClients = allClients.length;
   const activeClients = allClients.filter(c => c.status === 'active').length;

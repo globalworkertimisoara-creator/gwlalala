@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeTextInput } from '@/types/client';
 
 export function useClientActivityLog(clientId: string) {
   return useQuery({
@@ -23,9 +24,10 @@ export function useLogClientActivity() {
     mutationFn: async ({ clientId, action, details }: { clientId: string; action: string; details?: Record<string, any> }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      const sanitizedAction = sanitizeTextInput(action);
       const { error } = await supabase.from('client_activity_log').insert({
         client_id: clientId,
-        action,
+        action: sanitizedAction,
         details: details || null,
         performed_by: user.id,
       });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -29,9 +29,20 @@ const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: client, isLoading } = useClient(id!);
+
+  // Validate UUID format
+  const isValidUUID = id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+  useEffect(() => {
+    if (!isValidUUID) {
+      navigate('/clients', { replace: true });
+    }
+  }, [isValidUUID, navigate]);
+
+  const { data: client, isLoading } = useClient(isValidUUID ? id! : '');
   const updateStatus = useUpdateClientStatus();
 
+  if (!isValidUUID) return null;
   if (isLoading) return <AppLayout><div className="p-6 text-muted-foreground">Loading...</div></AppLayout>;
   if (!client) return <AppLayout><div className="p-6 text-muted-foreground">Client not found</div></AppLayout>;
 
