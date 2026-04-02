@@ -256,7 +256,7 @@ const CreateClient = () => {
                     <CardContent className="space-y-3">
                       <div>
                         <Label className="text-xs">Company *</Label>
-                        <Select value={formData.company_id || ''} onValueChange={handleCompanySelect}>
+                        <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
                           <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
                           <SelectContent>
                             {companies.map(c => (
