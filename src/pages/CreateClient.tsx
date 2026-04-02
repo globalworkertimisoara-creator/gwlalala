@@ -26,19 +26,19 @@ const CreateClient = () => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies-for-client-full'],
-    queryFn: async () => {
-      const { data } = await supabase.from('companies').select('*').order('company_name');
-      return data || [];
-    },
-  });
-
-  const { data: existingCompanyClients = [] } = useQuery({
-    queryKey: ['existing-company-clients'],
+  const { data: existingCompanyClientIds = [] } = useQuery({
+    queryKey: ['existing-company-client-ids'],
     queryFn: async () => {
       const { data } = await supabase.from('clients').select('company_id').eq('client_type', 'company').not('company_id', 'is', null);
       return (data || []).map(c => c.company_id);
+    },
+  });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies-for-client', existingCompanyClientIds],
+    queryFn: async () => {
+      const { data } = await supabase.from('companies').select('*').order('company_name');
+      return (data || []).filter(c => !existingCompanyClientIds.includes(c.id));
     },
   });
 
@@ -186,11 +186,17 @@ const CreateClient = () => {
   };
 
   const update = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
-  const isExistingClient = clientType === 'company' && formData.company_id && existingCompanyClients.includes(formData.company_id);
+  const isExistingClient = false; // Companies already linked are filtered out of the dropdown
 
-  const companyFormValid = clientType === 'company' && (
+  const isValidUrl = (url: string) => !url || /^https?:\/\//.test(url);
+  const isValidEmail = (email: string) => !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const companyUrlsValid = isValidUrl(formData.website || '') && isValidUrl(formData.linkedin_url || '');
+  const companyEmailsValid = isValidEmail(formData.primary_contact_email || '') && isValidEmail(formData.billing_contact_email || '');
+
+  const companyFormValid = clientType === 'company' && companyUrlsValid && companyEmailsValid && (
     companyMode === 'existing'
-      ? !!formData.company_id && !isExistingClient
+      ? !!formData.company_id
       : !!(formData.company_name && formData.primary_contact_name && formData.primary_contact_email && formData.headquarters_country)
   );
   const individualFormValid = clientType === 'individual' && !!(formData.first_name && formData.last_name && formData.email);
@@ -260,7 +266,7 @@ const CreateClient = () => {
                             ))}
                           </SelectContent>
                         </Select>
-                        {isExistingClient && <p className="text-xs text-destructive mt-1">This company is already a client.</p>}
+                        
                         {formData.company_id && !isExistingClient && (
                           <Badge variant="outline" className="mt-2 text-[10px]">Editing will update the existing company record</Badge>
                         )}
