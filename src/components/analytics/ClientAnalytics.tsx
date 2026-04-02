@@ -35,16 +35,15 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function ClientAnalytics({ onOpenDetail }: ClientAnalyticsProps) {
   const { can } = usePermissions();
-
-  if (!can('viewClients')) {
-    return null;
-  }
-
   const { data: byStatus = [] } = useClientsByStatus();
   const { data: allClients = [] } = useClients();
   const { data: revenueByClient = [] } = useClientRevenueByClient();
   const { data: acquisitionTrend = [] } = useClientAcquisitionTrend();
   const { data: topClients = [] } = useTopClients(20);
+
+  if (!can('viewClients')) {
+    return null;
+  }
 
   const totalClients = allClients.length;
   const activeClients = allClients.filter(c => c.status === 'active').length;
