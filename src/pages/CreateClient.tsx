@@ -286,7 +286,7 @@ const CreateClient = () => {
                         <div><Label className="text-xs">Industry</Label><Input maxLength={100} value={formData.industry || ''} onChange={e => update('industry', e.target.value)} className="h-9" /></div>
                         <div>
                           <Label className="text-xs">Company Size</Label>
-                          <Select value={formData.company_size || ''} onValueChange={v => update('company_size', v)}>
+                          <Select value={formData.company_size || undefined} onValueChange={v => update('company_size', v)}>
                             <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="1-10">1-10</SelectItem>
