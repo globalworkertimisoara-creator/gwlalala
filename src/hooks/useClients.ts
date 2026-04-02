@@ -178,7 +178,7 @@ export function useUpdateClientStatus() {
       await supabase.from('client_activity_log').insert({
         client_id: id,
         action: 'status_changed',
-        details: { old_status: oldClient?.status, new_status: status },
+        details: { old_status: currentClient?.status, new_status: status },
         performed_by: user.id,
       });
     },
