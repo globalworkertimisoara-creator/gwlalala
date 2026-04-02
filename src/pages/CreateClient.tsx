@@ -188,9 +188,15 @@ const CreateClient = () => {
   const update = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
   const isExistingClient = false; // Companies already linked are filtered out of the dropdown
 
-  const companyFormValid = clientType === 'company' && (
+  const isValidUrl = (url: string) => !url || /^https?:\/\//.test(url);
+  const isValidEmail = (email: string) => !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const companyUrlsValid = isValidUrl(formData.website || '') && isValidUrl(formData.linkedin_url || '');
+  const companyEmailsValid = isValidEmail(formData.primary_contact_email || '') && isValidEmail(formData.billing_contact_email || '');
+
+  const companyFormValid = clientType === 'company' && companyUrlsValid && companyEmailsValid && (
     companyMode === 'existing'
-      ? !!formData.company_id && !isExistingClient
+      ? !!formData.company_id
       : !!(formData.company_name && formData.primary_contact_name && formData.primary_contact_email && formData.headquarters_country)
   );
   const individualFormValid = clientType === 'individual' && !!(formData.first_name && formData.last_name && formData.email);
