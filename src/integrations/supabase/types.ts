@@ -767,6 +767,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "billing_records_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "billing_records_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
@@ -852,6 +859,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "candidate_activity_log_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "candidate_activity_log_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -903,6 +917,13 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_education_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
             referencedColumns: ["id"]
           },
         ]
@@ -971,6 +992,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "candidate_interviews_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "candidate_interviews_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -1027,6 +1055,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "candidate_job_links_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "candidate_job_links_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
@@ -1070,6 +1105,13 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_languages_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
             referencedColumns: ["id"]
           },
         ]
@@ -1147,6 +1189,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "candidate_offers_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "candidate_offers_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -1208,6 +1257,13 @@ export type Database = {
             referencedRelation: "candidates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "candidate_references_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       candidate_skills: {
@@ -1238,6 +1294,13 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_skills_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
             referencedColumns: ["id"]
           },
         ]
@@ -1288,6 +1351,13 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_work_experience_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
             referencedColumns: ["id"]
           },
         ]
@@ -1344,6 +1414,13 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_workflow_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
             referencedColumns: ["id"]
           },
           {
@@ -2463,6 +2540,13 @@ export type Database = {
             referencedRelation: "candidates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "documents_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       employer_activity_log: {
@@ -2543,6 +2627,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "employer_candidate_audit_log_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "employer_candidate_audit_log_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -2582,6 +2673,13 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_notes_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
             referencedColumns: ["id"]
           },
           {
@@ -2724,6 +2822,13 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalations_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
             referencedColumns: ["id"]
           },
           {
@@ -2900,6 +3005,13 @@ export type Database = {
             columns: ["candidate_id"]
             isOneToOne: false
             referencedRelation: "candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
             referencedColumns: ["id"]
           },
         ]
@@ -3376,6 +3488,13 @@ export type Database = {
             referencedRelation: "candidates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stage_history_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "v_candidates_for_employers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       storage_metadata: {
@@ -3745,6 +3864,67 @@ export type Database = {
           success_rate: number | null
           successful_placements: number | null
           total_candidates_submitted: number | null
+        }
+        Relationships: []
+      }
+      v_candidates_for_employers: {
+        Row: {
+          created_at: string | null
+          current_city: string | null
+          current_country: string | null
+          current_stage: Database["public"]["Enums"]["recruitment_stage"] | null
+          date_of_birth: string | null
+          email: string | null
+          expected_start_date: string | null
+          full_name: string | null
+          gender: string | null
+          id: string | null
+          linkedin: string | null
+          nationality: string | null
+          phone: string | null
+          profile_photo_url: string | null
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_city?: string | null
+          current_country?: string | null
+          current_stage?:
+            | Database["public"]["Enums"]["recruitment_stage"]
+            | null
+          date_of_birth?: string | null
+          email?: string | null
+          expected_start_date?: string | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string | null
+          linkedin?: string | null
+          nationality?: string | null
+          phone?: string | null
+          profile_photo_url?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_city?: string | null
+          current_country?: string | null
+          current_stage?:
+            | Database["public"]["Enums"]["recruitment_stage"]
+            | null
+          date_of_birth?: string | null
+          email?: string | null
+          expected_start_date?: string | null
+          full_name?: string | null
+          gender?: string | null
+          id?: string | null
+          linkedin?: string | null
+          nationality?: string | null
+          phone?: string | null
+          profile_photo_url?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
