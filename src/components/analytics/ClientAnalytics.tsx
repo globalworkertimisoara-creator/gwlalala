@@ -12,6 +12,7 @@ import {
   useTopClients,
 } from '@/hooks/useClientAnalytics';
 import { useClients } from '@/hooks/useClients';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Handshake, TrendingUp, DollarSign, AlertTriangle } from 'lucide-react';
 import type { AnalyticsDetailItem } from '@/pages/Analytics';
 
