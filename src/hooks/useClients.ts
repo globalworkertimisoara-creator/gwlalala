@@ -167,7 +167,11 @@ export function useUpdateClientStatus() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: oldClient } = await supabase.from('clients').select('status').eq('id', id).single();
+      const { data: currentClient } = await supabase.from('clients').select('status').eq('id', id).single();
+      if (!currentClient || !isValidStatusTransition(currentClient.status as ClientStatus, status)) {
+        throw new Error('INVALID_STATUS_TRANSITION');
+      }
+
       const { error } = await supabase.from('clients').update({ status }).eq('id', id);
       if (error) throw error;
 
