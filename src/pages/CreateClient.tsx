@@ -125,12 +125,12 @@ const CreateClient = () => {
                 <Card>
                   <CardHeader><CardTitle className="text-sm">Personal Info</CardTitle></CardHeader>
                   <CardContent className="grid grid-cols-2 gap-3">
-                    <div><Label className="text-xs">First Name *</Label><Input value={formData.first_name || ''} onChange={e => update('first_name', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Last Name *</Label><Input value={formData.last_name || ''} onChange={e => update('last_name', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Email *</Label><Input type="email" value={formData.email || ''} onChange={e => update('email', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Phone</Label><Input value={formData.phone || ''} onChange={e => update('phone', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">First Name *</Label><Input maxLength={100} value={formData.first_name || ''} onChange={e => update('first_name', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Last Name *</Label><Input maxLength={100} value={formData.last_name || ''} onChange={e => update('last_name', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Email *</Label><Input maxLength={254} type="email" value={formData.email || ''} onChange={e => update('email', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Phone</Label><Input maxLength={20} value={formData.phone || ''} onChange={e => update('phone', e.target.value)} className="h-9" /></div>
                     <div><Label className="text-xs">Date of Birth</Label><Input type="date" value={formData.date_of_birth || ''} onChange={e => update('date_of_birth', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Nationality</Label><Input value={formData.nationality || ''} onChange={e => update('nationality', e.target.value)} className="h-9" /></div>
+                    <div><Label className="text-xs">Nationality</Label><Input maxLength={100} value={formData.nationality || ''} onChange={e => update('nationality', e.target.value)} className="h-9" /></div>
                   </CardContent>
                 </Card>
                 <Card>
