@@ -140,6 +140,7 @@ const isValidUrl = (url: string) => !url || /^https?:\/\//.test(url);
 const isValidEmail = (email: string) => !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 function OverviewTab({ client, companyData }: { client: any; companyData: any }) {
+  const { can } = usePermissions();
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editData, setEditData] = useState<Record<string, any>>({});
   const updateClient = useUpdateClient();
