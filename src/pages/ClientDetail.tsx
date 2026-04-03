@@ -167,20 +167,24 @@ function OverviewTab({ client, companyData }: { client: any; companyData: any })
       if (editData[field] && !isValidUrl(editData[field])) return;
     }
 
+    // Sanitize all text fields before saving
+    const sanitizedData: Record<string, any> = {};
+    for (const [key, value] of Object.entries(editData)) {
+      sanitizedData[key] = typeof value === 'string' ? sanitizeTextInput(value) : value;
+    }
+
     if (client.client_type === 'company' && companyData) {
-      // Company sections update the companies table
       const companySections = ['contact', 'company_details', 'address', 'hr', 'billing_contact'];
       if (companySections.includes(section)) {
         updateCompany.mutate(
-          { id: companyData.id, clientId: client.id, ...editData },
+          { id: companyData.id, clientId: client.id, ...sanitizedData },
           { onSuccess: () => setEditingSection(null) }
         );
         return;
       }
     }
-    // Individual client or client-level fields
     updateClient.mutate(
-      { id: client.id, ...editData },
+      { id: client.id, ...sanitizedData },
       { onSuccess: () => setEditingSection(null) }
     );
   };
