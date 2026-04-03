@@ -27,6 +27,8 @@ import {
 import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { useCreateProject } from '@/hooks/useProjects';
 import { useLinkContractToProject } from '@/hooks/useContracts';
+import { useClients } from '@/hooks/useClients';
+import { useLinkClientToProject } from '@/hooks/useClientProjects';
 import { PROJECT_STATUS_CONFIG, WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
 
 const formSchema = z.object({
