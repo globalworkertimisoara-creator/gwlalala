@@ -27,11 +27,14 @@ import {
 import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { useCreateProject } from '@/hooks/useProjects';
 import { useLinkContractToProject } from '@/hooks/useContracts';
+import { useClients } from '@/hooks/useClients';
+import { useLinkClientToProject } from '@/hooks/useClientProjects';
 import { PROJECT_STATUS_CONFIG, WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
 
 const formSchema = z.object({
+  client_id: z.string().min(1, 'Client is required'),
   name: z.string().min(1, 'Project name is required'),
-  employer_name: z.string().min(1, 'Employer name is required'),
+  employer_name: z.string().default(''),
   location: z.string().min(1, 'Location is required'),
   sales_person_name: z.string().optional(),
   status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled']).default('draft'),
@@ -49,12 +52,15 @@ export default function CreateProject() {
 
   const createProject = useCreateProject();
   const linkContract = useLinkContractToProject();
+  const { data: clients = [] } = useClients();
+  const linkClientToProject = useLinkClientToProject();
   const [countries, setCountries] = useState<string[]>([]);
   const [countryInput, setCountryInput] = useState('');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      client_id: '',
       name: '',
       employer_name: '',
       location: '',
@@ -90,9 +96,19 @@ export default function CreateProject() {
       contract_signed_at: values.contract_signed_at || undefined,
     });
 
-    // Auto-link contract if came from contract creation flow
-    if (contractId && project?.id) {
-      await linkContract.mutateAsync({ contractId, projectId: project.id });
+    if (project?.id) {
+      // Link client to project
+      if (values.client_id) {
+        await linkClientToProject.mutateAsync({
+          clientId: values.client_id,
+          projectId: project.id,
+        });
+      }
+
+      // Auto-link contract if came from contract creation flow
+      if (contractId) {
+        await linkContract.mutateAsync({ contractId, projectId: project.id });
+      }
     }
 
     navigate(`/projects/${project?.id || ''}`);
@@ -125,6 +141,43 @@ export default function CreateProject() {
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client *</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          const selected = clients.find(c => c.id === value);
+                          if (selected) {
+                            form.setValue('employer_name', selected.display_name);
+                          }
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a client..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clients.length === 0 ? (
+                            <SelectItem value="__empty" disabled>No clients found — create a client first</SelectItem>
+                          ) : (
+                            clients.map(client => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.display_name} ({client.client_type === 'company' ? 'Company' : 'Individual'})
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
@@ -142,10 +195,18 @@ export default function CreateProject() {
                     name="employer_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Employer Name *</FormLabel>
+                        <FormLabel>Employer Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., ABC Construction Ltd" {...field} />
+                          <Input
+                            placeholder="Auto-filled from client selection"
+                            {...field}
+                            disabled={!!form.watch('client_id')}
+                            className={form.watch('client_id') ? 'bg-muted' : ''}
+                          />
                         </FormControl>
+                        <p className="text-xs text-muted-foreground">
+                          {form.watch('client_id') ? 'Auto-filled from selected client' : 'Select a client above to auto-fill'}
+                        </p>
                         <FormMessage />
                       </FormItem>
                     )}
