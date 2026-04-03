@@ -60,6 +60,7 @@ export default function CreateProject() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      client_id: '',
       name: '',
       employer_name: '',
       location: '',
