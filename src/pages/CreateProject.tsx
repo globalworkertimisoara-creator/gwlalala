@@ -32,8 +32,9 @@ import { useLinkClientToProject } from '@/hooks/useClientProjects';
 import { PROJECT_STATUS_CONFIG, WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
 
 const formSchema = z.object({
+  client_id: z.string().min(1, 'Client is required'),
   name: z.string().min(1, 'Project name is required'),
-  employer_name: z.string().min(1, 'Employer name is required'),
+  employer_name: z.string().default(''),
   location: z.string().min(1, 'Location is required'),
   sales_person_name: z.string().optional(),
   status: z.enum(['draft', 'active', 'on_hold', 'completed', 'cancelled']).default('draft'),
