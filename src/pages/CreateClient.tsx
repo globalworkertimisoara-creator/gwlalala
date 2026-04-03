@@ -113,10 +113,10 @@ const CreateClient = () => {
   });
 
   const { data: companies = [] } = useQuery({
-    queryKey: ['companies-for-client', existingCompanyClientIds],
+    queryKey: ['companies-for-client'],
     queryFn: async () => {
       const { data } = await supabase.from('companies').select('*').order('company_name');
-      return (data || []).filter(c => !existingCompanyClientIds.includes(c.id));
+      return data || [];
     },
     enabled: !isEditMode,
   });
@@ -291,6 +291,24 @@ const CreateClient = () => {
               billing_contact_email: formData.billing_contact_email || null,
             })
             .eq('id', formData.company_id);
+
+          // Check if this company already has a client record
+          if (existingCompanyClientIds.includes(formData.company_id)) {
+            const { data: existingClientRecord } = await supabase
+              .from('clients')
+              .select('id')
+              .eq('company_id', formData.company_id)
+              .eq('client_type', 'company')
+              .single();
+
+            if (existingClientRecord) {
+              toast({ title: 'Company details updated', description: 'Redirecting to existing client record.' });
+              navigate(`/clients/${existingClientRecord.id}`);
+              setSubmitting(false);
+              return;
+            }
+          }
+
           companyId = formData.company_id;
         } else {
           return;
@@ -413,31 +431,39 @@ const CreateClient = () => {
                         <Label className="text-xs">Company *</Label>
                         {companies.length === 0 ? (
                           <div className="rounded-md border border-dashed p-4 text-center space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                              No available companies found. All existing companies are already clients.
-                            </p>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => { setCompanyMode('new'); setFormData({}); }}
-                              className="gap-1.5"
-                            >
-                              <PlusCircle className="h-3.5 w-3.5" />
-                              Create New Company
+                            <p className="text-sm text-muted-foreground">No companies found in the system.</p>
+                            <Button type="button" variant="outline" size="sm" onClick={() => { setCompanyMode('new'); setFormData({}); }} className="gap-1.5">
+                              <PlusCircle className="h-3.5 w-3.5" /> Create New Company
                             </Button>
                           </div>
                         ) : (
-                          <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
-                            <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
-                            <SelectContent>
-                              {companies.map(c => (
-                                <SelectItem key={c.id} value={c.id}>
-                                  {c.company_name} — {c.headquarters_city || 'N/A'}, {c.headquarters_country || 'N/A'}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <>
+                            <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
+                              <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
+                              <SelectContent>
+                                {companies.map(c => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    <span className="flex items-center gap-2">
+                                      {c.company_name} — {c.headquarters_city || 'N/A'}, {c.headquarters_country || 'N/A'}
+                                      {existingCompanyClientIds.includes(c.id) && (
+                                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Has client</span>
+                                      )}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {formData.company_id && existingCompanyClientIds.includes(formData.company_id) && (
+                              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 mt-2">
+                                <p className="text-xs text-amber-800">
+                                  This company already has a client record. You can still update its details below. Creating a new client will be skipped — you'll be redirected to the existing client instead.
+                                </p>
+                              </div>
+                            )}
+                            {formData.company_id && !existingCompanyClientIds.includes(formData.company_id) && (
+                              <Badge variant="outline" className="mt-2 text-[10px]">A new client record will be created for this company</Badge>
+                            )}
+                          </>
                         )}
 
                         {formData.company_id && (
