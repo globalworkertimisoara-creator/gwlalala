@@ -196,11 +196,14 @@ function OverviewTab({ client, companyData }: { client: any; companyData: any })
     </div>
   );
 
-  const EditButton = ({ section, data }: { section: string; data: Record<string, any> }) => (
-    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(section, data)}>
-      <Pencil className="h-3.5 w-3.5" />
-    </Button>
-  );
+  const EditButton = ({ section, data }: { section: string; data: Record<string, any> }) => {
+    if (!can('editClients')) return null;
+    return (
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(section, data)}>
+        <Pencil className="h-3.5 w-3.5" />
+      </Button>
+    );
+  };
 
   if (client.client_type === 'company' && companyData) {
     return (
