@@ -141,6 +141,39 @@ export function useUpdateClient() {
   });
 }
 
+export function useUpdateCompany() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, clientId, ...updates }: { id: string; clientId: string } & Record<string, any>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const sanitized: Record<string, any> = {};
+      for (const [key, value] of Object.entries(updates)) {
+        sanitized[key] = typeof value === 'string' ? sanitizeTextInput(value) : value;
+      }
+
+      const { error } = await supabase.from('companies').update(sanitized).eq('id', id);
+      if (error) throw error;
+
+      await supabase.from('client_activity_log').insert({
+        client_id: clientId,
+        action: 'company_updated',
+        details: { fields_updated: Object.keys(updates) },
+        performed_by: user.id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['client'] });
+      toast({ title: 'Company details updated' });
+    },
+    onError: () => {
+      toast({ title: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+    },
+  });
+}
+
 export function useDeleteClient() {
   const queryClient = useQueryClient();
   return useMutation({
