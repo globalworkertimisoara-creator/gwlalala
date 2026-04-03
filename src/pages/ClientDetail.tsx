@@ -20,6 +20,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useDropzone } from 'react-dropzone';
@@ -140,6 +141,7 @@ const isValidUrl = (url: string) => !url || /^https?:\/\//.test(url);
 const isValidEmail = (email: string) => !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 function OverviewTab({ client, companyData }: { client: any; companyData: any }) {
+  const { can } = usePermissions();
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editData, setEditData] = useState<Record<string, any>>({});
   const updateClient = useUpdateClient();
@@ -166,20 +168,24 @@ function OverviewTab({ client, companyData }: { client: any; companyData: any })
       if (editData[field] && !isValidUrl(editData[field])) return;
     }
 
+    // Sanitize all text fields before saving
+    const sanitizedData: Record<string, any> = {};
+    for (const [key, value] of Object.entries(editData)) {
+      sanitizedData[key] = typeof value === 'string' ? sanitizeTextInput(value) : value;
+    }
+
     if (client.client_type === 'company' && companyData) {
-      // Company sections update the companies table
       const companySections = ['contact', 'company_details', 'address', 'hr', 'billing_contact'];
       if (companySections.includes(section)) {
         updateCompany.mutate(
-          { id: companyData.id, clientId: client.id, ...editData },
+          { id: companyData.id, clientId: client.id, ...sanitizedData },
           { onSuccess: () => setEditingSection(null) }
         );
         return;
       }
     }
-    // Individual client or client-level fields
     updateClient.mutate(
-      { id: client.id, ...editData },
+      { id: client.id, ...sanitizedData },
       { onSuccess: () => setEditingSection(null) }
     );
   };
@@ -191,11 +197,14 @@ function OverviewTab({ client, companyData }: { client: any; companyData: any })
     </div>
   );
 
-  const EditButton = ({ section, data }: { section: string; data: Record<string, any> }) => (
-    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(section, data)}>
-      <Pencil className="h-3.5 w-3.5" />
-    </Button>
-  );
+  const EditButton = ({ section, data }: { section: string; data: Record<string, any> }) => {
+    if (!can('editClients')) return null;
+    return (
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(section, data)}>
+        <Pencil className="h-3.5 w-3.5" />
+      </Button>
+    );
+  };
 
   if (client.client_type === 'company' && companyData) {
     return (
