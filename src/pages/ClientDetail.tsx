@@ -854,6 +854,7 @@ function NotesTab({ clientId, userId }: { clientId: string; userId?: string }) {
           placeholder="Add a note about this client..."
           value={noteContent}
           onChange={e => setNoteContent(e.target.value)}
+          maxLength={5000}
           rows={2}
           className="flex-1"
         />
