@@ -96,9 +96,19 @@ export default function CreateProject() {
       contract_signed_at: values.contract_signed_at || undefined,
     });
 
-    // Auto-link contract if came from contract creation flow
-    if (contractId && project?.id) {
-      await linkContract.mutateAsync({ contractId, projectId: project.id });
+    if (project?.id) {
+      // Link client to project
+      if (values.client_id) {
+        await linkClientToProject.mutateAsync({
+          clientId: values.client_id,
+          projectId: project.id,
+        });
+      }
+
+      // Auto-link contract if came from contract creation flow
+      if (contractId) {
+        await linkContract.mutateAsync({ contractId, projectId: project.id });
+      }
     }
 
     navigate(`/projects/${project?.id || ''}`);
