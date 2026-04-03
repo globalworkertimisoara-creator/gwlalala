@@ -411,16 +411,34 @@ const CreateClient = () => {
                     <CardContent className="space-y-3">
                       <div>
                         <Label className="text-xs">Company *</Label>
-                        <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
-                          <SelectContent>
-                            {companies.map(c => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.company_name} — {c.headquarters_city}, {c.headquarters_country}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {companies.length === 0 ? (
+                          <div className="rounded-md border border-dashed p-4 text-center space-y-2">
+                            <p className="text-sm text-muted-foreground">
+                              No available companies found. All existing companies are already clients.
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => { setCompanyMode('new'); setFormData({}); }}
+                              className="gap-1.5"
+                            >
+                              <PlusCircle className="h-3.5 w-3.5" />
+                              Create New Company
+                            </Button>
+                          </div>
+                        ) : (
+                          <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
+                            <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
+                            <SelectContent>
+                              {companies.map(c => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.company_name} — {c.headquarters_city || 'N/A'}, {c.headquarters_country || 'N/A'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
 
                         {formData.company_id && (
                           <Badge variant="outline" className="mt-2 text-[10px]">Editing will update the existing company record</Badge>
