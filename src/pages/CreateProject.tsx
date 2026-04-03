@@ -52,6 +52,8 @@ export default function CreateProject() {
 
   const createProject = useCreateProject();
   const linkContract = useLinkContractToProject();
+  const { data: clients = [] } = useClients();
+  const linkClientToProject = useLinkClientToProject();
   const [countries, setCountries] = useState<string[]>([]);
   const [countryInput, setCountryInput] = useState('');
 
