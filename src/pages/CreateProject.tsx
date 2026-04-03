@@ -28,6 +28,7 @@ import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { useCreateProject } from '@/hooks/useProjects';
 import { useLinkContractToProject } from '@/hooks/useContracts';
 import { useClients } from '@/hooks/useClients';
+import { sanitizeTextInput } from '@/types/client';
 import { useLinkClientToProject } from '@/hooks/useClientProjects';
 import { PROJECT_STATUS_CONFIG, WORKFLOW_TYPE_CONFIG, WorkflowType } from '@/types/project';
 
@@ -85,14 +86,14 @@ export default function CreateProject() {
 
   const onSubmit = async (values: FormValues) => {
     const project = await createProject.mutateAsync({
-      name: values.name,
-      employer_name: values.employer_name,
-      location: values.location,
-      sales_person_name: values.sales_person_name,
+      name: sanitizeTextInput(values.name),
+      employer_name: sanitizeTextInput(values.employer_name),
+      location: values.location ? sanitizeTextInput(values.location) : undefined,
+      sales_person_name: values.sales_person_name ? sanitizeTextInput(values.sales_person_name) : undefined,
       status: values.status,
       default_workflow_type: values.default_workflow_type as WorkflowType,
-      notes: values.notes,
-      countries_in_contract: countries,
+      notes: values.notes ? sanitizeTextInput(values.notes) : undefined,
+      countries_in_contract: countries.map(c => sanitizeTextInput(c)),
       contract_signed_at: values.contract_signed_at || undefined,
     });
 
