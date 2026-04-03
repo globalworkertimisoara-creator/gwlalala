@@ -285,6 +285,11 @@ const App = () => (
                 <ClientDetail />
               </ProtectedRoute>
             } />
+            <Route path="/clients/:id/edit" element={
+              <ProtectedRoute>
+                <CreateClient />
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
