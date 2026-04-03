@@ -291,6 +291,24 @@ const CreateClient = () => {
               billing_contact_email: formData.billing_contact_email || null,
             })
             .eq('id', formData.company_id);
+
+          // Check if this company already has a client record
+          if (existingCompanyClientIds.includes(formData.company_id)) {
+            const { data: existingClientRecord } = await supabase
+              .from('clients')
+              .select('id')
+              .eq('company_id', formData.company_id)
+              .eq('client_type', 'company')
+              .single();
+
+            if (existingClientRecord) {
+              toast({ title: 'Company details updated', description: 'Redirecting to existing client record.' });
+              navigate(`/clients/${existingClientRecord.id}`);
+              setSubmitting(false);
+              return;
+            }
+          }
+
           companyId = formData.company_id;
         } else {
           return;
