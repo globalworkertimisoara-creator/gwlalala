@@ -141,6 +141,43 @@ export default function CreateProject() {
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client *</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          const selected = clients.find(c => c.id === value);
+                          if (selected) {
+                            form.setValue('employer_name', selected.display_name);
+                          }
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a client..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clients.length === 0 ? (
+                            <SelectItem value="__empty" disabled>No clients found — create a client first</SelectItem>
+                          ) : (
+                            clients.map(client => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.display_name} ({client.client_type === 'company' ? 'Company' : 'Individual'})
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
@@ -158,10 +195,18 @@ export default function CreateProject() {
                     name="employer_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Employer Name *</FormLabel>
+                        <FormLabel>Employer Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., ABC Construction Ltd" {...field} />
+                          <Input
+                            placeholder="Auto-filled from client selection"
+                            {...field}
+                            disabled={!!form.watch('client_id')}
+                            className={form.watch('client_id') ? 'bg-muted' : ''}
+                          />
                         </FormControl>
+                        <p className="text-xs text-muted-foreground">
+                          {form.watch('client_id') ? 'Auto-filled from selected client' : 'Select a client above to auto-fill'}
+                        </p>
                         <FormMessage />
                       </FormItem>
                     )}
