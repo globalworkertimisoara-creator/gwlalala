@@ -768,8 +768,8 @@ function BillingTab({ clientId }: { clientId: string }) {
           <DialogContent>
             <DialogHeader><DialogTitle>Create Invoice</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label className="text-xs">Invoice Number</Label><Input value={invoiceForm.invoice_number || ''} onChange={e => setInvoiceForm(p => ({ ...p, invoice_number: e.target.value }))} className="h-9" /></div>
-              <div><Label className="text-xs">Description</Label><Textarea value={invoiceForm.description || ''} onChange={e => setInvoiceForm(p => ({ ...p, description: e.target.value }))} rows={2} /></div>
+              <div><Label className="text-xs">Invoice Number</Label><Input value={invoiceForm.invoice_number || ''} onChange={e => setInvoiceForm(p => ({ ...p, invoice_number: e.target.value }))} className="h-9" maxLength={50} /></div>
+              <div><Label className="text-xs">Description</Label><Textarea value={invoiceForm.description || ''} onChange={e => setInvoiceForm(p => ({ ...p, description: e.target.value }))} rows={2} maxLength={2000} /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label className="text-xs">Amount</Label><Input type="number" value={invoiceForm.total_amount || ''} onChange={e => setInvoiceForm(p => ({ ...p, total_amount: e.target.value }))} className="h-9" /></div>
                 <div><Label className="text-xs">Currency</Label>
@@ -854,6 +854,7 @@ function NotesTab({ clientId, userId }: { clientId: string; userId?: string }) {
           placeholder="Add a note about this client..."
           value={noteContent}
           onChange={e => setNoteContent(e.target.value)}
+          maxLength={5000}
           rows={2}
           className="flex-1"
         />
