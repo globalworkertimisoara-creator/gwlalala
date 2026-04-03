@@ -127,7 +127,13 @@ export function useUpdateClient() {
     mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      const { error } = await supabase.from('clients').update(updates).eq('id', id);
+
+      const sanitized: Record<string, any> = {};
+      for (const [key, value] of Object.entries(updates)) {
+        sanitized[key] = typeof value === 'string' ? sanitizeTextInput(value) : value;
+      }
+
+      const { error } = await supabase.from('clients').update(sanitized).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
