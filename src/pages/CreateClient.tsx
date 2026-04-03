@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Building2, UserRound, Search, PlusCircle } from 'lucide-react';
-import { useCreateClient } from '@/hooks/useClients';
+import { useCreateClient, useUpdateClient, useUpdateCompany, useClient } from '@/hooks/useClients';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -20,11 +20,88 @@ type CompanyMode = 'existing' | 'new';
 
 const CreateClient = () => {
   const navigate = useNavigate();
+  const { id: editId } = useParams<{ id: string }>();
+  const isValidUUID = editId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editId);
+  const isEditMode = !!isValidUUID;
+
   const createClient = useCreateClient();
+  const updateClient = useUpdateClient();
+  const updateCompany = useUpdateCompany();
+  const { data: existingClient, isLoading: loadingClient } = useClient(isEditMode ? editId! : '');
+
   const [clientType, setClientType] = useState<ClientType>('company');
   const [companyMode, setCompanyMode] = useState<CompanyMode>('existing');
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Redirect if invalid UUID in edit mode
+  useEffect(() => {
+    if (editId && !isValidUUID) {
+      navigate('/clients', { replace: true });
+    }
+  }, [editId, isValidUUID, navigate]);
+
+  // Pre-fill form in edit mode
+  useEffect(() => {
+    if (isEditMode && existingClient) {
+      const client = existingClient as any;
+      const company = client.companies;
+
+      setClientType(client.client_type);
+
+      if (client.client_type === 'company' && company) {
+        setCompanyMode('existing');
+        setFormData({
+          company_id: client.company_id,
+          company_name: company.company_name || '',
+          legal_name: company.legal_name || '',
+          industry: company.industry || '',
+          company_size: company.company_size || '',
+          founded_year: company.founded_year?.toString() || '',
+          registration_number: company.registration_number || '',
+          website: company.website || '',
+          linkedin_url: company.linkedin_url || '',
+          description: company.description || '',
+          primary_contact_name: company.primary_contact_name || '',
+          primary_contact_email: company.primary_contact_email || '',
+          primary_contact_phone: company.primary_contact_phone || '',
+          primary_contact_position: company.primary_contact_position || '',
+          hr_contact_name: company.hr_contact_name || '',
+          hr_contact_email: company.hr_contact_email || '',
+          headquarters_address: company.headquarters_address || '',
+          headquarters_city: company.headquarters_city || '',
+          headquarters_country: company.headquarters_country || '',
+          postal_code: company.postal_code || '',
+          billing_contact_name: company.billing_contact_name || '',
+          billing_contact_email: company.billing_contact_email || '',
+          status: client.status || 'lead',
+          source: client.source || '',
+          notes: client.notes || '',
+        });
+      } else {
+        setFormData({
+          first_name: client.first_name || '',
+          last_name: client.last_name || '',
+          email: client.email || '',
+          phone: client.phone || '',
+          date_of_birth: client.date_of_birth || '',
+          nationality: client.nationality || '',
+          address_line1: client.address_line1 || '',
+          city: client.city || '',
+          country: client.country || '',
+          postal_code: client.postal_code || '',
+          id_document_type: client.id_document_type || '',
+          id_document_number: client.id_document_number || '',
+          billing_name: client.billing_name || '',
+          billing_email: client.billing_email || '',
+          tax_id: client.tax_id || '',
+          status: client.status || 'lead',
+          source: client.source || '',
+          notes: client.notes || '',
+        });
+      }
+    }
+  }, [isEditMode, existingClient]);
 
   const { data: existingCompanyClientIds = [] } = useQuery({
     queryKey: ['existing-company-client-ids'],
@@ -32,6 +109,7 @@ const CreateClient = () => {
       const { data } = await supabase.from('clients').select('company_id').eq('client_type', 'company').not('company_id', 'is', null);
       return (data || []).map(c => c.company_id);
     },
+    enabled: !isEditMode,
   });
 
   const { data: companies = [] } = useQuery({
@@ -40,6 +118,7 @@ const CreateClient = () => {
       const { data } = await supabase.from('companies').select('*').order('company_name');
       return (data || []).filter(c => !existingCompanyClientIds.includes(c.id));
     },
+    enabled: !isEditMode,
   });
 
   const handleCompanySelect = (companyId: string) => {
@@ -78,6 +157,67 @@ const CreateClient = () => {
     setSubmitting(true);
 
     try {
+      if (isEditMode && editId) {
+        // Edit mode
+        if (clientType === 'company' && (existingClient as any)?.company_id) {
+          await updateCompany.mutateAsync({
+            id: (existingClient as any).company_id,
+            clientId: editId,
+            legal_name: formData.legal_name || null,
+            industry: formData.industry || null,
+            company_size: formData.company_size || null,
+            founded_year: formData.founded_year ? Number(formData.founded_year) : null,
+            registration_number: formData.registration_number || null,
+            website: formData.website || null,
+            linkedin_url: formData.linkedin_url || null,
+            description: formData.description || null,
+            primary_contact_name: formData.primary_contact_name,
+            primary_contact_email: formData.primary_contact_email,
+            primary_contact_phone: formData.primary_contact_phone || null,
+            primary_contact_position: formData.primary_contact_position || null,
+            hr_contact_name: formData.hr_contact_name || null,
+            hr_contact_email: formData.hr_contact_email || null,
+            headquarters_address: formData.headquarters_address || null,
+            headquarters_city: formData.headquarters_city || null,
+            headquarters_country: formData.headquarters_country,
+            postal_code: formData.postal_code || null,
+            billing_contact_name: formData.billing_contact_name || null,
+            billing_contact_email: formData.billing_contact_email || null,
+          });
+        }
+
+        const clientUpdates: Record<string, any> = {
+          status: formData.status || 'lead',
+          source: formData.source || null,
+          notes: formData.notes || null,
+        };
+
+        if (clientType === 'individual') {
+          Object.assign(clientUpdates, {
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            email: formData.email,
+            phone: formData.phone || null,
+            date_of_birth: formData.date_of_birth || null,
+            nationality: formData.nationality || null,
+            address_line1: formData.address_line1 || null,
+            city: formData.city || null,
+            country: formData.country || null,
+            postal_code: formData.postal_code || null,
+            id_document_type: formData.id_document_type || null,
+            id_document_number: formData.id_document_number || null,
+            billing_name: formData.billing_name || null,
+            billing_email: formData.billing_email || null,
+            tax_id: formData.tax_id || null,
+          });
+        }
+
+        await updateClient.mutateAsync({ id: editId, ...clientUpdates });
+        navigate(`/clients/${editId}`);
+        return;
+      }
+
+      // Create mode — existing logic
       const input: Record<string, any> = {
         client_type: clientType,
         status: formData.status || 'lead',
@@ -186,7 +326,6 @@ const CreateClient = () => {
   };
 
   const update = (key: string, value: any) => setFormData(prev => ({ ...prev, [key]: value }));
-  const isExistingClient = false; // Companies already linked are filtered out of the dropdown
 
   const isValidUrl = (url: string) => !url || /^https?:\/\//.test(url);
   const isValidEmail = (email: string) => !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -195,30 +334,44 @@ const CreateClient = () => {
   const companyEmailsValid = isValidEmail(formData.primary_contact_email || '') && isValidEmail(formData.billing_contact_email || '');
 
   const companyFormValid = clientType === 'company' && companyUrlsValid && companyEmailsValid && (
-    companyMode === 'existing'
+    isEditMode
       ? !!formData.company_id
-      : !!(formData.company_name && formData.primary_contact_name && formData.primary_contact_email && formData.headquarters_country)
+      : companyMode === 'existing'
+        ? !!formData.company_id
+        : !!(formData.company_name && formData.primary_contact_name && formData.primary_contact_email && formData.headquarters_country)
   );
   const individualFormValid = clientType === 'individual' && !!(formData.first_name && formData.last_name && formData.email);
-  const canSubmit = !submitting && !createClient.isPending && (companyFormValid || individualFormValid);
+  const isMutating = submitting || createClient.isPending || updateClient.isPending || updateCompany.isPending;
+  const canSubmit = !isMutating && (companyFormValid || individualFormValid);
+
+  // Loading/access states for edit mode
+  if (isEditMode && loadingClient) {
+    return <AppLayout><div className="p-6 text-muted-foreground">Loading client...</div></AppLayout>;
+  }
+  if (isEditMode && !loadingClient && !existingClient) {
+    return <AppLayout><div className="p-6 text-muted-foreground">Client not found</div></AppLayout>;
+  }
 
   return (
     <AppLayout>
       <div className="h-[calc(100vh-64px)] overflow-y-auto">
         <div className="max-w-2xl mx-auto px-6 py-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/clients')} className="mb-4 gap-1">
-            <ArrowLeft className="h-4 w-4" /> Back to Clients
+          <Button variant="ghost" size="sm" onClick={() => navigate(isEditMode ? `/clients/${editId}` : '/clients')} className="mb-4 gap-1">
+            <ArrowLeft className="h-4 w-4" /> {isEditMode ? 'Back to Client' : 'Back to Clients'}
           </Button>
 
-          <h1 className="text-xl font-bold mb-6">New Client</h1>
+          <h1 className="text-xl font-bold mb-6">{isEditMode ? 'Edit Client' : 'New Client'}</h1>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             {(['company', 'individual'] as ClientType[]).map(type => (
               <button
                 key={type}
                 type="button"
-                onClick={() => { setClientType(type); setFormData({}); setCompanyMode('existing'); }}
-                className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-colors ${clientType === type ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
+                disabled={isEditMode}
+                onClick={() => { if (!isEditMode) { setClientType(type); setFormData({}); setCompanyMode('existing'); } }}
+                className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-colors ${
+                  clientType === type ? 'border-primary bg-primary/5' : 'border-muted'
+                } ${isEditMode ? 'opacity-60 cursor-not-allowed' : 'hover:border-muted-foreground/30'}`}
               >
                 {type === 'company' ? <Building2 className="h-6 w-6" /> : <UserRound className="h-6 w-6" />}
                 <span className="font-medium capitalize">{type}</span>
@@ -229,28 +382,30 @@ const CreateClient = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {clientType === 'company' ? (
               <>
-                {/* Company mode selector */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => { setCompanyMode('existing'); setFormData({}); }}
-                    className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'existing' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
-                  >
-                    <Search className="h-4 w-4" />
-                    <span className="font-medium">Select Existing</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setCompanyMode('new'); setFormData({}); }}
-                    className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'new' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                    <span className="font-medium">Create New</span>
-                  </button>
-                </div>
+                {/* Company mode selector — hidden in edit mode */}
+                {!isEditMode && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setCompanyMode('existing'); setFormData({}); }}
+                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'existing' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
+                    >
+                      <Search className="h-4 w-4" />
+                      <span className="font-medium">Select Existing</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCompanyMode('new'); setFormData({}); }}
+                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'new' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      <span className="font-medium">Create New</span>
+                    </button>
+                  </div>
+                )}
 
-                {/* Existing company selector */}
-                {companyMode === 'existing' && (
+                {/* Existing company selector — hidden in edit mode */}
+                {!isEditMode && companyMode === 'existing' && (
                   <Card>
                     <CardHeader><CardTitle className="text-sm">Select Company</CardTitle></CardHeader>
                     <CardContent className="space-y-3">
@@ -266,8 +421,8 @@ const CreateClient = () => {
                             ))}
                           </SelectContent>
                         </Select>
-                        
-                        {formData.company_id && !isExistingClient && (
+
+                        {formData.company_id && (
                           <Badge variant="outline" className="mt-2 text-[10px]">Editing will update the existing company record</Badge>
                         )}
                       </div>
@@ -275,13 +430,16 @@ const CreateClient = () => {
                   </Card>
                 )}
 
-                {/* Company detail fields — shown when new OR when existing selected */}
-                {(companyMode === 'new' || formData.company_id) && (
+                {/* Company detail fields — shown when new OR when existing selected OR in edit mode */}
+                {(isEditMode || companyMode === 'new' || formData.company_id) && (
                   <>
                     <Card>
                       <CardHeader><CardTitle className="text-sm">Company Info</CardTitle></CardHeader>
                       <CardContent className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2"><Label className="text-xs">Company Name *</Label><Input maxLength={200} value={formData.company_name || ''} onChange={e => update('company_name', e.target.value)} className="h-9" /></div>
+                        <div className="col-span-2">
+                          <Label className="text-xs">Company Name *</Label>
+                          <Input maxLength={200} value={formData.company_name || ''} onChange={e => update('company_name', e.target.value)} className="h-9" disabled={isEditMode} />
+                        </div>
                         <div><Label className="text-xs">Legal Name</Label><Input maxLength={200} value={formData.legal_name || ''} onChange={e => update('legal_name', e.target.value)} className="h-9" /></div>
                         <div><Label className="text-xs">Industry</Label><Input maxLength={100} value={formData.industry || ''} onChange={e => update('industry', e.target.value)} className="h-9" /></div>
                         <div>
@@ -413,9 +571,9 @@ const CreateClient = () => {
             </Card>
 
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => navigate('/clients')}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => navigate(isEditMode ? `/clients/${editId}` : '/clients')}>Cancel</Button>
               <Button type="submit" disabled={!canSubmit}>
-                {submitting || createClient.isPending ? 'Creating...' : 'Create Client'}
+                {isMutating ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Client')}
               </Button>
             </div>
           </form>
