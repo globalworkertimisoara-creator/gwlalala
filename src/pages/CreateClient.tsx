@@ -113,10 +113,10 @@ const CreateClient = () => {
   });
 
   const { data: companies = [] } = useQuery({
-    queryKey: ['companies-for-client', existingCompanyClientIds],
+    queryKey: ['companies-for-client'],
     queryFn: async () => {
       const { data } = await supabase.from('companies').select('*').order('company_name');
-      return (data || []).filter(c => !existingCompanyClientIds.includes(c.id));
+      return data || [];
     },
     enabled: !isEditMode,
   });
