@@ -185,18 +185,42 @@ export function useClientRelationships(clientId: string) {
   });
 }
 
+const INVERSE_RELATIONSHIP: Record<string, string> = {
+  parent: 'subsidiary',
+  subsidiary: 'parent',
+  referral: 'referral',
+  partner: 'partner',
+  related: 'related',
+};
+
 export function useCreateClientRelationship() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: { client_id: string; related_client_id: string; relationship_type: string; notes?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      // IDOR prevention — verify access to both clients
+      const { data: clientA } = await supabase.from('clients').select('id').eq('id', input.client_id).single();
+      const { data: clientB } = await supabase.from('clients').select('id').eq('id', input.related_client_id).single();
+      if (!clientA || !clientB) throw new Error('Invalid client');
+
       const { data, error } = await supabase.from('client_relationships').insert({
         ...input,
         notes: input.notes ? sanitizeTextInput(input.notes) : null,
         created_by: user.id,
       }).select().single();
       if (error) throw error;
+
+      // Create inverse relationship
+      const inverseType = INVERSE_RELATIONSHIP[input.relationship_type] || 'related';
+      await supabase.from('client_relationships').insert({
+        client_id: input.related_client_id,
+        related_client_id: input.client_id,
+        relationship_type: inverseType,
+        notes: input.notes ? sanitizeTextInput(input.notes) : null,
+        created_by: user.id,
+      }).select().single().catch(() => {});
 
       await supabase.from('client_activity_log').insert({
         client_id: input.client_id,
@@ -221,11 +245,22 @@ export function useCreateClientRelationship() {
 export function useDeleteClientRelationship() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, client_id, related_client_id }: { id: string; client_id: string; related_client_id: string }) => {
+    mutationFn: async ({ id, client_id, related_client_id, relationship_type }: { id: string; client_id: string; related_client_id: string; relationship_type?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       const { error } = await supabase.from('client_relationships').delete().eq('id', id);
       if (error) throw error;
+
+      // Also delete the inverse
+      if (relationship_type) {
+        const inverseType = INVERSE_RELATIONSHIP[relationship_type] || 'related';
+        await supabase.from('client_relationships')
+          .delete()
+          .eq('client_id', related_client_id)
+          .eq('related_client_id', client_id)
+          .eq('relationship_type', inverseType)
+          .catch(() => {});
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['client-relationships', variables.client_id] });
@@ -292,6 +327,162 @@ export function useDeleteClientCustomField() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['client-custom-fields', variables.client_id] });
+    },
+    onError: () => {
+      toast({ title: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+    },
+  });
+}
+
+// ─── Client Documents (with folders & versioning) ─────────
+
+export function useClientDocuments(clientId: string, folder?: string) {
+  return useQuery({
+    queryKey: ['client-documents', clientId, folder],
+    queryFn: async () => {
+      let query = supabase
+        .from('client_documents')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+
+      if (folder && folder !== 'all') {
+        query = query.eq('folder', folder);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!clientId,
+  });
+}
+
+export function useDocumentVersions(rootId: string | null) {
+  return useQuery({
+    queryKey: ['client-document-versions', rootId],
+    queryFn: async () => {
+      if (!rootId) return [];
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rootId)) return [];
+      const { data, error } = await supabase
+        .from('client_documents')
+        .select('*')
+        .or(`id.eq.${rootId},parent_document_id.eq.${rootId}`)
+        .order('version', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!rootId,
+  });
+}
+
+export function useUploadClientDocument() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      client_id: string;
+      file: File;
+      name: string;
+      doc_type: string;
+      folder: string;
+      description?: string;
+      parent_document_id?: string;
+      version?: number;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      if (input.file.size > 10 * 1024 * 1024) throw new Error('FILE_TOO_LARGE');
+
+      const allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv', '.txt', '.png', '.jpg', '.jpeg'];
+      const ext = '.' + input.file.name.split('.').pop()?.toLowerCase();
+      if (!allowedTypes.includes(ext)) throw new Error('INVALID_FILE_TYPE');
+
+      const VALID_FOLDERS = ['general', 'contracts', 'invoices', 'legal', 'proposals', 'reports', 'correspondence'];
+      if (!VALID_FOLDERS.includes(input.folder)) throw new Error('INVALID_FOLDER');
+
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.client_id)) {
+        throw new Error('Not authenticated');
+      }
+
+      const safeFilename = input.file.name.replace(/[/\\]/g, '_').replace(/\.{2,}/g, '_');
+      const storagePath = `${input.client_id}/${input.folder}/${Date.now()}_${safeFilename}`;
+      const { error: uploadError } = await supabase.storage
+        .from('client-documents')
+        .upload(storagePath, input.file);
+      if (uploadError) throw uploadError;
+
+      const { data, error } = await supabase.from('client_documents').insert({
+        client_id: input.client_id,
+        name: sanitizeTextInput(input.name),
+        doc_type: input.doc_type,
+        storage_path: storagePath,
+        file_size: input.file.size,
+        folder: input.folder,
+        version: input.version || 1,
+        parent_document_id: input.parent_document_id || null,
+        description: input.description ? sanitizeTextInput(input.description) : null,
+        uploaded_by: user.id,
+      }).select().single();
+      if (error) throw error;
+
+      await supabase.from('client_activity_log').insert({
+        client_id: input.client_id,
+        action: 'document_uploaded',
+        details: { name: input.name, folder: input.folder, version: input.version || 1 },
+        performed_by: user.id,
+      });
+
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['client-documents', variables.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['client-document-versions'] });
+      toast({ title: 'Document uploaded successfully' });
+    },
+    onError: (error: Error) => {
+      if (error.message === 'FILE_TOO_LARGE') {
+        toast({ title: 'File too large', description: 'Maximum file size is 10MB.', variant: 'destructive' });
+      } else if (error.message === 'INVALID_FILE_TYPE') {
+        toast({ title: 'Invalid file type', description: 'Allowed types: PDF, Word, Excel, CSV, TXT, PNG, JPG.', variant: 'destructive' });
+      } else if (error.message === 'INVALID_FOLDER') {
+        toast({ title: 'Invalid folder', description: 'Please select a valid folder.', variant: 'destructive' });
+      } else {
+        toast({ title: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+      }
+    },
+  });
+}
+
+export function useDeleteClientDocument() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, client_id, storage_path }: { id: string; client_id: string; storage_path: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Find all versions to delete
+      const rootId = id;
+      const { data: versions } = await supabase
+        .from('client_documents')
+        .select('id, storage_path')
+        .or(`id.eq.${rootId},parent_document_id.eq.${rootId}`);
+
+      const storagePaths = versions?.map(v => v.storage_path) || [storage_path];
+      const ids = versions?.map(v => v.id) || [id];
+
+      // Delete from storage
+      await supabase.storage.from('client-documents').remove(storagePaths);
+
+      // Delete all version records
+      for (const docId of ids) {
+        await supabase.from('client_documents').delete().eq('id', docId);
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['client-documents', variables.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['client-document-versions'] });
+      toast({ title: 'Document deleted' });
     },
     onError: () => {
       toast({ title: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
