@@ -656,8 +656,16 @@ const CreateClient = () => {
                           </div>
                           <div><Label className="text-xs">Founded Year</Label><Input type="number" min={1800} max={new Date().getFullYear()} value={formData.founded_year || ''} onChange={e => update('founded_year', e.target.value)} className="h-9" disabled={readOnly} /></div>
                           <div><Label className="text-xs">Registration Number</Label><Input maxLength={50} value={formData.registration_number || ''} onChange={e => update('registration_number', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                          <div><Label className="text-xs">Website</Label><Input maxLength={500} value={formData.website || ''} onChange={e => update('website', e.target.value)} className="h-9" placeholder="https://..." disabled={readOnly} /></div>
-                          <div><Label className="text-xs">LinkedIn URL</Label><Input maxLength={500} value={formData.linkedin_url || ''} onChange={e => update('linkedin_url', e.target.value)} className="h-9" placeholder="https://..." disabled={readOnly} /></div>
+                          <div>
+                            <Label className="text-xs">Website</Label>
+                            <Input maxLength={500} value={formData.website || ''} onChange={e => update('website', e.target.value)} className={`h-9 ${urlError(formData.website || '')}`} placeholder="https://..." disabled={readOnly} />
+                            {showErrors && formData.website && !isValidUrl(formData.website) && <p className="text-xs text-destructive mt-1">URL must start with http:// or https://</p>}
+                          </div>
+                          <div>
+                            <Label className="text-xs">LinkedIn URL</Label>
+                            <Input maxLength={500} value={formData.linkedin_url || ''} onChange={e => update('linkedin_url', e.target.value)} className={`h-9 ${urlError(formData.linkedin_url || '')}`} placeholder="https://..." disabled={readOnly} />
+                            {showErrors && formData.linkedin_url && !isValidUrl(formData.linkedin_url) && <p className="text-xs text-destructive mt-1">URL must start with http:// or https://</p>}
+                          </div>
                           <div className="col-span-2"><Label className="text-xs">Description</Label><Textarea maxLength={2000} value={formData.description || ''} onChange={e => update('description', e.target.value)} rows={3} disabled={readOnly} /></div>
                         </CardContent>
                       </Card>
