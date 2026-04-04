@@ -32,6 +32,18 @@ export interface Client {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  // CRM fields
+  payment_terms?: string;
+  currency?: string;
+  vat_number?: string;
+  vat_verified?: boolean;
+  preferred_communication?: string;
+  priority_level?: string;
+  risk_score?: number;
+  risk_notes?: string;
+  credit_limit?: number;
+  sla_terms?: string;
+  payment_score?: number;
 }
 
 export interface ClientWithMetrics extends Client {
@@ -70,6 +82,10 @@ export interface ClientDocument {
   file_size: number | null;
   uploaded_by: string | null;
   created_at: string;
+  folder?: string;
+  version?: number;
+  parent_document_id?: string;
+  description?: string;
 }
 
 export interface ClientInvoice {
@@ -140,3 +156,124 @@ export const VALID_STATUS_TRANSITIONS: Record<ClientStatus, ClientStatus[]> = {
 export function isValidStatusTransition(from: ClientStatus, to: ClientStatus): boolean {
   return VALID_STATUS_TRANSITIONS[from]?.includes(to) ?? false;
 }
+
+// ─── CRM Types ────────────────────────────────────────────
+
+export interface ClientContact {
+  id: string;
+  client_id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  department?: string;
+  is_primary: boolean;
+  contact_type: string;
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RelationshipType = 'parent' | 'subsidiary' | 'referral' | 'partner' | 'related';
+
+export interface ClientRelationship {
+  id: string;
+  client_id: string;
+  related_client_id: string;
+  relationship_type: RelationshipType;
+  notes?: string;
+  created_by?: string;
+  created_at: string;
+  related_client?: Client;
+}
+
+export type MeetingType = 'in_person' | 'video' | 'phone' | 'other';
+export type MeetingStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show';
+
+export interface ClientMeeting {
+  id: string;
+  client_id: string;
+  title: string;
+  description?: string;
+  meeting_date: string;
+  duration_minutes: number;
+  location?: string;
+  meeting_type: MeetingType;
+  status: MeetingStatus;
+  attendees: Array<{ name: string; email?: string; role?: string }>;
+  agenda?: string;
+  outcome?: string;
+  follow_up_notes?: string;
+  follow_up_date?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientCustomField {
+  id: string;
+  client_id: string;
+  field_name: string;
+  field_value?: string;
+  field_type: 'text' | 'number' | 'date' | 'boolean' | 'url';
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const PAYMENT_TERMS_OPTIONS = [
+  { value: 'net_15', label: 'Net 15' },
+  { value: 'net_30', label: 'Net 30' },
+  { value: 'net_45', label: 'Net 45' },
+  { value: 'net_60', label: 'Net 60' },
+  { value: 'net_90', label: 'Net 90' },
+  { value: 'immediate', label: 'Due on Receipt' },
+  { value: 'custom', label: 'Custom' },
+] as const;
+
+export const CURRENCY_OPTIONS = [
+  { value: 'EUR', label: 'EUR (€)' },
+  { value: 'USD', label: 'USD ($)' },
+  { value: 'GBP', label: 'GBP (£)' },
+  { value: 'RON', label: 'RON (lei)' },
+  { value: 'CHF', label: 'CHF (Fr)' },
+  { value: 'PLN', label: 'PLN (zł)' },
+  { value: 'CZK', label: 'CZK (Kč)' },
+  { value: 'HUF', label: 'HUF (Ft)' },
+  { value: 'SEK', label: 'SEK (kr)' },
+  { value: 'NOK', label: 'NOK (kr)' },
+  { value: 'DKK', label: 'DKK (kr)' },
+] as const;
+
+export const PRIORITY_LEVELS = [
+  { value: 'vip', label: 'VIP', color: 'text-amber-600 bg-amber-50 border-amber-200' },
+  { value: 'high', label: 'High', color: 'text-red-600 bg-red-50 border-red-200' },
+  { value: 'standard', label: 'Standard', color: 'text-blue-600 bg-blue-50 border-blue-200' },
+  { value: 'low', label: 'Low', color: 'text-gray-600 bg-gray-50 border-gray-200' },
+] as const;
+
+export const COMMUNICATION_CHANNELS = [
+  { value: 'email', label: 'Email' },
+  { value: 'phone', label: 'Phone' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'in_person', label: 'In Person' },
+  { value: 'video', label: 'Video Call' },
+] as const;
+
+export const DOCUMENT_FOLDERS = [
+  'general',
+  'contracts',
+  'invoices',
+  'legal',
+  'proposals',
+  'reports',
+  'correspondence',
+] as const;
+
+export const MEETING_STATUS_CONFIG: Record<MeetingStatus, { label: string; color: string }> = {
+  scheduled: { label: 'Scheduled', color: 'text-blue-600 bg-blue-50' },
+  completed: { label: 'Completed', color: 'text-green-600 bg-green-50' },
+  cancelled: { label: 'Cancelled', color: 'text-gray-600 bg-gray-50' },
+  no_show: { label: 'No Show', color: 'text-red-600 bg-red-50' },
+};

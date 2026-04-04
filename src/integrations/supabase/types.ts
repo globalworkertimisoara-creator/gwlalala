@@ -1593,36 +1593,159 @@ export type Database = {
           },
         ]
       }
-      client_documents: {
+      client_contacts: {
+        Row: {
+          client_id: string
+          contact_type: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          email: string | null
+          id: string
+          is_primary: boolean | null
+          name: string
+          notes: string | null
+          phone: string | null
+          position: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          contact_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          contact_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_custom_fields: {
         Row: {
           client_id: string
           created_at: string
-          doc_type: string
-          file_size: number | null
+          created_by: string | null
+          field_name: string
+          field_type: string | null
+          field_value: string | null
           id: string
-          name: string
-          storage_path: string
-          uploaded_by: string | null
+          updated_at: string
         }
         Insert: {
           client_id: string
           created_at?: string
-          doc_type: string
-          file_size?: number | null
+          created_by?: string | null
+          field_name: string
+          field_type?: string | null
+          field_value?: string | null
           id?: string
-          name: string
-          storage_path: string
-          uploaded_by?: string | null
+          updated_at?: string
         }
         Update: {
           client_id?: string
           created_at?: string
+          created_by?: string | null
+          field_name?: string
+          field_type?: string | null
+          field_value?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_custom_fields_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_custom_fields_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_documents: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string | null
+          doc_type: string
+          file_size: number | null
+          folder: string | null
+          id: string
+          name: string
+          parent_document_id: string | null
+          storage_path: string
+          uploaded_by: string | null
+          version: number | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string | null
+          doc_type: string
+          file_size?: number | null
+          folder?: string | null
+          id?: string
+          name: string
+          parent_document_id?: string | null
+          storage_path: string
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string | null
           doc_type?: string
           file_size?: number | null
+          folder?: string | null
           id?: string
           name?: string
+          parent_document_id?: string | null
           storage_path?: string
           uploaded_by?: string | null
+          version?: number | null
         }
         Relationships: [
           {
@@ -1637,6 +1760,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_documents_parent_document_id_fkey"
+            columns: ["parent_document_id"]
+            isOneToOne: false
+            referencedRelation: "client_documents"
             referencedColumns: ["id"]
           },
         ]
@@ -1763,6 +1893,81 @@ export type Database = {
           },
         ]
       }
+      client_meetings: {
+        Row: {
+          agenda: string | null
+          attendees: Json | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_minutes: number | null
+          follow_up_date: string | null
+          follow_up_notes: string | null
+          id: string
+          location: string | null
+          meeting_date: string
+          meeting_type: string | null
+          outcome: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agenda?: string | null
+          attendees?: Json | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          follow_up_date?: string | null
+          follow_up_notes?: string | null
+          id?: string
+          location?: string | null
+          meeting_date: string
+          meeting_type?: string | null
+          outcome?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agenda?: string | null
+          attendees?: Json | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          follow_up_date?: string | null
+          follow_up_notes?: string | null
+          id?: string
+          location?: string | null
+          meeting_date?: string
+          meeting_type?: string | null
+          outcome?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_meetings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_meetings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_notes: {
         Row: {
           client_id: string
@@ -1862,6 +2067,65 @@ export type Database = {
           },
         ]
       }
+      client_relationships: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          related_client_id: string
+          relationship_type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          related_client_id: string
+          relationship_type: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          related_client_id?: string
+          relationship_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_relationships_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_relationships_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_relationships_related_client_id_fkey"
+            columns: ["related_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_relationships_related_client_id_fkey"
+            columns: ["related_client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_analytics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address_line1: string | null
@@ -1876,6 +2140,8 @@ export type Database = {
           country: string | null
           created_at: string
           created_by: string | null
+          credit_limit: number | null
+          currency: string | null
           date_of_birth: string | null
           email: string | null
           first_name: string | null
@@ -1886,13 +2152,22 @@ export type Database = {
           last_name: string | null
           nationality: string | null
           notes: string | null
+          payment_score: number | null
+          payment_terms: string | null
           phone: string | null
           postal_code: string | null
+          preferred_communication: string | null
+          priority_level: string | null
+          risk_notes: string | null
+          risk_score: number | null
+          sla_terms: string | null
           source: string | null
           status: Database["public"]["Enums"]["client_status"]
           tags: string[] | null
           tax_id: string | null
           updated_at: string
+          vat_number: string | null
+          vat_verified: boolean | null
         }
         Insert: {
           address_line1?: string | null
@@ -1907,6 +2182,8 @@ export type Database = {
           country?: string | null
           created_at?: string
           created_by?: string | null
+          credit_limit?: number | null
+          currency?: string | null
           date_of_birth?: string | null
           email?: string | null
           first_name?: string | null
@@ -1917,13 +2194,22 @@ export type Database = {
           last_name?: string | null
           nationality?: string | null
           notes?: string | null
+          payment_score?: number | null
+          payment_terms?: string | null
           phone?: string | null
           postal_code?: string | null
+          preferred_communication?: string | null
+          priority_level?: string | null
+          risk_notes?: string | null
+          risk_score?: number | null
+          sla_terms?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           tags?: string[] | null
           tax_id?: string | null
           updated_at?: string
+          vat_number?: string | null
+          vat_verified?: boolean | null
         }
         Update: {
           address_line1?: string | null
@@ -1938,6 +2224,8 @@ export type Database = {
           country?: string | null
           created_at?: string
           created_by?: string | null
+          credit_limit?: number | null
+          currency?: string | null
           date_of_birth?: string | null
           email?: string | null
           first_name?: string | null
@@ -1948,13 +2236,22 @@ export type Database = {
           last_name?: string | null
           nationality?: string | null
           notes?: string | null
+          payment_score?: number | null
+          payment_terms?: string | null
           phone?: string | null
           postal_code?: string | null
+          preferred_communication?: string | null
+          priority_level?: string | null
+          risk_notes?: string | null
+          risk_score?: number | null
+          sla_terms?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           tags?: string[] | null
           tax_id?: string | null
           updated_at?: string
+          vat_number?: string | null
+          vat_verified?: boolean | null
         }
         Relationships: [
           {
