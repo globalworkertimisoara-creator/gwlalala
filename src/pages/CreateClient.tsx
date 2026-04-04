@@ -675,9 +675,22 @@ const CreateClient = () => {
                   <Card>
                     <CardHeader><CardTitle className="text-sm">Personal Info</CardTitle></CardHeader>
                     <CardContent className="grid grid-cols-2 gap-3">
-                      <div><Label className="text-xs">First Name *</Label><Input maxLength={100} value={formData.first_name || ''} onChange={e => update('first_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                      <div><Label className="text-xs">Last Name *</Label><Input maxLength={100} value={formData.last_name || ''} onChange={e => update('last_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                      <div><Label className="text-xs">Email *</Label><Input maxLength={254} type="email" value={formData.email || ''} onChange={e => update('email', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div>
+                        <Label className="text-xs">First Name *</Label>
+                        <Input maxLength={100} value={formData.first_name || ''} onChange={e => update('first_name', e.target.value)} className={`h-9 ${fieldError(formData.first_name)}`} disabled={readOnly} />
+                        {showErrors && !formData.first_name?.trim() && <p className="text-xs text-destructive mt-1">First name is required</p>}
+                      </div>
+                      <div>
+                        <Label className="text-xs">Last Name *</Label>
+                        <Input maxLength={100} value={formData.last_name || ''} onChange={e => update('last_name', e.target.value)} className={`h-9 ${fieldError(formData.last_name)}`} disabled={readOnly} />
+                        {showErrors && !formData.last_name?.trim() && <p className="text-xs text-destructive mt-1">Last name is required</p>}
+                      </div>
+                      <div>
+                        <Label className="text-xs">Email *</Label>
+                        <Input maxLength={254} type="email" value={formData.email || ''} onChange={e => update('email', e.target.value)} className={`h-9 ${fieldError(formData.email)} ${emailError(formData.email || '')}`} disabled={readOnly} />
+                        {showErrors && !formData.email?.trim() && <p className="text-xs text-destructive mt-1">Email is required</p>}
+                        {showErrors && formData.email && !isValidEmail(formData.email) && <p className="text-xs text-destructive mt-1">Invalid email format</p>}
+                      </div>
                       <div><Label className="text-xs">Phone</Label><Input maxLength={20} value={formData.phone || ''} onChange={e => update('phone', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       <div><Label className="text-xs">Date of Birth</Label><Input type="date" value={formData.date_of_birth || ''} onChange={e => update('date_of_birth', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       <div><Label className="text-xs">Nationality</Label><Input maxLength={100} value={formData.nationality || ''} onChange={e => update('nationality', e.target.value)} className="h-9" disabled={readOnly} /></div>
