@@ -214,6 +214,40 @@ const CreateClient = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate before submitting
+    if (!companyFormValid && !individualFormValid) {
+      setShowErrors(true);
+      // Auto-navigate to tab with first error
+      if (clientType === 'company' && companyMode !== 'existing') {
+        if (!formData.company_name || !formData.primary_contact_name || !formData.primary_contact_email) {
+          setActiveTab('basic');
+        } else if (!formData.headquarters_country) {
+          setActiveTab('address');
+        }
+      } else if (clientType === 'company' && companyMode === 'existing') {
+        if (!formData.company_id) setActiveTab('basic');
+      } else if (clientType === 'individual') {
+        if (!formData.first_name || !formData.last_name || !formData.email) setActiveTab('basic');
+      }
+      toast({
+        title: 'Required fields missing',
+        description: 'Please fill in all required fields highlighted in red.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (clientType === 'company' && (!companyUrlsValid || !companyEmailsValid)) {
+      setShowErrors(true);
+      toast({
+        title: 'Invalid input',
+        description: 'Please check email and URL fields for correct formatting.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
