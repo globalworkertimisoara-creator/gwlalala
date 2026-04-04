@@ -46,6 +46,7 @@ const CreateClient = () => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const [showErrors, setShowErrors] = useState(false);
 
   // Contacts (edit mode)
   const { data: contacts = [] } = useClientContacts(isEditMode ? editId! : '');
@@ -213,6 +214,40 @@ const CreateClient = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate before submitting
+    if (!companyFormValid && !individualFormValid) {
+      setShowErrors(true);
+      // Auto-navigate to tab with first error
+      if (clientType === 'company' && companyMode !== 'existing') {
+        if (!formData.company_name || !formData.primary_contact_name || !formData.primary_contact_email) {
+          setActiveTab('basic');
+        } else if (!formData.headquarters_country) {
+          setActiveTab('address');
+        }
+      } else if (clientType === 'company' && companyMode === 'existing') {
+        if (!formData.company_id) setActiveTab('basic');
+      } else if (clientType === 'individual') {
+        if (!formData.first_name || !formData.last_name || !formData.email) setActiveTab('basic');
+      }
+      toast({
+        title: 'Required fields missing',
+        description: 'Please fill in all required fields highlighted in red.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (clientType === 'company' && (!companyUrlsValid || !companyEmailsValid)) {
+      setShowErrors(true);
+      toast({
+        title: 'Invalid input',
+        description: 'Please check email and URL fields for correct formatting.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -424,7 +459,47 @@ const CreateClient = () => {
   );
   const individualFormValid = clientType === 'individual' && !!(formData.first_name && formData.last_name && formData.email);
   const isMutating = submitting || createClient.isPending || updateClient.isPending || updateCompany.isPending;
-  const canSubmit = !isMutating && !readOnly && (companyFormValid || individualFormValid);
+
+  const fieldError = (value: any) => {
+    if (!showErrors) return '';
+    if (!value || (typeof value === 'string' && !value.trim())) {
+      return 'border-destructive ring-1 ring-destructive';
+    }
+    return '';
+  };
+
+  const emailError = (value: string) => {
+    if (!showErrors || !value) return '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return 'border-destructive ring-1 ring-destructive';
+    }
+    return '';
+  };
+
+  const urlError = (value: string) => {
+    if (!showErrors || !value) return '';
+    if (!/^https?:\/\//.test(value)) {
+      return 'border-destructive ring-1 ring-destructive';
+    }
+    return '';
+  };
+
+  const tabHasErrors = (tab: string): boolean => {
+    if (!showErrors) return false;
+    if (tab === 'basic') {
+      if (clientType === 'company') {
+        if (companyMode === 'existing' && !formData.company_id) return true;
+        if (companyMode === 'new' && (!formData.company_name || !formData.primary_contact_name || !formData.primary_contact_email)) return true;
+      } else {
+        if (!formData.first_name || !formData.last_name || !formData.email) return true;
+      }
+    }
+    if (tab === 'contacts' && clientType === 'company' && companyMode === 'new') {
+      if (!formData.primary_contact_name || !formData.primary_contact_email) return true;
+    }
+    if (tab === 'address' && clientType === 'company' && companyMode === 'new' && !formData.headquarters_country) return true;
+    return false;
+  };
 
   const getRiskColor = (score: number) => {
     if (score <= 3) return 'text-green-600';
@@ -464,7 +539,7 @@ const CreateClient = () => {
                 key={type}
                 type="button"
                 disabled={isEditMode}
-                onClick={() => { if (!isEditMode) { setClientType(type); setFormData({}); setCompanyMode('existing'); } }}
+                onClick={() => { if (!isEditMode) { setClientType(type); setFormData({}); setCompanyMode('existing'); setShowErrors(false); } }}
                 className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-colors ${
                   clientType === type ? 'border-primary bg-primary/5' : 'border-muted'
                 } ${isEditMode ? 'opacity-60 cursor-not-allowed' : 'hover:border-muted-foreground/30'}`}
@@ -478,11 +553,20 @@ const CreateClient = () => {
           <form onSubmit={handleSubmit}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid grid-cols-6 w-full">
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                <TabsTrigger value="basic" className="relative">
+                  Basic Info
+                  {tabHasErrors('basic') && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />}
+                </TabsTrigger>
+                <TabsTrigger value="contacts" className="relative">
+                  Contacts
+                  {tabHasErrors('contacts') && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />}
+                </TabsTrigger>
                 <TabsTrigger value="financial">Financial</TabsTrigger>
                 <TabsTrigger value="risk">Risk</TabsTrigger>
-                <TabsTrigger value="address">Address</TabsTrigger>
+                <TabsTrigger value="address" className="relative">
+                  Address
+                  {tabHasErrors('address') && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />}
+                </TabsTrigger>
                 <TabsTrigger value="notes">Notes</TabsTrigger>
               </TabsList>
 
@@ -492,11 +576,11 @@ const CreateClient = () => {
                   <>
                     {!isEditMode && (
                       <div className="grid grid-cols-2 gap-3">
-                        <button type="button" onClick={() => { setCompanyMode('existing'); setFormData({}); }}
+                        <button type="button" onClick={() => { setCompanyMode('existing'); setFormData({}); setShowErrors(false); }}
                           className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'existing' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}>
                           <Search className="h-4 w-4" /><span className="font-medium">Select Existing</span>
                         </button>
-                        <button type="button" onClick={() => { setCompanyMode('new'); setFormData({}); }}
+                        <button type="button" onClick={() => { setCompanyMode('new'); setFormData({}); setShowErrors(false); }}
                           className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'new' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}>
                           <PlusCircle className="h-4 w-4" /><span className="font-medium">Create New</span>
                         </button>
@@ -519,7 +603,7 @@ const CreateClient = () => {
                               <div>
                                 <Label className="text-xs">Company *</Label>
                                 <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
-                                  <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
+                                  <SelectTrigger className={`h-9 ${showErrors && !formData.company_id ? 'border-destructive ring-1 ring-destructive' : ''}`}><SelectValue placeholder="Choose a company..." /></SelectTrigger>
                                   <SelectContent>
                                     {companies.map(c => (
                                       <SelectItem key={c.id} value={c.id}>
@@ -533,6 +617,9 @@ const CreateClient = () => {
                                     ))}
                                   </SelectContent>
                                 </Select>
+                                {showErrors && !formData.company_id && (
+                                  <p className="text-xs text-destructive mt-1">Please select a company</p>
+                                )}
                                 {formData.company_id && existingCompanyClientIds.includes(formData.company_id) && (
                                   <div className="rounded-md border border-amber-200 bg-amber-50 p-3 mt-2">
                                     <p className="text-xs text-amber-800">This company already has a client record. You'll be redirected to the existing client.</p>
@@ -554,7 +641,8 @@ const CreateClient = () => {
                         <CardContent className="grid grid-cols-2 gap-3">
                           <div className="col-span-2">
                             <Label className="text-xs">Company Name *</Label>
-                            <Input maxLength={200} value={formData.company_name || ''} onChange={e => update('company_name', e.target.value)} className="h-9" disabled={isEditMode || readOnly} />
+                            <Input maxLength={200} value={formData.company_name || ''} onChange={e => update('company_name', e.target.value)} className={`h-9 ${fieldError(formData.company_name)}`} disabled={isEditMode || readOnly} />
+                            {showErrors && !formData.company_name?.trim() && <p className="text-xs text-destructive mt-1">Company name is required</p>}
                           </div>
                           <div><Label className="text-xs">Legal Name</Label><Input maxLength={200} value={formData.legal_name || ''} onChange={e => update('legal_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
                           <div><Label className="text-xs">Industry</Label><Input maxLength={100} value={formData.industry || ''} onChange={e => update('industry', e.target.value)} className="h-9" disabled={readOnly} /></div>
@@ -571,8 +659,16 @@ const CreateClient = () => {
                           </div>
                           <div><Label className="text-xs">Founded Year</Label><Input type="number" min={1800} max={new Date().getFullYear()} value={formData.founded_year || ''} onChange={e => update('founded_year', e.target.value)} className="h-9" disabled={readOnly} /></div>
                           <div><Label className="text-xs">Registration Number</Label><Input maxLength={50} value={formData.registration_number || ''} onChange={e => update('registration_number', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                          <div><Label className="text-xs">Website</Label><Input maxLength={500} value={formData.website || ''} onChange={e => update('website', e.target.value)} className="h-9" placeholder="https://..." disabled={readOnly} /></div>
-                          <div><Label className="text-xs">LinkedIn URL</Label><Input maxLength={500} value={formData.linkedin_url || ''} onChange={e => update('linkedin_url', e.target.value)} className="h-9" placeholder="https://..." disabled={readOnly} /></div>
+                          <div>
+                            <Label className="text-xs">Website</Label>
+                            <Input maxLength={500} value={formData.website || ''} onChange={e => update('website', e.target.value)} className={`h-9 ${urlError(formData.website || '')}`} placeholder="https://..." disabled={readOnly} />
+                            {showErrors && formData.website && !isValidUrl(formData.website) && <p className="text-xs text-destructive mt-1">URL must start with http:// or https://</p>}
+                          </div>
+                          <div>
+                            <Label className="text-xs">LinkedIn URL</Label>
+                            <Input maxLength={500} value={formData.linkedin_url || ''} onChange={e => update('linkedin_url', e.target.value)} className={`h-9 ${urlError(formData.linkedin_url || '')}`} placeholder="https://..." disabled={readOnly} />
+                            {showErrors && formData.linkedin_url && !isValidUrl(formData.linkedin_url) && <p className="text-xs text-destructive mt-1">URL must start with http:// or https://</p>}
+                          </div>
                           <div className="col-span-2"><Label className="text-xs">Description</Label><Textarea maxLength={2000} value={formData.description || ''} onChange={e => update('description', e.target.value)} rows={3} disabled={readOnly} /></div>
                         </CardContent>
                       </Card>
@@ -582,9 +678,22 @@ const CreateClient = () => {
                   <Card>
                     <CardHeader><CardTitle className="text-sm">Personal Info</CardTitle></CardHeader>
                     <CardContent className="grid grid-cols-2 gap-3">
-                      <div><Label className="text-xs">First Name *</Label><Input maxLength={100} value={formData.first_name || ''} onChange={e => update('first_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                      <div><Label className="text-xs">Last Name *</Label><Input maxLength={100} value={formData.last_name || ''} onChange={e => update('last_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                      <div><Label className="text-xs">Email *</Label><Input maxLength={254} type="email" value={formData.email || ''} onChange={e => update('email', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div>
+                        <Label className="text-xs">First Name *</Label>
+                        <Input maxLength={100} value={formData.first_name || ''} onChange={e => update('first_name', e.target.value)} className={`h-9 ${fieldError(formData.first_name)}`} disabled={readOnly} />
+                        {showErrors && !formData.first_name?.trim() && <p className="text-xs text-destructive mt-1">First name is required</p>}
+                      </div>
+                      <div>
+                        <Label className="text-xs">Last Name *</Label>
+                        <Input maxLength={100} value={formData.last_name || ''} onChange={e => update('last_name', e.target.value)} className={`h-9 ${fieldError(formData.last_name)}`} disabled={readOnly} />
+                        {showErrors && !formData.last_name?.trim() && <p className="text-xs text-destructive mt-1">Last name is required</p>}
+                      </div>
+                      <div>
+                        <Label className="text-xs">Email *</Label>
+                        <Input maxLength={254} type="email" value={formData.email || ''} onChange={e => update('email', e.target.value)} className={`h-9 ${fieldError(formData.email)} ${emailError(formData.email || '')}`} disabled={readOnly} />
+                        {showErrors && !formData.email?.trim() && <p className="text-xs text-destructive mt-1">Email is required</p>}
+                        {showErrors && formData.email && !isValidEmail(formData.email) && <p className="text-xs text-destructive mt-1">Invalid email format</p>}
+                      </div>
                       <div><Label className="text-xs">Phone</Label><Input maxLength={20} value={formData.phone || ''} onChange={e => update('phone', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       <div><Label className="text-xs">Date of Birth</Label><Input type="date" value={formData.date_of_birth || ''} onChange={e => update('date_of_birth', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       <div><Label className="text-xs">Nationality</Label><Input maxLength={100} value={formData.nationality || ''} onChange={e => update('nationality', e.target.value)} className="h-9" disabled={readOnly} /></div>
@@ -642,8 +751,17 @@ const CreateClient = () => {
                     <Card>
                       <CardHeader><CardTitle className="text-sm">Primary Contact</CardTitle></CardHeader>
                       <CardContent className="grid grid-cols-2 gap-3">
-                        <div><Label className="text-xs">Contact Name *</Label><Input maxLength={100} value={formData.primary_contact_name || ''} onChange={e => update('primary_contact_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                        <div><Label className="text-xs">Contact Email *</Label><Input maxLength={254} type="email" value={formData.primary_contact_email || ''} onChange={e => update('primary_contact_email', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                        <div>
+                          <Label className="text-xs">Contact Name *</Label>
+                          <Input maxLength={100} value={formData.primary_contact_name || ''} onChange={e => update('primary_contact_name', e.target.value)} className={`h-9 ${fieldError(formData.primary_contact_name)}`} disabled={readOnly} />
+                          {showErrors && !formData.primary_contact_name?.trim() && <p className="text-xs text-destructive mt-1">Contact name is required</p>}
+                        </div>
+                        <div>
+                          <Label className="text-xs">Contact Email *</Label>
+                          <Input maxLength={254} type="email" value={formData.primary_contact_email || ''} onChange={e => update('primary_contact_email', e.target.value)} className={`h-9 ${fieldError(formData.primary_contact_email)} ${emailError(formData.primary_contact_email || '')}`} disabled={readOnly} />
+                          {showErrors && !formData.primary_contact_email?.trim() && <p className="text-xs text-destructive mt-1">Contact email is required</p>}
+                          {showErrors && formData.primary_contact_email && !isValidEmail(formData.primary_contact_email) && <p className="text-xs text-destructive mt-1">Invalid email format</p>}
+                        </div>
                         <div><Label className="text-xs">Contact Phone</Label><Input maxLength={20} value={formData.primary_contact_phone || ''} onChange={e => update('primary_contact_phone', e.target.value)} className="h-9" disabled={readOnly} /></div>
                         <div><Label className="text-xs">Contact Position</Label><Input maxLength={100} value={formData.primary_contact_position || ''} onChange={e => update('primary_contact_position', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       </CardContent>
@@ -878,7 +996,11 @@ const CreateClient = () => {
                     <CardContent className="grid grid-cols-2 gap-3">
                       <div className="col-span-2"><Label className="text-xs">Address</Label><Input maxLength={500} value={formData.headquarters_address || ''} onChange={e => update('headquarters_address', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       <div><Label className="text-xs">City</Label><Input maxLength={100} value={formData.headquarters_city || ''} onChange={e => update('headquarters_city', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                      <div><Label className="text-xs">Country *</Label><Input maxLength={100} value={formData.headquarters_country || ''} onChange={e => update('headquarters_country', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div>
+                        <Label className="text-xs">Country *</Label>
+                        <Input maxLength={100} value={formData.headquarters_country || ''} onChange={e => update('headquarters_country', e.target.value)} className={`h-9 ${fieldError(formData.headquarters_country)}`} disabled={readOnly} />
+                        {showErrors && !formData.headquarters_country?.trim() && <p className="text-xs text-destructive mt-1">Country is required</p>}
+                      </div>
                       <div><Label className="text-xs">Postal Code</Label><Input maxLength={20} value={formData.postal_code || ''} onChange={e => update('postal_code', e.target.value)} className="h-9" disabled={readOnly} /></div>
                     </CardContent>
                   </Card>
@@ -912,7 +1034,7 @@ const CreateClient = () => {
             {!readOnly && (
               <div className="flex justify-end gap-2 mt-6">
                 <Button type="button" variant="outline" onClick={() => navigate(isEditMode ? `/clients/${editId}` : '/clients')}>Cancel</Button>
-                <Button type="submit" disabled={!canSubmit}>
+                <Button type="submit" disabled={isMutating || readOnly}>
                   {isMutating ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Client')}
                 </Button>
               </div>
