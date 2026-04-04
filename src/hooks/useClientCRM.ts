@@ -214,13 +214,17 @@ export function useCreateClientRelationship() {
 
       // Create inverse relationship
       const inverseType = INVERSE_RELATIONSHIP[input.relationship_type] || 'related';
-      await supabase.from('client_relationships').insert({
-        client_id: input.related_client_id,
-        related_client_id: input.client_id,
-        relationship_type: inverseType,
-        notes: input.notes ? sanitizeTextInput(input.notes) : null,
-        created_by: user.id,
-      }).select().single().catch(() => {});
+      try {
+        await supabase.from('client_relationships').insert({
+          client_id: input.related_client_id,
+          related_client_id: input.client_id,
+          relationship_type: inverseType,
+          notes: input.notes ? sanitizeTextInput(input.notes) : null,
+          created_by: user.id,
+        }).select().single();
+      } catch {
+        // ignore duplicate
+      }
 
       await supabase.from('client_activity_log').insert({
         client_id: input.client_id,
