@@ -315,7 +315,7 @@ function OverviewTab({ client, companyData }: { client: any; companyData: any })
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label className="text-xs">Credit Limit</Label>
-                <Input type="number" value={editData.credit_limit} onChange={e => updateField('credit_limit', Number(e.target.value))} className="h-8" />
+                <Input type="number" maxLength={15} value={editData.credit_limit} onChange={e => updateField('credit_limit', Number(e.target.value))} className="h-8" />
               </div>
               <div>
                 <Label className="text-xs">Currency</Label>
