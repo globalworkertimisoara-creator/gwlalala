@@ -603,7 +603,7 @@ const CreateClient = () => {
                               <div>
                                 <Label className="text-xs">Company *</Label>
                                 <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
-                                  <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
+                                  <SelectTrigger className={`h-9 ${showErrors && !formData.company_id ? 'border-destructive ring-1 ring-destructive' : ''}`}><SelectValue placeholder="Choose a company..." /></SelectTrigger>
                                   <SelectContent>
                                     {companies.map(c => (
                                       <SelectItem key={c.id} value={c.id}>
