@@ -778,7 +778,7 @@ function MeetingsTab({ clientId }: { clientId: string }) {
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-xs">Title *</Label><Input maxLength={200} value={form.title || ''} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className="h-8" /></div>
               <div><Label className="text-xs">Date *</Label><Input type="datetime-local" value={form.meeting_date || ''} onChange={e => setForm(p => ({ ...p, meeting_date: e.target.value }))} className="h-8" /></div>
-              <div><Label className="text-xs">Duration (min)</Label><Input type="number" value={form.duration_minutes || 60} onChange={e => setForm(p => ({ ...p, duration_minutes: e.target.value }))} className="h-8" /></div>
+              <div><Label className="text-xs">Duration (min)</Label><Input type="number" maxLength={4} value={form.duration_minutes || 60} onChange={e => setForm(p => ({ ...p, duration_minutes: e.target.value }))} className="h-8" /></div>
               <div><Label className="text-xs">Type</Label>
                 <Select value={form.meeting_type || 'video'} onValueChange={v => setForm(p => ({ ...p, meeting_type: v }))}>
                   <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
