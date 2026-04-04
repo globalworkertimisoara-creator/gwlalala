@@ -32,6 +32,18 @@ export interface Client {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  // CRM fields
+  payment_terms?: string;
+  currency?: string;
+  vat_number?: string;
+  vat_verified?: boolean;
+  preferred_communication?: string;
+  priority_level?: string;
+  risk_score?: number;
+  risk_notes?: string;
+  credit_limit?: number;
+  sla_terms?: string;
+  payment_score?: number;
 }
 
 export interface ClientWithMetrics extends Client {
