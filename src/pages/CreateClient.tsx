@@ -553,11 +553,20 @@ const CreateClient = () => {
           <form onSubmit={handleSubmit}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid grid-cols-6 w-full">
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                <TabsTrigger value="basic" className="relative">
+                  Basic Info
+                  {tabHasErrors('basic') && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />}
+                </TabsTrigger>
+                <TabsTrigger value="contacts" className="relative">
+                  Contacts
+                  {tabHasErrors('contacts') && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />}
+                </TabsTrigger>
                 <TabsTrigger value="financial">Financial</TabsTrigger>
                 <TabsTrigger value="risk">Risk</TabsTrigger>
-                <TabsTrigger value="address">Address</TabsTrigger>
+                <TabsTrigger value="address" className="relative">
+                  Address
+                  {tabHasErrors('address') && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />}
+                </TabsTrigger>
                 <TabsTrigger value="notes">Notes</TabsTrigger>
               </TabsList>
 
