@@ -1104,10 +1104,10 @@ function DocumentsTab({ clientId, userId }: { clientId: string; userId?: string 
     await uploadDoc.mutateAsync({
       client_id: clientId,
       file: selectedFile,
-      name: uploadForm.name || selectedFile.name,
+      name: sanitizeTextInput(uploadForm.name || selectedFile.name),
       doc_type: uploadForm.doc_type || 'other',
       folder: uploadForm.folder || 'general',
-      description: uploadForm.description,
+      description: uploadForm.description ? sanitizeTextInput(uploadForm.description) : undefined,
       parent_document_id: parentDoc?.parent_document_id || parentDoc?.id || undefined,
       version: parentDoc ? (parentDoc.version || 1) + 1 : 1,
     });
