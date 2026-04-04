@@ -576,11 +576,11 @@ const CreateClient = () => {
                   <>
                     {!isEditMode && (
                       <div className="grid grid-cols-2 gap-3">
-                        <button type="button" onClick={() => { setCompanyMode('existing'); setFormData({}); }}
+                        <button type="button" onClick={() => { setCompanyMode('existing'); setFormData({}); setShowErrors(false); }}
                           className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'existing' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}>
                           <Search className="h-4 w-4" /><span className="font-medium">Select Existing</span>
                         </button>
-                        <button type="button" onClick={() => { setCompanyMode('new'); setFormData({}); }}
+                        <button type="button" onClick={() => { setCompanyMode('new'); setFormData({}); setShowErrors(false); }}
                           className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'new' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}>
                           <PlusCircle className="h-4 w-4" /><span className="font-medium">Create New</span>
                         </button>
