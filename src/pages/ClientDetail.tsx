@@ -740,12 +740,12 @@ function MeetingsTab({ clientId }: { clientId: string }) {
     if (!form.title?.trim() || !form.meeting_date) return;
     await createMeeting.mutateAsync({
       client_id: clientId,
-      title: form.title,
+      title: sanitizeTextInput(form.title),
       meeting_date: form.meeting_date,
       duration_minutes: Number(form.duration_minutes) || 60,
       meeting_type: form.meeting_type || 'video',
-      location: form.location || null,
-      agenda: form.agenda || null,
+      location: form.location ? sanitizeTextInput(form.location) : null,
+      agenda: form.agenda ? sanitizeTextInput(form.agenda) : null,
       status: 'scheduled',
     });
     setForm({}); setShowForm(false);
