@@ -247,31 +247,31 @@ const CreateClient = () => {
         const clientUpdates: Record<string, any> = {
           status: formData.status || 'lead',
           source: formData.source || null,
-          notes: formData.notes || null,
+          notes: formData.notes ? sanitizeTextInput(formData.notes) : null,
           ...crmFields,
         };
 
         if (clientType === 'individual') {
           Object.assign(clientUpdates, {
-            first_name: formData.first_name,
-            last_name: formData.last_name,
+            first_name: sanitizeTextInput(formData.first_name),
+            last_name: sanitizeTextInput(formData.last_name),
             email: formData.email,
             phone: formData.phone || null,
             date_of_birth: formData.date_of_birth || null,
-            nationality: formData.nationality || null,
-            address_line1: formData.address_line1 || null,
-            city: formData.city || null,
-            country: formData.country || null,
-            postal_code: formData.postal_code || null,
+            nationality: formData.nationality ? sanitizeTextInput(formData.nationality) : null,
+            address_line1: formData.address_line1 ? sanitizeTextInput(formData.address_line1) : null,
+            city: formData.city ? sanitizeTextInput(formData.city) : null,
+            country: formData.country ? sanitizeTextInput(formData.country) : null,
+            postal_code: formData.postal_code ? sanitizeTextInput(formData.postal_code) : null,
             id_document_type: formData.id_document_type || null,
-            id_document_number: formData.id_document_number || null,
+            id_document_number: formData.id_document_number ? sanitizeTextInput(formData.id_document_number) : null,
             id_document_expiry: formData.id_document_expiry || null,
-            billing_name: formData.billing_name || null,
+            billing_name: formData.billing_name ? sanitizeTextInput(formData.billing_name) : null,
             billing_email: formData.billing_email || null,
-            tax_id: formData.tax_id || null,
+            tax_id: formData.tax_id ? sanitizeTextInput(formData.tax_id) : null,
           });
         } else {
-          clientUpdates.tax_id = formData.tax_id || null;
+          clientUpdates.tax_id = formData.tax_id ? sanitizeTextInput(formData.tax_id) : null;
         }
 
         await updateClient.mutateAsync({ id: editId, ...clientUpdates });
