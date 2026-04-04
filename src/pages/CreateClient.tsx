@@ -7,14 +7,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Building2, UserRound, Search, PlusCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Building2, UserRound, Search, PlusCircle, Trash2, Plus } from 'lucide-react';
 import { useCreateClient, useUpdateClient, useUpdateCompany, useClient } from '@/hooks/useClients';
+import { useClientContacts, useCreateClientContact, useUpdateClientContact, useDeleteClientContact } from '@/hooks/useClientCRM';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { ClientType } from '@/types/client';
-import { sanitizeTextInput } from '@/types/client';
+import {
+  sanitizeTextInput,
+  PAYMENT_TERMS_OPTIONS,
+  CURRENCY_OPTIONS,
+  PRIORITY_LEVELS,
+  COMMUNICATION_CHANNELS,
+} from '@/types/client';
 
 type CompanyMode = 'existing' | 'new';
 
@@ -24,6 +35,7 @@ const CreateClient = () => {
   const isValidUUID = editId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editId);
   const isEditMode = !!isValidUUID;
 
+  const { can } = usePermissions();
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
   const updateCompany = useUpdateCompany();
@@ -33,15 +45,23 @@ const CreateClient = () => {
   const [companyMode, setCompanyMode] = useState<CompanyMode>('existing');
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
 
-  // Redirect if invalid UUID in edit mode
+  // Contacts (edit mode)
+  const { data: contacts = [] } = useClientContacts(isEditMode ? editId! : '');
+  const createContact = useCreateClientContact();
+  const updateContact = useUpdateClientContact();
+  const deleteContact = useDeleteClientContact();
+  const [newContact, setNewContact] = useState<Record<string, any> | null>(null);
+
+  const readOnly = isEditMode && !can('editClients');
+
   useEffect(() => {
     if (editId && !isValidUUID) {
       navigate('/clients', { replace: true });
     }
   }, [editId, isValidUUID, navigate]);
 
-  // Pre-fill form in edit mode
   useEffect(() => {
     if (isEditMode && existingClient) {
       const client = existingClient as any;
@@ -77,6 +97,19 @@ const CreateClient = () => {
           status: client.status || 'lead',
           source: client.source || '',
           notes: client.notes || '',
+          // CRM fields
+          payment_terms: client.payment_terms || 'net_30',
+          currency: client.currency || 'EUR',
+          vat_number: client.vat_number || '',
+          vat_verified: client.vat_verified || false,
+          preferred_communication: client.preferred_communication || 'email',
+          priority_level: client.priority_level || 'standard',
+          risk_score: client.risk_score ?? 5,
+          risk_notes: client.risk_notes || '',
+          credit_limit: client.credit_limit?.toString() || '0',
+          sla_terms: client.sla_terms || '',
+          payment_score: client.payment_score ?? 5,
+          tax_id: client.tax_id || '',
         });
       } else {
         setFormData({
@@ -92,12 +125,24 @@ const CreateClient = () => {
           postal_code: client.postal_code || '',
           id_document_type: client.id_document_type || '',
           id_document_number: client.id_document_number || '',
+          id_document_expiry: client.id_document_expiry || '',
           billing_name: client.billing_name || '',
           billing_email: client.billing_email || '',
           tax_id: client.tax_id || '',
           status: client.status || 'lead',
           source: client.source || '',
           notes: client.notes || '',
+          payment_terms: client.payment_terms || 'net_30',
+          currency: client.currency || 'EUR',
+          vat_number: client.vat_number || '',
+          vat_verified: client.vat_verified || false,
+          preferred_communication: client.preferred_communication || 'email',
+          priority_level: client.priority_level || 'standard',
+          risk_score: client.risk_score ?? 5,
+          risk_notes: client.risk_notes || '',
+          credit_limit: client.credit_limit?.toString() || '0',
+          sla_terms: client.sla_terms || '',
+          payment_score: client.payment_score ?? 5,
         });
       }
     }
@@ -152,13 +197,26 @@ const CreateClient = () => {
     }
   };
 
+  const crmFields = {
+    payment_terms: formData.payment_terms || 'net_30',
+    currency: formData.currency || 'EUR',
+    vat_number: formData.vat_number ? sanitizeTextInput(formData.vat_number) : null,
+    vat_verified: formData.vat_verified || false,
+    preferred_communication: formData.preferred_communication || 'email',
+    priority_level: formData.priority_level || 'standard',
+    risk_score: typeof formData.risk_score === 'number' ? formData.risk_score : 5,
+    risk_notes: formData.risk_notes ? sanitizeTextInput(formData.risk_notes) : null,
+    credit_limit: formData.credit_limit ? Number(formData.credit_limit) : 0,
+    sla_terms: formData.sla_terms ? sanitizeTextInput(formData.sla_terms) : null,
+    payment_score: typeof formData.payment_score === 'number' ? formData.payment_score : 5,
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
       if (isEditMode && editId) {
-        // Edit mode
         if (clientType === 'company' && (existingClient as any)?.company_id) {
           await updateCompany.mutateAsync({
             id: (existingClient as any).company_id,
@@ -190,6 +248,7 @@ const CreateClient = () => {
           status: formData.status || 'lead',
           source: formData.source || null,
           notes: formData.notes || null,
+          ...crmFields,
         };
 
         if (clientType === 'individual') {
@@ -206,10 +265,13 @@ const CreateClient = () => {
             postal_code: formData.postal_code || null,
             id_document_type: formData.id_document_type || null,
             id_document_number: formData.id_document_number || null,
+            id_document_expiry: formData.id_document_expiry || null,
             billing_name: formData.billing_name || null,
             billing_email: formData.billing_email || null,
             tax_id: formData.tax_id || null,
           });
+        } else {
+          clientUpdates.tax_id = formData.tax_id || null;
         }
 
         await updateClient.mutateAsync({ id: editId, ...clientUpdates });
@@ -217,12 +279,13 @@ const CreateClient = () => {
         return;
       }
 
-      // Create mode — existing logic
+      // Create mode
       const input: Record<string, any> = {
         client_type: clientType,
         status: formData.status || 'lead',
         source: formData.source || null,
         notes: formData.notes ? sanitizeTextInput(formData.notes) : null,
+        ...crmFields,
       };
 
       if (clientType === 'company') {
@@ -264,7 +327,7 @@ const CreateClient = () => {
             .single();
 
           if (companyError || !newCompany) {
-            toast({ title: 'Error', description: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
+            toast({ title: 'An unexpected error occurred. Please try again.', variant: 'destructive' });
             return;
           }
           companyId = newCompany.id;
@@ -292,7 +355,6 @@ const CreateClient = () => {
             })
             .eq('id', formData.company_id);
 
-          // Check if this company already has a client record
           if (existingCompanyClientIds.includes(formData.company_id)) {
             const { data: existingClientRecord } = await supabase
               .from('clients')
@@ -315,6 +377,7 @@ const CreateClient = () => {
         }
 
         input.company_id = companyId;
+        input.tax_id = formData.tax_id ? sanitizeTextInput(formData.tax_id) : null;
       } else {
         if (!formData.first_name || !formData.last_name || !formData.email) return;
         Object.assign(input, {
@@ -330,6 +393,7 @@ const CreateClient = () => {
           postal_code: formData.postal_code ? sanitizeTextInput(formData.postal_code) : null,
           id_document_type: formData.id_document_type || null,
           id_document_number: formData.id_document_number ? sanitizeTextInput(formData.id_document_number) : null,
+          id_document_expiry: formData.id_document_expiry || null,
           billing_name: formData.billing_name ? sanitizeTextInput(formData.billing_name) : null,
           billing_email: formData.billing_email || null,
           tax_id: formData.tax_id ? sanitizeTextInput(formData.tax_id) : null,
@@ -360,9 +424,20 @@ const CreateClient = () => {
   );
   const individualFormValid = clientType === 'individual' && !!(formData.first_name && formData.last_name && formData.email);
   const isMutating = submitting || createClient.isPending || updateClient.isPending || updateCompany.isPending;
-  const canSubmit = !isMutating && (companyFormValid || individualFormValid);
+  const canSubmit = !isMutating && !readOnly && (companyFormValid || individualFormValid);
 
-  // Loading/access states for edit mode
+  const getRiskColor = (score: number) => {
+    if (score <= 3) return 'text-green-600';
+    if (score <= 6) return 'text-amber-600';
+    return 'text-red-600';
+  };
+
+  const handleAddContact = async () => {
+    if (!newContact?.name || !editId) return;
+    await createContact.mutateAsync({ ...newContact, client_id: editId });
+    setNewContact(null);
+  };
+
   if (isEditMode && loadingClient) {
     return <AppLayout><div className="p-6 text-muted-foreground">Loading client...</div></AppLayout>;
   }
@@ -370,16 +445,19 @@ const CreateClient = () => {
     return <AppLayout><div className="p-6 text-muted-foreground">Client not found</div></AppLayout>;
   }
 
+  const showCompanyFields = isEditMode || companyMode === 'new' || formData.company_id;
+
   return (
     <AppLayout>
       <div className="h-[calc(100vh-64px)] overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-6 py-6">
+        <div className="max-w-4xl mx-auto px-6 py-6">
           <Button variant="ghost" size="sm" onClick={() => navigate(isEditMode ? `/clients/${editId}` : '/clients')} className="mb-4 gap-1">
             <ArrowLeft className="h-4 w-4" /> {isEditMode ? 'Back to Client' : 'Back to Clients'}
           </Button>
 
           <h1 className="text-xl font-bold mb-6">{isEditMode ? 'Edit Client' : 'New Client'}</h1>
 
+          {/* Client type selector */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {(['company', 'individual'] as ClientType[]).map(type => (
               <button
@@ -397,229 +475,448 @@ const CreateClient = () => {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {clientType === 'company' ? (
-              <>
-                {/* Company mode selector — hidden in edit mode */}
-                {!isEditMode && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { setCompanyMode('existing'); setFormData({}); }}
-                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'existing' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
-                    >
-                      <Search className="h-4 w-4" />
-                      <span className="font-medium">Select Existing</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setCompanyMode('new'); setFormData({}); }}
-                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'new' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}
-                    >
-                      <PlusCircle className="h-4 w-4" />
-                      <span className="font-medium">Create New</span>
-                    </button>
-                  </div>
-                )}
+          <form onSubmit={handleSubmit}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid grid-cols-6 w-full">
+                <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                <TabsTrigger value="financial">Financial</TabsTrigger>
+                <TabsTrigger value="risk">Risk</TabsTrigger>
+                <TabsTrigger value="address">Address</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+              </TabsList>
 
-                {/* Existing company selector — hidden in edit mode */}
-                {!isEditMode && companyMode === 'existing' && (
-                  <Card>
-                    <CardHeader><CardTitle className="text-sm">Select Company</CardTitle></CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <Label className="text-xs">Company *</Label>
-                        {companies.length === 0 ? (
-                          <div className="rounded-md border border-dashed p-4 text-center space-y-2">
-                            <p className="text-sm text-muted-foreground">No companies found in the system.</p>
-                            <Button type="button" variant="outline" size="sm" onClick={() => { setCompanyMode('new'); setFormData({}); }} className="gap-1.5">
-                              <PlusCircle className="h-3.5 w-3.5" /> Create New Company
-                            </Button>
+              {/* ─── Tab 1: Basic Info ─── */}
+              <TabsContent value="basic" className="space-y-4">
+                {clientType === 'company' ? (
+                  <>
+                    {!isEditMode && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <button type="button" onClick={() => { setCompanyMode('existing'); setFormData({}); }}
+                          className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'existing' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}>
+                          <Search className="h-4 w-4" /><span className="font-medium">Select Existing</span>
+                        </button>
+                        <button type="button" onClick={() => { setCompanyMode('new'); setFormData({}); }}
+                          className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors text-sm ${companyMode === 'new' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'}`}>
+                          <PlusCircle className="h-4 w-4" /><span className="font-medium">Create New</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {!isEditMode && companyMode === 'existing' && (
+                      <Card>
+                        <CardHeader><CardTitle className="text-sm">Select Company</CardTitle></CardHeader>
+                        <CardContent className="space-y-3">
+                          {companies.length === 0 ? (
+                            <div className="rounded-md border border-dashed p-4 text-center space-y-2">
+                              <p className="text-sm text-muted-foreground">No companies found in the system.</p>
+                              <Button type="button" variant="outline" size="sm" onClick={() => { setCompanyMode('new'); setFormData({}); }} className="gap-1.5">
+                                <PlusCircle className="h-3.5 w-3.5" /> Create New Company
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                <Label className="text-xs">Company *</Label>
+                                <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
+                                  <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
+                                  <SelectContent>
+                                    {companies.map(c => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        <span className="flex items-center gap-2">
+                                          {c.company_name} — {c.headquarters_city || 'N/A'}, {c.headquarters_country || 'N/A'}
+                                          {existingCompanyClientIds.includes(c.id) && (
+                                            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Has client</span>
+                                          )}
+                                        </span>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                {formData.company_id && existingCompanyClientIds.includes(formData.company_id) && (
+                                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 mt-2">
+                                    <p className="text-xs text-amber-800">This company already has a client record. You'll be redirected to the existing client.</p>
+                                  </div>
+                                )}
+                                {formData.company_id && !existingCompanyClientIds.includes(formData.company_id) && (
+                                  <Badge variant="outline" className="mt-2 text-[10px]">A new client record will be created for this company</Badge>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {showCompanyFields && (
+                      <Card>
+                        <CardHeader><CardTitle className="text-sm">Company Info</CardTitle></CardHeader>
+                        <CardContent className="grid grid-cols-2 gap-3">
+                          <div className="col-span-2">
+                            <Label className="text-xs">Company Name *</Label>
+                            <Input maxLength={200} value={formData.company_name || ''} onChange={e => update('company_name', e.target.value)} className="h-9" disabled={isEditMode || readOnly} />
                           </div>
-                        ) : (
-                          <>
-                            <Select value={formData.company_id || undefined} onValueChange={handleCompanySelect}>
-                              <SelectTrigger className="h-9"><SelectValue placeholder="Choose a company..." /></SelectTrigger>
+                          <div><Label className="text-xs">Legal Name</Label><Input maxLength={200} value={formData.legal_name || ''} onChange={e => update('legal_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                          <div><Label className="text-xs">Industry</Label><Input maxLength={100} value={formData.industry || ''} onChange={e => update('industry', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                          <div>
+                            <Label className="text-xs">Company Size</Label>
+                            <Select value={formData.company_size || undefined} onValueChange={v => update('company_size', v)} disabled={readOnly}>
+                              <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
                               <SelectContent>
-                                {companies.map(c => (
-                                  <SelectItem key={c.id} value={c.id}>
-                                    <span className="flex items-center gap-2">
-                                      {c.company_name} — {c.headquarters_city || 'N/A'}, {c.headquarters_country || 'N/A'}
-                                      {existingCompanyClientIds.includes(c.id) && (
-                                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Has client</span>
-                                      )}
-                                    </span>
-                                  </SelectItem>
+                                {['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'].map(s => (
+                                  <SelectItem key={s} value={s}>{s}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
-                            {formData.company_id && existingCompanyClientIds.includes(formData.company_id) && (
-                              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 mt-2">
-                                <p className="text-xs text-amber-800">
-                                  This company already has a client record. You can still update its details below. Creating a new client will be skipped — you'll be redirected to the existing client instead.
-                                </p>
-                              </div>
-                            )}
-                            {formData.company_id && !existingCompanyClientIds.includes(formData.company_id) && (
-                              <Badge variant="outline" className="mt-2 text-[10px]">A new client record will be created for this company</Badge>
-                            )}
-                          </>
-                        )}
-
-                        {formData.company_id && (
-                          <Badge variant="outline" className="mt-2 text-[10px]">Editing will update the existing company record</Badge>
-                        )}
-                      </div>
+                          </div>
+                          <div><Label className="text-xs">Founded Year</Label><Input type="number" min={1800} max={new Date().getFullYear()} value={formData.founded_year || ''} onChange={e => update('founded_year', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                          <div><Label className="text-xs">Registration Number</Label><Input maxLength={50} value={formData.registration_number || ''} onChange={e => update('registration_number', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                          <div><Label className="text-xs">Website</Label><Input maxLength={500} value={formData.website || ''} onChange={e => update('website', e.target.value)} className="h-9" placeholder="https://..." disabled={readOnly} /></div>
+                          <div><Label className="text-xs">LinkedIn URL</Label><Input maxLength={500} value={formData.linkedin_url || ''} onChange={e => update('linkedin_url', e.target.value)} className="h-9" placeholder="https://..." disabled={readOnly} /></div>
+                          <div className="col-span-2"><Label className="text-xs">Description</Label><Textarea maxLength={2000} value={formData.description || ''} onChange={e => update('description', e.target.value)} rows={3} disabled={readOnly} /></div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
+                ) : (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Personal Info</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-3">
+                      <div><Label className="text-xs">First Name *</Label><Input maxLength={100} value={formData.first_name || ''} onChange={e => update('first_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Last Name *</Label><Input maxLength={100} value={formData.last_name || ''} onChange={e => update('last_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Email *</Label><Input maxLength={254} type="email" value={formData.email || ''} onChange={e => update('email', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Phone</Label><Input maxLength={20} value={formData.phone || ''} onChange={e => update('phone', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Date of Birth</Label><Input type="date" value={formData.date_of_birth || ''} onChange={e => update('date_of_birth', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Nationality</Label><Input maxLength={100} value={formData.nationality || ''} onChange={e => update('nationality', e.target.value)} className="h-9" disabled={readOnly} /></div>
                     </CardContent>
                   </Card>
                 )}
 
-                {/* Company detail fields — shown when new OR when existing selected OR in edit mode */}
-                {(isEditMode || companyMode === 'new' || formData.company_id) && (
-                  <>
-                    <Card>
-                      <CardHeader><CardTitle className="text-sm">Company Info</CardTitle></CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
-                          <Label className="text-xs">Company Name *</Label>
-                          <Input maxLength={200} value={formData.company_name || ''} onChange={e => update('company_name', e.target.value)} className="h-9" disabled={isEditMode} />
-                        </div>
-                        <div><Label className="text-xs">Legal Name</Label><Input maxLength={200} value={formData.legal_name || ''} onChange={e => update('legal_name', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Industry</Label><Input maxLength={100} value={formData.industry || ''} onChange={e => update('industry', e.target.value)} className="h-9" /></div>
-                        <div>
-                          <Label className="text-xs">Company Size</Label>
-                          <Select value={formData.company_size || undefined} onValueChange={v => update('company_size', v)}>
-                            <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1-10">1-10</SelectItem>
-                              <SelectItem value="11-50">11-50</SelectItem>
-                              <SelectItem value="51-200">51-200</SelectItem>
-                              <SelectItem value="201-500">201-500</SelectItem>
-                              <SelectItem value="501-1000">501-1000</SelectItem>
-                              <SelectItem value="1000+">1000+</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div><Label className="text-xs">Founded Year</Label><Input type="number" min={1800} max={new Date().getFullYear()} value={formData.founded_year || ''} onChange={e => update('founded_year', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Registration Number</Label><Input maxLength={50} value={formData.registration_number || ''} onChange={e => update('registration_number', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Website</Label><Input maxLength={500} value={formData.website || ''} onChange={e => update('website', e.target.value)} className="h-9" placeholder="https://..." /></div>
-                        <div><Label className="text-xs">LinkedIn URL</Label><Input maxLength={500} value={formData.linkedin_url || ''} onChange={e => update('linkedin_url', e.target.value)} className="h-9" placeholder="https://..." /></div>
-                        <div className="col-span-2"><Label className="text-xs">Description</Label><Textarea maxLength={2000} value={formData.description || ''} onChange={e => update('description', e.target.value)} rows={3} /></div>
-                      </CardContent>
-                    </Card>
+                {/* Status, Source, Priority — always shown */}
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Details</CardTitle></CardHeader>
+                  <CardContent className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">Status</Label>
+                      <Select value={formData.status || 'lead'} onValueChange={v => update('status', v)} disabled={readOnly}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {['lead', 'active', 'on_hold', 'inactive', 'churned'].map(s => (
+                            <SelectItem key={s} value={s}>{s.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Source</Label>
+                      <Select value={formData.source || undefined} onValueChange={v => update('source', v)} disabled={readOnly}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          {['referral', 'website', 'marketing', 'direct', 'other'].map(s => (
+                            <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Priority Level</Label>
+                      <Select value={formData.priority_level || 'standard'} onValueChange={v => update('priority_level', v)} disabled={readOnly}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {PRIORITY_LEVELS.map(p => (
+                            <SelectItem key={p.value} value={p.value}>
+                              <span className={`font-medium ${p.color.split(' ')[0]}`}>{p.label}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
+              {/* ─── Tab 2: Contacts ─── */}
+              <TabsContent value="contacts" className="space-y-4">
+                {clientType === 'company' && showCompanyFields && (
+                  <>
                     <Card>
                       <CardHeader><CardTitle className="text-sm">Primary Contact</CardTitle></CardHeader>
                       <CardContent className="grid grid-cols-2 gap-3">
-                        <div><Label className="text-xs">Contact Name *</Label><Input maxLength={100} value={formData.primary_contact_name || ''} onChange={e => update('primary_contact_name', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Contact Email *</Label><Input maxLength={254} type="email" value={formData.primary_contact_email || ''} onChange={e => update('primary_contact_email', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Contact Phone</Label><Input maxLength={20} value={formData.primary_contact_phone || ''} onChange={e => update('primary_contact_phone', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Contact Position</Label><Input maxLength={100} value={formData.primary_contact_position || ''} onChange={e => update('primary_contact_position', e.target.value)} className="h-9" /></div>
+                        <div><Label className="text-xs">Contact Name *</Label><Input maxLength={100} value={formData.primary_contact_name || ''} onChange={e => update('primary_contact_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                        <div><Label className="text-xs">Contact Email *</Label><Input maxLength={254} type="email" value={formData.primary_contact_email || ''} onChange={e => update('primary_contact_email', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                        <div><Label className="text-xs">Contact Phone</Label><Input maxLength={20} value={formData.primary_contact_phone || ''} onChange={e => update('primary_contact_phone', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                        <div><Label className="text-xs">Contact Position</Label><Input maxLength={100} value={formData.primary_contact_position || ''} onChange={e => update('primary_contact_position', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       </CardContent>
                     </Card>
 
                     <Card>
                       <CardHeader><CardTitle className="text-sm">HR Contact</CardTitle></CardHeader>
                       <CardContent className="grid grid-cols-2 gap-3">
-                        <div><Label className="text-xs">HR Contact Name</Label><Input maxLength={100} value={formData.hr_contact_name || ''} onChange={e => update('hr_contact_name', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">HR Contact Email</Label><Input maxLength={254} type="email" value={formData.hr_contact_email || ''} onChange={e => update('hr_contact_email', e.target.value)} className="h-9" /></div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader><CardTitle className="text-sm">Headquarters Address</CardTitle></CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2"><Label className="text-xs">Address</Label><Input maxLength={500} value={formData.headquarters_address || ''} onChange={e => update('headquarters_address', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">City</Label><Input maxLength={100} value={formData.headquarters_city || ''} onChange={e => update('headquarters_city', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Country *</Label><Input maxLength={100} value={formData.headquarters_country || ''} onChange={e => update('headquarters_country', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Postal Code</Label><Input maxLength={20} value={formData.postal_code || ''} onChange={e => update('postal_code', e.target.value)} className="h-9" /></div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader><CardTitle className="text-sm">Billing Contact</CardTitle></CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-3">
-                        <div><Label className="text-xs">Billing Contact Name</Label><Input maxLength={200} value={formData.billing_contact_name || ''} onChange={e => update('billing_contact_name', e.target.value)} className="h-9" /></div>
-                        <div><Label className="text-xs">Billing Contact Email</Label><Input maxLength={254} type="email" value={formData.billing_contact_email || ''} onChange={e => update('billing_contact_email', e.target.value)} className="h-9" /></div>
+                        <div><Label className="text-xs">HR Contact Name</Label><Input maxLength={100} value={formData.hr_contact_name || ''} onChange={e => update('hr_contact_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                        <div><Label className="text-xs">HR Contact Email</Label><Input maxLength={254} type="email" value={formData.hr_contact_email || ''} onChange={e => update('hr_contact_email', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       </CardContent>
                     </Card>
                   </>
                 )}
-              </>
-            ) : (
-              <>
+
                 <Card>
-                  <CardHeader><CardTitle className="text-sm">Personal Info</CardTitle></CardHeader>
-                  <CardContent className="grid grid-cols-2 gap-3">
-                    <div><Label className="text-xs">First Name *</Label><Input maxLength={100} value={formData.first_name || ''} onChange={e => update('first_name', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Last Name *</Label><Input maxLength={100} value={formData.last_name || ''} onChange={e => update('last_name', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Email *</Label><Input maxLength={254} type="email" value={formData.email || ''} onChange={e => update('email', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Phone</Label><Input maxLength={20} value={formData.phone || ''} onChange={e => update('phone', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Date of Birth</Label><Input type="date" value={formData.date_of_birth || ''} onChange={e => update('date_of_birth', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Nationality</Label><Input maxLength={100} value={formData.nationality || ''} onChange={e => update('nationality', e.target.value)} className="h-9" /></div>
+                  <CardHeader><CardTitle className="text-sm">Preferred Communication</CardTitle></CardHeader>
+                  <CardContent>
+                    <Select value={formData.preferred_communication || 'email'} onValueChange={v => update('preferred_communication', v)} disabled={readOnly}>
+                      <SelectTrigger className="h-9 max-w-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {COMMUNICATION_CHANNELS.map(c => (
+                          <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </CardContent>
                 </Card>
+
+                {/* Additional Contacts — edit mode only */}
+                {isEditMode && (
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle className="text-sm">Additional Contacts</CardTitle>
+                      {!readOnly && (
+                        <Button type="button" variant="outline" size="sm" onClick={() => setNewContact({ name: '', email: '', phone: '', position: '', department: '', contact_type: 'general', is_primary: false })} className="gap-1">
+                          <Plus className="h-3.5 w-3.5" /> Add
+                        </Button>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      {contacts.length === 0 && !newContact && (
+                        <p className="text-sm text-muted-foreground text-center py-4">No additional contacts yet.</p>
+                      )}
+                      <div className="space-y-3">
+                        {contacts.map((c: any) => (
+                          <div key={c.id} className="flex items-center gap-3 p-3 border rounded-lg text-sm">
+                            <div className="flex-1 grid grid-cols-3 gap-2">
+                              <div><span className="text-muted-foreground text-xs">Name:</span> {c.name}</div>
+                              <div><span className="text-muted-foreground text-xs">Email:</span> {c.email || '—'}</div>
+                              <div><span className="text-muted-foreground text-xs">Phone:</span> {c.phone || '—'}</div>
+                              <div><span className="text-muted-foreground text-xs">Position:</span> {c.position || '—'}</div>
+                              <div><span className="text-muted-foreground text-xs">Dept:</span> {c.department || '—'}</div>
+                              <div><span className="text-muted-foreground text-xs">Type:</span> {c.contact_type} {c.is_primary && <Badge variant="secondary" className="text-[9px] ml-1">Primary</Badge>}</div>
+                            </div>
+                            {!readOnly && (
+                              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteContact.mutate({ id: c.id, client_id: editId! })}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        {newContact && (
+                          <div className="p-3 border rounded-lg border-dashed space-y-2">
+                            <div className="grid grid-cols-3 gap-2">
+                              <Input maxLength={100} placeholder="Name *" value={newContact.name} onChange={e => setNewContact(p => ({ ...p!, name: e.target.value }))} className="h-8 text-sm" />
+                              <Input maxLength={254} placeholder="Email" value={newContact.email} onChange={e => setNewContact(p => ({ ...p!, email: e.target.value }))} className="h-8 text-sm" />
+                              <Input maxLength={20} placeholder="Phone" value={newContact.phone} onChange={e => setNewContact(p => ({ ...p!, phone: e.target.value }))} className="h-8 text-sm" />
+                              <Input maxLength={100} placeholder="Position" value={newContact.position} onChange={e => setNewContact(p => ({ ...p!, position: e.target.value }))} className="h-8 text-sm" />
+                              <Input maxLength={100} placeholder="Department" value={newContact.department} onChange={e => setNewContact(p => ({ ...p!, department: e.target.value }))} className="h-8 text-sm" />
+                              <Select value={newContact.contact_type} onValueChange={v => setNewContact(p => ({ ...p!, contact_type: v }))}>
+                                <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {['general', 'billing', 'technical', 'executive', 'hr'].map(t => (
+                                    <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <label className="flex items-center gap-2 text-xs">
+                                <Checkbox checked={newContact.is_primary} onCheckedChange={v => setNewContact(p => ({ ...p!, is_primary: !!v }))} />
+                                Primary contact
+                              </label>
+                              <div className="flex gap-2">
+                                <Button type="button" variant="ghost" size="sm" onClick={() => setNewContact(null)}>Cancel</Button>
+                                <Button type="button" size="sm" disabled={!newContact.name || createContact.isPending} onClick={handleAddContact}>
+                                  {createContact.isPending ? 'Adding...' : 'Add Contact'}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* ─── Tab 3: Financial ─── */}
+              <TabsContent value="financial" className="space-y-4">
                 <Card>
-                  <CardHeader><CardTitle className="text-sm">Address</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-sm">Payment & Billing</CardTitle></CardHeader>
                   <CardContent className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2"><Label className="text-xs">Address</Label><Input maxLength={500} value={formData.address_line1 || ''} onChange={e => update('address_line1', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">City</Label><Input maxLength={100} value={formData.city || ''} onChange={e => update('city', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Country</Label><Input maxLength={100} value={formData.country || ''} onChange={e => update('country', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Postal Code</Label><Input maxLength={20} value={formData.postal_code || ''} onChange={e => update('postal_code', e.target.value)} className="h-9" /></div>
+                    <div>
+                      <Label className="text-xs">Payment Terms</Label>
+                      <Select value={formData.payment_terms || 'net_30'} onValueChange={v => update('payment_terms', v)} disabled={readOnly}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {PAYMENT_TERMS_OPTIONS.map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Currency</Label>
+                      <Select value={formData.currency || 'EUR'} onValueChange={v => update('currency', v)} disabled={readOnly}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {CURRENCY_OPTIONS.map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">VAT Number</Label>
+                      <Input maxLength={30} value={formData.vat_number || ''} onChange={e => update('vat_number', e.target.value)} className="h-9" disabled={readOnly} />
+                    </div>
+                    <div className="flex items-end gap-2 pb-1">
+                      <label className="flex items-center gap-2 text-xs">
+                        <Checkbox checked={formData.vat_verified || false} onCheckedChange={v => update('vat_verified', !!v)} disabled={readOnly} />
+                        VAT Verified
+                      </label>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Credit Limit</Label>
+                      <Input type="number" min={0} step={0.01} value={formData.credit_limit || '0'} onChange={e => update('credit_limit', e.target.value)} className="h-9" disabled={readOnly} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Tax ID</Label>
+                      <Input maxLength={50} value={formData.tax_id || ''} onChange={e => update('tax_id', e.target.value)} className="h-9" disabled={readOnly} />
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-xs">Payment Score (1-10): <span className="font-semibold">{formData.payment_score ?? 5}</span></Label>
+                      <Slider
+                        value={[formData.payment_score ?? 5]}
+                        onValueChange={([v]) => update('payment_score', v)}
+                        min={1} max={10} step={1}
+                        className="mt-2"
+                        disabled={readOnly}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
+
+                {clientType === 'individual' && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Billing Info</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-3">
+                      <div><Label className="text-xs">Billing Name</Label><Input maxLength={200} value={formData.billing_name || ''} onChange={e => update('billing_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Billing Email</Label><Input maxLength={254} value={formData.billing_email || ''} onChange={e => update('billing_email', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {clientType === 'company' && showCompanyFields && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Billing Contact</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-3">
+                      <div><Label className="text-xs">Billing Contact Name</Label><Input maxLength={200} value={formData.billing_contact_name || ''} onChange={e => update('billing_contact_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Billing Contact Email</Label><Input maxLength={254} type="email" value={formData.billing_contact_email || ''} onChange={e => update('billing_contact_email', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* ─── Tab 4: Risk & Compliance ─── */}
+              <TabsContent value="risk" className="space-y-4">
                 <Card>
-                  <CardHeader><CardTitle className="text-sm">Billing Info</CardTitle></CardHeader>
-                  <CardContent className="grid grid-cols-2 gap-3">
-                    <div><Label className="text-xs">Billing Name</Label><Input maxLength={200} value={formData.billing_name || ''} onChange={e => update('billing_name', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Billing Email</Label><Input maxLength={254} value={formData.billing_email || ''} onChange={e => update('billing_email', e.target.value)} className="h-9" /></div>
-                    <div><Label className="text-xs">Tax ID</Label><Input maxLength={50} value={formData.tax_id || ''} onChange={e => update('tax_id', e.target.value)} className="h-9" /></div>
+                  <CardHeader><CardTitle className="text-sm">Risk Assessment</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-xs">Risk Score (1-10): <span className={`font-semibold ${getRiskColor(formData.risk_score ?? 5)}`}>{formData.risk_score ?? 5}</span></Label>
+                      <Slider
+                        value={[formData.risk_score ?? 5]}
+                        onValueChange={([v]) => update('risk_score', v)}
+                        min={1} max={10} step={1}
+                        className="mt-2"
+                        disabled={readOnly}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Risk Notes</Label>
+                      <Textarea maxLength={5000} value={formData.risk_notes || ''} onChange={e => update('risk_notes', e.target.value)} rows={3} disabled={readOnly} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">SLA Terms</Label>
+                      <Textarea maxLength={5000} value={formData.sla_terms || ''} onChange={e => update('sla_terms', e.target.value)} rows={3} disabled={readOnly} />
+                    </div>
                   </CardContent>
                 </Card>
-              </>
+
+                {clientType === 'individual' && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">ID Documents</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-xs">ID Document Type</Label>
+                        <Select value={formData.id_document_type || undefined} onValueChange={v => update('id_document_type', v)} disabled={readOnly}>
+                          <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
+                          <SelectContent>
+                            {['passport', 'national_id', 'drivers_license', 'residence_permit'].map(t => (
+                              <SelectItem key={t} value={t}>{t.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div><Label className="text-xs">ID Number</Label><Input maxLength={50} value={formData.id_document_number || ''} onChange={e => update('id_document_number', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">ID Expiry</Label><Input type="date" value={formData.id_document_expiry || ''} onChange={e => update('id_document_expiry', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* ─── Tab 5: Address ─── */}
+              <TabsContent value="address" className="space-y-4">
+                {clientType === 'company' && showCompanyFields ? (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Headquarters Address</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2"><Label className="text-xs">Address</Label><Input maxLength={500} value={formData.headquarters_address || ''} onChange={e => update('headquarters_address', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">City</Label><Input maxLength={100} value={formData.headquarters_city || ''} onChange={e => update('headquarters_city', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Country *</Label><Input maxLength={100} value={formData.headquarters_country || ''} onChange={e => update('headquarters_country', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Postal Code</Label><Input maxLength={20} value={formData.postal_code || ''} onChange={e => update('postal_code', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                    </CardContent>
+                  </Card>
+                ) : clientType === 'individual' ? (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm">Address</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2"><Label className="text-xs">Address</Label><Input maxLength={500} value={formData.address_line1 || ''} onChange={e => update('address_line1', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">City</Label><Input maxLength={100} value={formData.city || ''} onChange={e => update('city', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Country</Label><Input maxLength={100} value={formData.country || ''} onChange={e => update('country', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div><Label className="text-xs">Postal Code</Label><Input maxLength={20} value={formData.postal_code || ''} onChange={e => update('postal_code', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">Select a company to configure the address.</p>
+                )}
+              </TabsContent>
+
+              {/* ─── Tab 6: Notes ─── */}
+              <TabsContent value="notes" className="space-y-4">
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Internal Notes</CardTitle></CardHeader>
+                  <CardContent>
+                    <Textarea maxLength={5000} value={formData.notes || ''} onChange={e => update('notes', e.target.value)} rows={6} disabled={readOnly} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            {/* Submit buttons — always visible */}
+            {!readOnly && (
+              <div className="flex justify-end gap-2 mt-6">
+                <Button type="button" variant="outline" onClick={() => navigate(isEditMode ? `/clients/${editId}` : '/clients')}>Cancel</Button>
+                <Button type="submit" disabled={!canSubmit}>
+                  {isMutating ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Client')}
+                </Button>
+              </div>
             )}
-
-            <Card>
-              <CardHeader><CardTitle className="text-sm">Details</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Status</Label>
-                  <Select value={formData.status || 'lead'} onValueChange={v => update('status', v)}>
-                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lead">Lead</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="on_hold">On Hold</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs">Source</Label>
-                  <Select value={formData.source || undefined} onValueChange={v => update('source', v)}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="referral">Referral</SelectItem>
-                      <SelectItem value="website">Website</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="direct">Direct</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-xs">Notes</Label>
-                  <Textarea maxLength={5000} value={formData.notes || ''} onChange={e => update('notes', e.target.value)} rows={3} />
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => navigate(isEditMode ? `/clients/${editId}` : '/clients')}>Cancel</Button>
-              <Button type="submit" disabled={!canSubmit}>
-                {isMutating ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Client')}
-              </Button>
-            </div>
           </form>
         </div>
       </div>
