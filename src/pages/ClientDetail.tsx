@@ -999,8 +999,8 @@ function CustomFieldsTab({ clientId }: { clientId: string }) {
     if (!form.field_name?.trim()) return;
     await upsertField.mutateAsync({
       client_id: clientId,
-      field_name: form.field_name,
-      field_value: form.field_value || '',
+      field_name: sanitizeTextInput(form.field_name),
+      field_value: sanitizeTextInput(form.field_value || ''),
       field_type: form.field_type || 'text',
     });
     setForm({}); setShowForm(false);
