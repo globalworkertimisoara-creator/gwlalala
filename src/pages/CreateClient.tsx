@@ -539,7 +539,7 @@ const CreateClient = () => {
                 key={type}
                 type="button"
                 disabled={isEditMode}
-                onClick={() => { if (!isEditMode) { setClientType(type); setFormData({}); setCompanyMode('existing'); } }}
+                onClick={() => { if (!isEditMode) { setClientType(type); setFormData({}); setCompanyMode('existing'); setShowErrors(false); } }}
                 className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-colors ${
                   clientType === type ? 'border-primary bg-primary/5' : 'border-muted'
                 } ${isEditMode ? 'opacity-60 cursor-not-allowed' : 'hover:border-muted-foreground/30'}`}
