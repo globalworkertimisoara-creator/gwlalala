@@ -258,12 +258,15 @@ export function useDeleteClientRelationship() {
       // Also delete the inverse
       if (relationship_type) {
         const inverseType = INVERSE_RELATIONSHIP[relationship_type] || 'related';
-        await supabase.from('client_relationships')
-          .delete()
-          .eq('client_id', related_client_id)
-          .eq('related_client_id', client_id)
-          .eq('relationship_type', inverseType)
-          .catch(() => {});
+        try {
+          await supabase.from('client_relationships')
+            .delete()
+            .eq('client_id', related_client_id)
+            .eq('related_client_id', client_id)
+            .eq('relationship_type', inverseType);
+        } catch {
+          // ignore if not found
+        }
       }
     },
     onSuccess: (_, variables) => {
