@@ -993,7 +993,11 @@ const CreateClient = () => {
                     <CardContent className="grid grid-cols-2 gap-3">
                       <div className="col-span-2"><Label className="text-xs">Address</Label><Input maxLength={500} value={formData.headquarters_address || ''} onChange={e => update('headquarters_address', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       <div><Label className="text-xs">City</Label><Input maxLength={100} value={formData.headquarters_city || ''} onChange={e => update('headquarters_city', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                      <div><Label className="text-xs">Country *</Label><Input maxLength={100} value={formData.headquarters_country || ''} onChange={e => update('headquarters_country', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                      <div>
+                        <Label className="text-xs">Country *</Label>
+                        <Input maxLength={100} value={formData.headquarters_country || ''} onChange={e => update('headquarters_country', e.target.value)} className={`h-9 ${fieldError(formData.headquarters_country)}`} disabled={readOnly} />
+                        {showErrors && !formData.headquarters_country?.trim() && <p className="text-xs text-destructive mt-1">Country is required</p>}
+                      </div>
                       <div><Label className="text-xs">Postal Code</Label><Input maxLength={20} value={formData.postal_code || ''} onChange={e => update('postal_code', e.target.value)} className="h-9" disabled={readOnly} /></div>
                     </CardContent>
                   </Card>
