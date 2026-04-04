@@ -617,6 +617,9 @@ const CreateClient = () => {
                                     ))}
                                   </SelectContent>
                                 </Select>
+                                {showErrors && !formData.company_id && (
+                                  <p className="text-xs text-destructive mt-1">Please select a company</p>
+                                )}
                                 {formData.company_id && existingCompanyClientIds.includes(formData.company_id) && (
                                   <div className="rounded-md border border-amber-200 bg-amber-50 p-3 mt-2">
                                     <p className="text-xs text-amber-800">This company already has a client record. You'll be redirected to the existing client.</p>
