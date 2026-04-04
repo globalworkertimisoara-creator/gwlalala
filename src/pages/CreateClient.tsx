@@ -996,7 +996,7 @@ const CreateClient = () => {
             {!readOnly && (
               <div className="flex justify-end gap-2 mt-6">
                 <Button type="button" variant="outline" onClick={() => navigate(isEditMode ? `/clients/${editId}` : '/clients')}>Cancel</Button>
-                <Button type="submit" disabled={!canSubmit}>
+                <Button type="submit" disabled={isMutating || readOnly}>
                   {isMutating ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Client')}
                 </Button>
               </div>
