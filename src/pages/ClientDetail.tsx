@@ -876,7 +876,7 @@ function RelationshipsTab({ clientId }: { clientId: string }) {
       client_id: clientId,
       related_client_id: form.related_client_id,
       relationship_type: form.relationship_type,
-      notes: form.notes,
+      notes: form.notes ? sanitizeTextInput(form.notes) : null,
     });
     setForm({}); setShowDialog(false);
   };
