@@ -46,6 +46,7 @@ const CreateClient = () => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const [showErrors, setShowErrors] = useState(false);
 
   // Contacts (edit mode)
   const { data: contacts = [] } = useClientContacts(isEditMode ? editId! : '');
