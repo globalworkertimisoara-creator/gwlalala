@@ -221,25 +221,25 @@ const CreateClient = () => {
           await updateCompany.mutateAsync({
             id: (existingClient as any).company_id,
             clientId: editId,
-            legal_name: formData.legal_name || null,
-            industry: formData.industry || null,
+            legal_name: formData.legal_name ? sanitizeTextInput(formData.legal_name) : null,
+            industry: formData.industry ? sanitizeTextInput(formData.industry) : null,
             company_size: formData.company_size || null,
             founded_year: formData.founded_year ? Number(formData.founded_year) : null,
-            registration_number: formData.registration_number || null,
+            registration_number: formData.registration_number ? sanitizeTextInput(formData.registration_number) : null,
             website: formData.website || null,
             linkedin_url: formData.linkedin_url || null,
-            description: formData.description || null,
-            primary_contact_name: formData.primary_contact_name,
+            description: formData.description ? sanitizeTextInput(formData.description) : null,
+            primary_contact_name: sanitizeTextInput(formData.primary_contact_name),
             primary_contact_email: formData.primary_contact_email,
             primary_contact_phone: formData.primary_contact_phone || null,
-            primary_contact_position: formData.primary_contact_position || null,
-            hr_contact_name: formData.hr_contact_name || null,
+            primary_contact_position: formData.primary_contact_position ? sanitizeTextInput(formData.primary_contact_position) : null,
+            hr_contact_name: formData.hr_contact_name ? sanitizeTextInput(formData.hr_contact_name) : null,
             hr_contact_email: formData.hr_contact_email || null,
-            headquarters_address: formData.headquarters_address || null,
-            headquarters_city: formData.headquarters_city || null,
-            headquarters_country: formData.headquarters_country,
-            postal_code: formData.postal_code || null,
-            billing_contact_name: formData.billing_contact_name || null,
+            headquarters_address: formData.headquarters_address ? sanitizeTextInput(formData.headquarters_address) : null,
+            headquarters_city: formData.headquarters_city ? sanitizeTextInput(formData.headquarters_city) : null,
+            headquarters_country: sanitizeTextInput(formData.headquarters_country),
+            postal_code: formData.postal_code ? sanitizeTextInput(formData.postal_code) : null,
+            billing_contact_name: formData.billing_contact_name ? sanitizeTextInput(formData.billing_contact_name) : null,
             billing_contact_email: formData.billing_contact_email || null,
           });
         }
@@ -247,31 +247,31 @@ const CreateClient = () => {
         const clientUpdates: Record<string, any> = {
           status: formData.status || 'lead',
           source: formData.source || null,
-          notes: formData.notes || null,
+          notes: formData.notes ? sanitizeTextInput(formData.notes) : null,
           ...crmFields,
         };
 
         if (clientType === 'individual') {
           Object.assign(clientUpdates, {
-            first_name: formData.first_name,
-            last_name: formData.last_name,
+            first_name: sanitizeTextInput(formData.first_name),
+            last_name: sanitizeTextInput(formData.last_name),
             email: formData.email,
             phone: formData.phone || null,
             date_of_birth: formData.date_of_birth || null,
-            nationality: formData.nationality || null,
-            address_line1: formData.address_line1 || null,
-            city: formData.city || null,
-            country: formData.country || null,
-            postal_code: formData.postal_code || null,
+            nationality: formData.nationality ? sanitizeTextInput(formData.nationality) : null,
+            address_line1: formData.address_line1 ? sanitizeTextInput(formData.address_line1) : null,
+            city: formData.city ? sanitizeTextInput(formData.city) : null,
+            country: formData.country ? sanitizeTextInput(formData.country) : null,
+            postal_code: formData.postal_code ? sanitizeTextInput(formData.postal_code) : null,
             id_document_type: formData.id_document_type || null,
-            id_document_number: formData.id_document_number || null,
+            id_document_number: formData.id_document_number ? sanitizeTextInput(formData.id_document_number) : null,
             id_document_expiry: formData.id_document_expiry || null,
-            billing_name: formData.billing_name || null,
+            billing_name: formData.billing_name ? sanitizeTextInput(formData.billing_name) : null,
             billing_email: formData.billing_email || null,
-            tax_id: formData.tax_id || null,
+            tax_id: formData.tax_id ? sanitizeTextInput(formData.tax_id) : null,
           });
         } else {
-          clientUpdates.tax_id = formData.tax_id || null;
+          clientUpdates.tax_id = formData.tax_id ? sanitizeTextInput(formData.tax_id) : null;
         }
 
         await updateClient.mutateAsync({ id: editId, ...clientUpdates });

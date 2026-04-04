@@ -470,6 +470,9 @@ export function useDeleteClientDocument() {
 
       // Find all versions to delete
       const rootId = id;
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rootId)) {
+        throw new Error('Invalid document ID');
+      }
       const { data: versions } = await supabase
         .from('client_documents')
         .select('id, storage_path')

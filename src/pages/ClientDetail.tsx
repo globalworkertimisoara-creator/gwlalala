@@ -315,7 +315,7 @@ function OverviewTab({ client, companyData }: { client: any; companyData: any })
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label className="text-xs">Credit Limit</Label>
-                <Input type="number" value={editData.credit_limit} onChange={e => updateField('credit_limit', Number(e.target.value))} className="h-8" />
+                <Input type="number" maxLength={15} value={editData.credit_limit} onChange={e => updateField('credit_limit', Number(e.target.value))} className="h-8" />
               </div>
               <div>
                 <Label className="text-xs">Currency</Label>
@@ -643,10 +643,14 @@ function ContactsTab({ clientId }: { clientId: string }) {
 
   const handleSave = async () => {
     if (!form.name?.trim()) return;
+    const sanitized: Record<string, any> = {};
+    for (const [key, value] of Object.entries(form)) {
+      sanitized[key] = typeof value === 'string' ? sanitizeTextInput(value) : value;
+    }
     if (editId) {
-      await updateContact.mutateAsync({ id: editId, client_id: clientId, name: form.name, email: form.email, phone: form.phone, position: form.position, department: form.department, contact_type: form.contact_type || 'general', is_primary: form.is_primary || false, notes: form.notes });
+      await updateContact.mutateAsync({ id: editId, client_id: clientId, name: sanitized.name, email: sanitized.email, phone: sanitized.phone, position: sanitized.position, department: sanitized.department, contact_type: sanitized.contact_type || 'general', is_primary: sanitized.is_primary || false, notes: sanitized.notes });
     } else {
-      await createContact.mutateAsync({ client_id: clientId, name: form.name, email: form.email, phone: form.phone, position: form.position, department: form.department, contact_type: form.contact_type || 'general', is_primary: form.is_primary || false, notes: form.notes });
+      await createContact.mutateAsync({ client_id: clientId, name: sanitized.name, email: sanitized.email, phone: sanitized.phone, position: sanitized.position, department: sanitized.department, contact_type: sanitized.contact_type || 'general', is_primary: sanitized.is_primary || false, notes: sanitized.notes });
     }
     setShowForm(false); setForm({});
   };
@@ -709,7 +713,21 @@ function ContactsTab({ clientId }: { clientId: string }) {
                     {can('editClients') && (
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditContact(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteContact.mutate({ id: c.id, client_id: clientId })}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+                              <AlertDialogDescription>Are you sure you want to remove this contact?</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteContact.mutate({ id: c.id, client_id: clientId })}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     )}
                   </td>
@@ -736,12 +754,12 @@ function MeetingsTab({ clientId }: { clientId: string }) {
     if (!form.title?.trim() || !form.meeting_date) return;
     await createMeeting.mutateAsync({
       client_id: clientId,
-      title: form.title,
+      title: sanitizeTextInput(form.title),
       meeting_date: form.meeting_date,
       duration_minutes: Number(form.duration_minutes) || 60,
       meeting_type: form.meeting_type || 'video',
-      location: form.location || null,
-      agenda: form.agenda || null,
+      location: form.location ? sanitizeTextInput(form.location) : null,
+      agenda: form.agenda ? sanitizeTextInput(form.agenda) : null,
       status: 'scheduled',
     });
     setForm({}); setShowForm(false);
@@ -760,7 +778,7 @@ function MeetingsTab({ clientId }: { clientId: string }) {
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-xs">Title *</Label><Input maxLength={200} value={form.title || ''} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className="h-8" /></div>
               <div><Label className="text-xs">Date *</Label><Input type="datetime-local" value={form.meeting_date || ''} onChange={e => setForm(p => ({ ...p, meeting_date: e.target.value }))} className="h-8" /></div>
-              <div><Label className="text-xs">Duration (min)</Label><Input type="number" value={form.duration_minutes || 60} onChange={e => setForm(p => ({ ...p, duration_minutes: e.target.value }))} className="h-8" /></div>
+              <div><Label className="text-xs">Duration (min)</Label><Input type="number" maxLength={4} value={form.duration_minutes || 60} onChange={e => setForm(p => ({ ...p, duration_minutes: e.target.value }))} className="h-8" /></div>
               <div><Label className="text-xs">Type</Label>
                 <Select value={form.meeting_type || 'video'} onValueChange={v => setForm(p => ({ ...p, meeting_type: v }))}>
                   <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
@@ -872,7 +890,7 @@ function RelationshipsTab({ clientId }: { clientId: string }) {
       client_id: clientId,
       related_client_id: form.related_client_id,
       relationship_type: form.relationship_type,
-      notes: form.notes,
+      notes: form.notes ? sanitizeTextInput(form.notes) : null,
     });
     setForm({}); setShowDialog(false);
   };
@@ -995,8 +1013,8 @@ function CustomFieldsTab({ clientId }: { clientId: string }) {
     if (!form.field_name?.trim()) return;
     await upsertField.mutateAsync({
       client_id: clientId,
-      field_name: form.field_name,
-      field_value: form.field_value || '',
+      field_name: sanitizeTextInput(form.field_name),
+      field_value: sanitizeTextInput(form.field_value || ''),
       field_type: form.field_type || 'text',
     });
     setForm({}); setShowForm(false);
@@ -1100,10 +1118,10 @@ function DocumentsTab({ clientId, userId }: { clientId: string; userId?: string 
     await uploadDoc.mutateAsync({
       client_id: clientId,
       file: selectedFile,
-      name: uploadForm.name || selectedFile.name,
+      name: sanitizeTextInput(uploadForm.name || selectedFile.name),
       doc_type: uploadForm.doc_type || 'other',
       folder: uploadForm.folder || 'general',
-      description: uploadForm.description,
+      description: uploadForm.description ? sanitizeTextInput(uploadForm.description) : undefined,
       parent_document_id: parentDoc?.parent_document_id || parentDoc?.id || undefined,
       version: parentDoc ? (parentDoc.version || 1) + 1 : 1,
     });
@@ -1457,7 +1475,7 @@ function BillingTab({ clientId }: { clientId: string }) {
               <div><Label className="text-xs">Invoice Number</Label><Input value={invoiceForm.invoice_number || ''} onChange={e => setInvoiceForm(p => ({ ...p, invoice_number: e.target.value }))} className="h-9" maxLength={50} /></div>
               <div><Label className="text-xs">Description</Label><Textarea value={invoiceForm.description || ''} onChange={e => setInvoiceForm(p => ({ ...p, description: e.target.value }))} rows={2} maxLength={2000} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-xs">Amount</Label><Input type="number" value={invoiceForm.total_amount || ''} onChange={e => setInvoiceForm(p => ({ ...p, total_amount: e.target.value }))} className="h-9" /></div>
+                <div><Label className="text-xs">Amount</Label><Input type="number" maxLength={15} value={invoiceForm.total_amount || ''} onChange={e => setInvoiceForm(p => ({ ...p, total_amount: e.target.value }))} className="h-9" /></div>
                 <div><Label className="text-xs">Currency</Label>
                   <Select value={invoiceForm.currency || 'EUR'} onValueChange={v => setInvoiceForm(p => ({ ...p, currency: v }))}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
