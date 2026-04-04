@@ -82,6 +82,10 @@ export interface ClientDocument {
   file_size: number | null;
   uploaded_by: string | null;
   created_at: string;
+  folder?: string;
+  version?: number;
+  parent_document_id?: string;
+  description?: string;
 }
 
 export interface ClientInvoice {
