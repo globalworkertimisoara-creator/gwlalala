@@ -638,7 +638,8 @@ const CreateClient = () => {
                         <CardContent className="grid grid-cols-2 gap-3">
                           <div className="col-span-2">
                             <Label className="text-xs">Company Name *</Label>
-                            <Input maxLength={200} value={formData.company_name || ''} onChange={e => update('company_name', e.target.value)} className="h-9" disabled={isEditMode || readOnly} />
+                            <Input maxLength={200} value={formData.company_name || ''} onChange={e => update('company_name', e.target.value)} className={`h-9 ${fieldError(formData.company_name)}`} disabled={isEditMode || readOnly} />
+                            {showErrors && !formData.company_name?.trim() && <p className="text-xs text-destructive mt-1">Company name is required</p>}
                           </div>
                           <div><Label className="text-xs">Legal Name</Label><Input maxLength={200} value={formData.legal_name || ''} onChange={e => update('legal_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
                           <div><Label className="text-xs">Industry</Label><Input maxLength={100} value={formData.industry || ''} onChange={e => update('industry', e.target.value)} className="h-9" disabled={readOnly} /></div>
