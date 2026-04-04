@@ -32,7 +32,7 @@ export function useCreateClientContact() {
       for (const [key, value] of Object.entries(input)) {
         sanitized[key] = typeof value === 'string' ? sanitizeTextInput(value) : value;
       }
-      const { data, error } = await supabase.from('client_contacts').insert(sanitized).select().single();
+      const { data, error } = await supabase.from('client_contacts').insert(sanitized as any).select().single();
       if (error) throw error;
       return data;
     },
