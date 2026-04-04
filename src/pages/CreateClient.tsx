@@ -748,8 +748,17 @@ const CreateClient = () => {
                     <Card>
                       <CardHeader><CardTitle className="text-sm">Primary Contact</CardTitle></CardHeader>
                       <CardContent className="grid grid-cols-2 gap-3">
-                        <div><Label className="text-xs">Contact Name *</Label><Input maxLength={100} value={formData.primary_contact_name || ''} onChange={e => update('primary_contact_name', e.target.value)} className="h-9" disabled={readOnly} /></div>
-                        <div><Label className="text-xs">Contact Email *</Label><Input maxLength={254} type="email" value={formData.primary_contact_email || ''} onChange={e => update('primary_contact_email', e.target.value)} className="h-9" disabled={readOnly} /></div>
+                        <div>
+                          <Label className="text-xs">Contact Name *</Label>
+                          <Input maxLength={100} value={formData.primary_contact_name || ''} onChange={e => update('primary_contact_name', e.target.value)} className={`h-9 ${fieldError(formData.primary_contact_name)}`} disabled={readOnly} />
+                          {showErrors && !formData.primary_contact_name?.trim() && <p className="text-xs text-destructive mt-1">Contact name is required</p>}
+                        </div>
+                        <div>
+                          <Label className="text-xs">Contact Email *</Label>
+                          <Input maxLength={254} type="email" value={formData.primary_contact_email || ''} onChange={e => update('primary_contact_email', e.target.value)} className={`h-9 ${fieldError(formData.primary_contact_email)} ${emailError(formData.primary_contact_email || '')}`} disabled={readOnly} />
+                          {showErrors && !formData.primary_contact_email?.trim() && <p className="text-xs text-destructive mt-1">Contact email is required</p>}
+                          {showErrors && formData.primary_contact_email && !isValidEmail(formData.primary_contact_email) && <p className="text-xs text-destructive mt-1">Invalid email format</p>}
+                        </div>
                         <div><Label className="text-xs">Contact Phone</Label><Input maxLength={20} value={formData.primary_contact_phone || ''} onChange={e => update('primary_contact_phone', e.target.value)} className="h-9" disabled={readOnly} /></div>
                         <div><Label className="text-xs">Contact Position</Label><Input maxLength={100} value={formData.primary_contact_position || ''} onChange={e => update('primary_contact_position', e.target.value)} className="h-9" disabled={readOnly} /></div>
                       </CardContent>
