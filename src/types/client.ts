@@ -54,6 +54,8 @@ export interface ClientWithMetrics extends Client {
   total_invoiced: number;
   total_paid: number;
   outstanding_amount: number;
+  contact_count?: number;
+  last_activity?: string | null;
 }
 
 export interface ClientNote {
