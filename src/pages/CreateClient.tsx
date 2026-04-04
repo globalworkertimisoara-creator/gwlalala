@@ -459,7 +459,47 @@ const CreateClient = () => {
   );
   const individualFormValid = clientType === 'individual' && !!(formData.first_name && formData.last_name && formData.email);
   const isMutating = submitting || createClient.isPending || updateClient.isPending || updateCompany.isPending;
-  const canSubmit = !isMutating && !readOnly && (companyFormValid || individualFormValid);
+
+  const fieldError = (value: any) => {
+    if (!showErrors) return '';
+    if (!value || (typeof value === 'string' && !value.trim())) {
+      return 'border-destructive ring-1 ring-destructive';
+    }
+    return '';
+  };
+
+  const emailError = (value: string) => {
+    if (!showErrors || !value) return '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return 'border-destructive ring-1 ring-destructive';
+    }
+    return '';
+  };
+
+  const urlError = (value: string) => {
+    if (!showErrors || !value) return '';
+    if (!/^https?:\/\//.test(value)) {
+      return 'border-destructive ring-1 ring-destructive';
+    }
+    return '';
+  };
+
+  const tabHasErrors = (tab: string): boolean => {
+    if (!showErrors) return false;
+    if (tab === 'basic') {
+      if (clientType === 'company') {
+        if (companyMode === 'existing' && !formData.company_id) return true;
+        if (companyMode === 'new' && (!formData.company_name || !formData.primary_contact_name || !formData.primary_contact_email)) return true;
+      } else {
+        if (!formData.first_name || !formData.last_name || !formData.email) return true;
+      }
+    }
+    if (tab === 'contacts' && clientType === 'company' && companyMode === 'new') {
+      if (!formData.primary_contact_name || !formData.primary_contact_email) return true;
+    }
+    if (tab === 'address' && clientType === 'company' && companyMode === 'new' && !formData.headquarters_country) return true;
+    return false;
+  };
 
   const getRiskColor = (score: number) => {
     if (score <= 3) return 'text-green-600';
