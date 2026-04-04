@@ -643,10 +643,14 @@ function ContactsTab({ clientId }: { clientId: string }) {
 
   const handleSave = async () => {
     if (!form.name?.trim()) return;
+    const sanitized: Record<string, any> = {};
+    for (const [key, value] of Object.entries(form)) {
+      sanitized[key] = typeof value === 'string' ? sanitizeTextInput(value) : value;
+    }
     if (editId) {
-      await updateContact.mutateAsync({ id: editId, client_id: clientId, name: form.name, email: form.email, phone: form.phone, position: form.position, department: form.department, contact_type: form.contact_type || 'general', is_primary: form.is_primary || false, notes: form.notes });
+      await updateContact.mutateAsync({ id: editId, client_id: clientId, name: sanitized.name, email: sanitized.email, phone: sanitized.phone, position: sanitized.position, department: sanitized.department, contact_type: sanitized.contact_type || 'general', is_primary: sanitized.is_primary || false, notes: sanitized.notes });
     } else {
-      await createContact.mutateAsync({ client_id: clientId, name: form.name, email: form.email, phone: form.phone, position: form.position, department: form.department, contact_type: form.contact_type || 'general', is_primary: form.is_primary || false, notes: form.notes });
+      await createContact.mutateAsync({ client_id: clientId, name: sanitized.name, email: sanitized.email, phone: sanitized.phone, position: sanitized.position, department: sanitized.department, contact_type: sanitized.contact_type || 'general', is_primary: sanitized.is_primary || false, notes: sanitized.notes });
     }
     setShowForm(false); setForm({});
   };
