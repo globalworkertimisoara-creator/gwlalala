@@ -253,6 +253,19 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [extractedFields, setExtractedFields] = useState<Set<string>>(new Set());
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldErr = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const emailErr = (value: string) => {
+    if (!showErrors || !value) return '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
 
   const resetForm = () => {
     setFormData({
