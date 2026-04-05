@@ -36,6 +36,21 @@ export default function CreateContract() {
   const { data: candidates = [] } = useCandidatesList();
   const { data: projects = [] } = useProjects();
 
+  const { toast } = useToast();
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const selectError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || value === 'none') return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
   const [form, setForm] = useState<CreateContractInput>({
     contract_type: 'recruitment' as any,
     party_type: 'employer',
