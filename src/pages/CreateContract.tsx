@@ -158,7 +158,10 @@ export default function CreateContract() {
             <CardContent className="space-y-4">
               <div>
                 <Label>Title *</Label>
-                <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Contract title" />
+                <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Contract title" className={fieldError(form.title)} />
+                {showErrors && !form.title.trim() && (
+                  <p className="text-xs text-destructive mt-1">Contract title is required</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
