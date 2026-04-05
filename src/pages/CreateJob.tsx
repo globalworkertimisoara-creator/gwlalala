@@ -52,11 +52,12 @@ export default function CreateJob() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.title || !form.client_company || !form.country) {
+    if (!form.title.trim() || !form.client_company.trim() || !form.country.trim()) {
+      setShowErrors(true);
       toast({
         variant: 'destructive',
-        title: 'Missing required fields',
-        description: 'Please fill in job title, client company, and country.',
+        title: 'Required fields missing',
+        description: 'Please fill in all required fields highlighted in red.',
       });
       return;
     }
