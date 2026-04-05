@@ -581,7 +581,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
           <Section title="Contact" icon={<span>📞</span>} defaultOpen={true}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div><Label className="flex items-center gap-1">Email {extLabel('email')}</Label>
-                <Input type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} className={ext('email')} /></div>
+                <Input type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} className={`${ext('email')} ${emailErr(formData.email)}`} />
+                {showErrors && formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                  <p className="text-xs text-destructive mt-1">Invalid email format</p>
+                )}
+              </div>
               <div><Label className="flex items-center gap-1">Phone {extLabel('phone')}</Label>
                 <Input value={formData.phone} onChange={e => handleChange('phone', e.target.value)} className={ext('phone')} /></div>
               <div><Label className="flex items-center gap-1">WhatsApp {extLabel('whatsapp')}</Label>

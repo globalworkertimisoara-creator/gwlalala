@@ -322,7 +322,7 @@ export default function CreateCandidate() {
               <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
               <Button
                 onClick={handleCreate}
-                disabled={createCandidate.isPending || !form.full_name.trim() || !form.email.trim()}
+                disabled={createCandidate.isPending}
               >
                 {createCandidate.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Candidate

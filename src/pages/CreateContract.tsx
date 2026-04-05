@@ -288,7 +288,7 @@ export default function CreateContract() {
           {/* Actions */}
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={createContract.isPending || !form.party_id || !form.title.trim()}>
+            <Button onClick={handleCreate} disabled={createContract.isPending}>
               {createContract.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Contract
             </Button>

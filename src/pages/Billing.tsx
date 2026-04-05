@@ -494,7 +494,7 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
       </div>
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-        <Button size="sm" onClick={handleSubmit} disabled={createRecord.isPending || !candidateId || !agencyId || !totalAmount}>
+        <Button size="sm" onClick={handleSubmit} disabled={createRecord.isPending}>
           {createRecord.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
           Create
         </Button>
