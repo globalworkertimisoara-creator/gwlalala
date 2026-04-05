@@ -81,7 +81,16 @@ export default function CreateContract() {
   };
 
   const handleCreate = async () => {
-    if (!form.title.trim() || !form.party_id.trim()) return;
+    if (!form.title.trim() || !form.party_id || form.party_id === 'none') {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please fill in the contract title and select a party.',
+      });
+      return;
+    }
+    if (!form.party_id.trim()) return;
     const result = await createContract.mutateAsync({
       ...form,
       contract_prefix: contractPrefix,
