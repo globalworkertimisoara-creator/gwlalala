@@ -547,6 +547,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
                 {showErrors && !formData.full_name.trim() && (
                   <p className="text-xs text-destructive mt-1">Full name is required</p>
                 )}
+              </div>
               <div><Label className="flex items-center gap-1">Date of Birth {extLabel('date_of_birth')}</Label>
                 <Input type="date" value={formData.date_of_birth} onChange={e => handleChange('date_of_birth', e.target.value)} className={ext('date_of_birth')} /></div>
               <div><Label className="flex items-center gap-1">Gender {extLabel('gender')}</Label>
