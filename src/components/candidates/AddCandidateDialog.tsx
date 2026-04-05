@@ -253,6 +253,19 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [extractedFields, setExtractedFields] = useState<Set<string>>(new Set());
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldErr = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const emailErr = (value: string) => {
+    if (!showErrors || !value) return '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
 
   const resetForm = () => {
     setFormData({
@@ -270,6 +283,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     setDriverLicense({ has_license: false, license_type: '', years_experience: null });
     setFamily({ has_spouse: false, children_ages: '', family_willing_to_relocate: false });
     setPendingDocuments([]); setExtractedFields(new Set()); setUploadProgress(0);
+    setShowErrors(false);
   };
 
   const handleChange = (field: keyof typeof formData, value: any) => {
@@ -401,8 +415,23 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
   // ── Submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.full_name) {
-      toast({ variant: 'destructive', title: 'Name required', description: 'Please provide a name' });
+    if (!formData.full_name.trim()) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please provide the candidate name.',
+      });
+      return;
+    }
+
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Invalid email',
+        description: 'Please enter a valid email address or leave it empty.',
+      });
       return;
     }
 
@@ -514,7 +543,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
           <Section title="Personal Information" icon={<span>👤</span>} defaultOpen={true}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div><Label className="flex items-center gap-1">Full Name * {extLabel('full_name')}</Label>
-                <Input value={formData.full_name} onChange={e => handleChange('full_name', e.target.value)} required className={ext('full_name')} /></div>
+                <Input value={formData.full_name} onChange={e => handleChange('full_name', e.target.value)} className={`${ext('full_name')} ${fieldErr(formData.full_name)}`} />
+                {showErrors && !formData.full_name.trim() && (
+                  <p className="text-xs text-destructive mt-1">Full name is required</p>
+                )}
+              </div>
               <div><Label className="flex items-center gap-1">Date of Birth {extLabel('date_of_birth')}</Label>
                 <Input type="date" value={formData.date_of_birth} onChange={e => handleChange('date_of_birth', e.target.value)} className={ext('date_of_birth')} /></div>
               <div><Label className="flex items-center gap-1">Gender {extLabel('gender')}</Label>
@@ -549,7 +582,11 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
           <Section title="Contact" icon={<span>📞</span>} defaultOpen={true}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div><Label className="flex items-center gap-1">Email {extLabel('email')}</Label>
-                <Input type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} className={ext('email')} /></div>
+                <Input type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} className={`${ext('email')} ${emailErr(formData.email)}`} />
+                {showErrors && formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                  <p className="text-xs text-destructive mt-1">Invalid email format</p>
+                )}
+              </div>
               <div><Label className="flex items-center gap-1">Phone {extLabel('phone')}</Label>
                 <Input value={formData.phone} onChange={e => handleChange('phone', e.target.value)} className={ext('phone')} /></div>
               <div><Label className="flex items-center gap-1">WhatsApp {extLabel('whatsapp')}</Label>

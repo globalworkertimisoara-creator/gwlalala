@@ -376,6 +376,19 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
   const [totalAmount, setTotalAmount] = useState('');
   const [currency, setCurrency] = useState('EUR');
   const [description, setDescription] = useState('');
+  const [showErrors, setShowErrors] = useState(false);
+
+  const selectError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const numberError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || parseFloat(value) <= 0) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
 
   const { data: candidates = [] } = useQuery({
     queryKey: ['billing-candidates'],
@@ -394,7 +407,15 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
   });
 
   const handleSubmit = async () => {
-    if (!candidateId || !agencyId || !totalAmount) return;
+    if (!candidateId || !agencyId || !totalAmount || parseFloat(totalAmount) <= 0) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please select a candidate, agency, and enter the total amount.',
+      });
+      return;
+    }
     try {
       await createRecord.mutateAsync({
         candidate_id: candidateId,
@@ -418,31 +439,40 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
       </DialogHeader>
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <Label className="text-xs">Candidate</Label>
+          <Label className="text-xs">Candidate *</Label>
           <Select value={candidateId} onValueChange={setCandidateId}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select candidate" /></SelectTrigger>
+            <SelectTrigger className={`h-8 text-xs ${selectError(candidateId)}`}><SelectValue placeholder="Select candidate" /></SelectTrigger>
             <SelectContent>
               {candidates.map((c: any) => (
                 <SelectItem key={c.id} value={c.id} className="text-xs">{c.full_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {showErrors && !candidateId && (
+            <p className="text-xs text-destructive">Please select a candidate</p>
+          )}
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">Agency</Label>
+          <Label className="text-xs">Agency *</Label>
           <Select value={agencyId} onValueChange={setAgencyId}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select agency" /></SelectTrigger>
+            <SelectTrigger className={`h-8 text-xs ${selectError(agencyId)}`}><SelectValue placeholder="Select agency" /></SelectTrigger>
             <SelectContent>
               {agencies.map((a: any) => (
                 <SelectItem key={a.id} value={a.id} className="text-xs">{a.company_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {showErrors && !agencyId && (
+            <p className="text-xs text-destructive">Please select an agency</p>
+          )}
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-2 space-y-1.5">
-            <Label className="text-xs">Total Amount</Label>
-            <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} placeholder="0.00" className="h-8 text-xs" />
+            <Label className="text-xs">Total Amount *</Label>
+            <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} placeholder="0.00" className={`h-8 text-xs ${numberError(totalAmount)}`} />
+            {showErrors && (!totalAmount || parseFloat(totalAmount) <= 0) && (
+              <p className="text-xs text-destructive">Total amount is required and must be greater than 0</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Currency</Label>
@@ -464,7 +494,7 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
       </div>
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-        <Button size="sm" onClick={handleSubmit} disabled={createRecord.isPending || !candidateId || !agencyId || !totalAmount}>
+        <Button size="sm" onClick={handleSubmit} disabled={createRecord.isPending}>
           {createRecord.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
           Create
         </Button>

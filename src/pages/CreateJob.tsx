@@ -24,6 +24,14 @@ export default function CreateJob() {
   const linkJobToProject = useLinkJobToProject();
   const { data: projects = [] } = useProjects();
 
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
   const [form, setForm] = useState({
     title: '',
     client_company: '',
@@ -44,11 +52,12 @@ export default function CreateJob() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.title || !form.client_company || !form.country) {
+    if (!form.title.trim() || !form.client_company.trim() || !form.country.trim()) {
+      setShowErrors(true);
       toast({
         variant: 'destructive',
-        title: 'Missing required fields',
-        description: 'Please fill in job title, client company, and country.',
+        title: 'Required fields missing',
+        description: 'Please fill in all required fields highlighted in red.',
       });
       return;
     }
@@ -153,8 +162,11 @@ export default function CreateJob() {
                     value={form.title}
                     onChange={(e) => updateField('title', e.target.value)}
                     placeholder="e.g., Electrician, Welder, Plumber"
-                    required
+                    className={fieldError(form.title)}
                   />
+                  {showErrors && !form.title.trim() && (
+                    <p className="text-xs text-destructive">Job title is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="client_company">
@@ -166,8 +178,11 @@ export default function CreateJob() {
                     value={form.client_company}
                     onChange={(e) => updateField('client_company', e.target.value)}
                     placeholder="e.g., ABC Construction Ltd"
-                    required
+                    className={fieldError(form.client_company)}
                   />
+                  {showErrors && !form.client_company.trim() && (
+                    <p className="text-xs text-destructive">Client company is required</p>
+                  )}
                 </div>
               </div>
 
@@ -182,8 +197,11 @@ export default function CreateJob() {
                     value={form.country}
                     onChange={(e) => updateField('country', e.target.value)}
                     placeholder="e.g., Romania, Germany, UAE"
-                    required
+                    className={fieldError(form.country)}
                   />
+                  {showErrors && !form.country.trim() && (
+                    <p className="text-xs text-destructive">Country is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="salary_range">

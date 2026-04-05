@@ -26,6 +26,22 @@ export default function CreateCandidate() {
   const createCandidate = useCreateCandidate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const emailError = (value: string) => {
+    if (!showErrors || !value) return '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -79,7 +95,25 @@ export default function CreateCandidate() {
   };
 
   const handleCreate = async () => {
-    if (!form.full_name.trim() || !form.email.trim()) return;
+    if (!form.full_name.trim() || !form.email.trim()) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please fill in the full name and email.',
+      });
+      return;
+    }
+
+    if (!isValidEmail(form.email)) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Invalid email',
+        description: 'Please enter a valid email address.',
+      });
+      return;
+    }
 
     try {
       const candidate = await createCandidate.mutateAsync({
@@ -187,7 +221,11 @@ export default function CreateCandidate() {
                     value={form.full_name}
                     onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
                     placeholder="John Doe"
+                    className={fieldError(form.full_name)}
                   />
+                  {showErrors && !form.full_name.trim() && (
+                    <p className="text-xs text-destructive mt-1">Full name is required</p>
+                  )}
                 </div>
                 <div>
                   <Label>Email *</Label>
@@ -196,7 +234,14 @@ export default function CreateCandidate() {
                     value={form.email}
                     onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                     placeholder="john@example.com"
+                    className={`${fieldError(form.email)} ${emailError(form.email)}`}
                   />
+                  {showErrors && !form.email.trim() && (
+                    <p className="text-xs text-destructive mt-1">Email is required</p>
+                  )}
+                  {showErrors && form.email.trim() && !isValidEmail(form.email) && (
+                    <p className="text-xs text-destructive mt-1">Invalid email format</p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -277,7 +322,7 @@ export default function CreateCandidate() {
               <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
               <Button
                 onClick={handleCreate}
-                disabled={createCandidate.isPending || !form.full_name.trim() || !form.email.trim()}
+                disabled={createCandidate.isPending}
               >
                 {createCandidate.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Candidate

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,21 @@ export default function CreateContract() {
   const { data: candidates = [] } = useCandidatesList();
   const { data: projects = [] } = useProjects();
 
+  const { toast } = useToast();
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const selectError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || value === 'none') return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
   const [form, setForm] = useState<CreateContractInput>({
     contract_type: 'recruitment' as any,
     party_type: 'employer',
@@ -65,7 +81,16 @@ export default function CreateContract() {
   };
 
   const handleCreate = async () => {
-    if (!form.title.trim() || !form.party_id.trim()) return;
+    if (!form.title.trim() || !form.party_id || form.party_id === 'none') {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please fill in the contract title and select a party.',
+      });
+      return;
+    }
+    if (!form.party_id.trim()) return;
     const result = await createContract.mutateAsync({
       ...form,
       contract_prefix: contractPrefix,
@@ -133,7 +158,10 @@ export default function CreateContract() {
             <CardContent className="space-y-4">
               <div>
                 <Label>Title *</Label>
-                <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Contract title" />
+                <Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Contract title" className={fieldError(form.title)} />
+                {showErrors && !form.title.trim() && (
+                  <p className="text-xs text-destructive mt-1">Contract title is required</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -176,7 +204,7 @@ export default function CreateContract() {
               <div>
                 <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : 'Worker'} *</Label>
                 <Select value={form.party_id || 'none'} onValueChange={v => setForm(p => ({ ...p, party_id: v === 'none' ? '' : v }))}>
-                  <SelectTrigger><SelectValue placeholder={`Select ${form.party_type}`} /></SelectTrigger>
+                  <SelectTrigger className={selectError(form.party_id)}><SelectValue placeholder={`Select ${form.party_type}`} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">— Select —</SelectItem>
                     {partyOptions.map(o => (
@@ -184,6 +212,9 @@ export default function CreateContract() {
                     ))}
                   </SelectContent>
                 </Select>
+                {showErrors && (!form.party_id || form.party_id === 'none') && (
+                  <p className="text-xs text-destructive mt-1">Please select a {form.party_type}</p>
+                )}
               </div>
               <div>
                 <Label>Sales Person</Label>
@@ -257,7 +288,7 @@ export default function CreateContract() {
           {/* Actions */}
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={createContract.isPending || !form.party_id || !form.title.trim()}>
+            <Button onClick={handleCreate} disabled={createContract.isPending}>
               {createContract.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Contract
             </Button>
