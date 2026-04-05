@@ -468,8 +468,11 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-2 space-y-1.5">
-            <Label className="text-xs">Total Amount</Label>
-            <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} placeholder="0.00" className="h-8 text-xs" />
+            <Label className="text-xs">Total Amount *</Label>
+            <Input type="number" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} placeholder="0.00" className={`h-8 text-xs ${numberError(totalAmount)}`} />
+            {showErrors && (!totalAmount || parseFloat(totalAmount) <= 0) && (
+              <p className="text-xs text-destructive">Total amount is required and must be greater than 0</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Currency</Label>
