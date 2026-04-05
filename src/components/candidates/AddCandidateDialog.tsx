@@ -415,8 +415,23 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
   // ── Submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.full_name) {
-      toast({ variant: 'destructive', title: 'Name required', description: 'Please provide a name' });
+    if (!formData.full_name.trim()) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please provide the candidate name.',
+      });
+      return;
+    }
+
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Invalid email',
+        description: 'Please enter a valid email address or leave it empty.',
+      });
       return;
     }
 
