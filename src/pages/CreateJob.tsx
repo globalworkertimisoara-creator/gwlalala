@@ -197,7 +197,7 @@ export default function CreateJob() {
                     value={form.country}
                     onChange={(e) => updateField('country', e.target.value)}
                     placeholder="e.g., Romania, Germany, UAE"
-                    required
+                    className={fieldError(form.country)}
                   />
                 </div>
                 <div className="space-y-2">
