@@ -376,6 +376,19 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
   const [totalAmount, setTotalAmount] = useState('');
   const [currency, setCurrency] = useState('EUR');
   const [description, setDescription] = useState('');
+  const [showErrors, setShowErrors] = useState(false);
+
+  const selectError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const numberError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || parseFloat(value) <= 0) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
 
   const { data: candidates = [] } = useQuery({
     queryKey: ['billing-candidates'],
@@ -394,7 +407,15 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
   });
 
   const handleSubmit = async () => {
-    if (!candidateId || !agencyId || !totalAmount) return;
+    if (!candidateId || !agencyId || !totalAmount || parseFloat(totalAmount) <= 0) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please select a candidate, agency, and enter the total amount.',
+      });
+      return;
+    }
     try {
       await createRecord.mutateAsync({
         candidate_id: candidateId,
