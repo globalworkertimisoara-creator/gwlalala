@@ -13,6 +13,7 @@ import { useProjects } from '@/hooks/useProjects';
 import ContractNumberInput from './ContractNumberInput';
 import { getContractPrefix } from '@/types/contract';
 import type { ContractPrefix, CreateContractInput } from '@/types/contract';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreateContractDialogProps {
   open: boolean;
