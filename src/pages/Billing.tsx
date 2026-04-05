@@ -439,26 +439,32 @@ function CreateBillingDialog({ onClose }: { onClose: () => void }) {
       </DialogHeader>
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <Label className="text-xs">Candidate</Label>
+          <Label className="text-xs">Candidate *</Label>
           <Select value={candidateId} onValueChange={setCandidateId}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select candidate" /></SelectTrigger>
+            <SelectTrigger className={`h-8 text-xs ${selectError(candidateId)}`}><SelectValue placeholder="Select candidate" /></SelectTrigger>
             <SelectContent>
               {candidates.map((c: any) => (
                 <SelectItem key={c.id} value={c.id} className="text-xs">{c.full_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {showErrors && !candidateId && (
+            <p className="text-xs text-destructive">Please select a candidate</p>
+          )}
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">Agency</Label>
+          <Label className="text-xs">Agency *</Label>
           <Select value={agencyId} onValueChange={setAgencyId}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select agency" /></SelectTrigger>
+            <SelectTrigger className={`h-8 text-xs ${selectError(agencyId)}`}><SelectValue placeholder="Select agency" /></SelectTrigger>
             <SelectContent>
               {agencies.map((a: any) => (
                 <SelectItem key={a.id} value={a.id} className="text-xs">{a.company_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {showErrors && !agencyId && (
+            <p className="text-xs text-destructive">Please select an agency</p>
+          )}
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="col-span-2 space-y-1.5">
