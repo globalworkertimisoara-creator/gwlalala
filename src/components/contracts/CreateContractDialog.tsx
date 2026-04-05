@@ -152,9 +152,9 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
           />
 
           <div>
-            <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : form.party_type === 'individual' ? 'Individual' : 'Worker'}</Label>
+            <Label>{form.party_type === 'employer' ? 'Employer' : form.party_type === 'agency' ? 'Agency' : form.party_type === 'individual' ? 'Individual' : 'Worker'} *</Label>
             <Select value={form.party_id || 'none'} onValueChange={v => setForm(p => ({ ...p, party_id: v === 'none' ? '' : v }))}>
-              <SelectTrigger><SelectValue placeholder={`Select ${form.party_type}`} /></SelectTrigger>
+              <SelectTrigger className={selectError(form.party_id)}><SelectValue placeholder={`Select ${form.party_type}`} /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">— Select —</SelectItem>
                 {partyOptions.map(o => (
@@ -162,6 +162,9 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
                 ))}
               </SelectContent>
             </Select>
+            {showErrors && (!form.party_id || form.party_id === 'none') && (
+              <p className="text-xs text-destructive mt-1">Please select a {form.party_type}</p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
