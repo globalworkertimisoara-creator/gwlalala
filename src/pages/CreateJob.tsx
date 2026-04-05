@@ -24,6 +24,14 @@ export default function CreateJob() {
   const linkJobToProject = useLinkJobToProject();
   const { data: projects = [] } = useProjects();
 
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
   const [form, setForm] = useState({
     title: '',
     client_company: '',
