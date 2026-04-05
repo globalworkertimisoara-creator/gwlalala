@@ -162,8 +162,11 @@ export default function CreateJob() {
                     value={form.title}
                     onChange={(e) => updateField('title', e.target.value)}
                     placeholder="e.g., Electrician, Welder, Plumber"
-                    required
+                    className={fieldError(form.title)}
                   />
+                  {showErrors && !form.title.trim() && (
+                    <p className="text-xs text-destructive">Job title is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="client_company">
@@ -175,8 +178,11 @@ export default function CreateJob() {
                     value={form.client_company}
                     onChange={(e) => updateField('client_company', e.target.value)}
                     placeholder="e.g., ABC Construction Ltd"
-                    required
+                    className={fieldError(form.client_company)}
                   />
+                  {showErrors && !form.client_company.trim() && (
+                    <p className="text-xs text-destructive">Client company is required</p>
+                  )}
                 </div>
               </div>
 
