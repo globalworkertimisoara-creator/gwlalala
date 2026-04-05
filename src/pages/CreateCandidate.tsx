@@ -221,7 +221,11 @@ export default function CreateCandidate() {
                     value={form.full_name}
                     onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
                     placeholder="John Doe"
+                    className={fieldError(form.full_name)}
                   />
+                  {showErrors && !form.full_name.trim() && (
+                    <p className="text-xs text-destructive mt-1">Full name is required</p>
+                  )}
                 </div>
                 <div>
                   <Label>Email *</Label>
@@ -230,7 +234,14 @@ export default function CreateCandidate() {
                     value={form.email}
                     onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                     placeholder="john@example.com"
+                    className={`${fieldError(form.email)} ${emailError(form.email)}`}
                   />
+                  {showErrors && !form.email.trim() && (
+                    <p className="text-xs text-destructive mt-1">Email is required</p>
+                  )}
+                  {showErrors && form.email.trim() && !isValidEmail(form.email) && (
+                    <p className="text-xs text-destructive mt-1">Invalid email format</p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
