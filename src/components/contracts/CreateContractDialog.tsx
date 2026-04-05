@@ -83,7 +83,15 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
   };
 
   const handleCreate = async () => {
-    if (!form.title.trim() || !form.party_id.trim()) return;
+    if (!form.title.trim() || !form.party_id || form.party_id === 'none') {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please fill in the contract title and select a party.',
+      });
+      return;
+    }
     await createContract.mutateAsync({
       ...form,
       contract_prefix: contractPrefix,
@@ -92,6 +100,7 @@ export function CreateContractDialog({ open, onOpenChange, preselectedProjectId 
     });
     setForm({ contract_type: 'recruitment' as any, party_type: 'employer', party_id: '', title: '' });
     setContractNumber({ sequenceNumber: null, contractDate: null });
+    setShowErrors(false);
     onOpenChange(false);
   };
 
