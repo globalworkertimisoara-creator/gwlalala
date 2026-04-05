@@ -543,7 +543,10 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
           <Section title="Personal Information" icon={<span>👤</span>} defaultOpen={true}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div><Label className="flex items-center gap-1">Full Name * {extLabel('full_name')}</Label>
-                <Input value={formData.full_name} onChange={e => handleChange('full_name', e.target.value)} required className={ext('full_name')} /></div>
+                <Input value={formData.full_name} onChange={e => handleChange('full_name', e.target.value)} className={`${ext('full_name')} ${fieldErr(formData.full_name)}`} />
+                {showErrors && !formData.full_name.trim() && (
+                  <p className="text-xs text-destructive mt-1">Full name is required</p>
+                )}
               <div><Label className="flex items-center gap-1">Date of Birth {extLabel('date_of_birth')}</Label>
                 <Input type="date" value={formData.date_of_birth} onChange={e => handleChange('date_of_birth', e.target.value)} className={ext('date_of_birth')} /></div>
               <div><Label className="flex items-center gap-1">Gender {extLabel('gender')}</Label>
