@@ -30,12 +30,27 @@ const contractTypeOptions = [
 
 export function CreateContractDialog({ open, onOpenChange, preselectedProjectId }: CreateContractDialogProps) {
   const createContract = useCreateContract();
+  const { toast } = useToast();
   const { data: salesStaff = [] } = useSalesStaff();
   const { data: companies = [] } = useCompanies();
   const { data: agencies = [] } = useAgencies();
   const { data: candidates = [] } = useCandidatesList();
   const { data: individualClients = [] } = useIndividualClients();
   const { data: projects = [] } = useProjects();
+
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const selectError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || value === 'none') return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
 
   const [form, setForm] = useState<CreateContractInput>({
     contract_type: 'recruitment' as any,
