@@ -26,6 +26,22 @@ export default function CreateCandidate() {
   const createCandidate = useCreateCandidate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [showErrors, setShowErrors] = useState(false);
+
+  const fieldError = (value: string) => {
+    if (!showErrors) return '';
+    if (!value || !value.trim()) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const emailError = (value: string) => {
+    if (!showErrors || !value) return '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'border-destructive ring-1 ring-destructive';
+    return '';
+  };
+
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
   const [form, setForm] = useState({
     full_name: '',
     email: '',
