@@ -199,6 +199,9 @@ export default function CreateJob() {
                     placeholder="e.g., Romania, Germany, UAE"
                     className={fieldError(form.country)}
                   />
+                  {showErrors && !form.country.trim() && (
+                    <p className="text-xs text-destructive">Country is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="salary_range">
