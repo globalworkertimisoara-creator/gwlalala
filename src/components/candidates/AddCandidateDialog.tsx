@@ -270,6 +270,7 @@ export function AddCandidateDialog({ open, onOpenChange }: AddCandidateDialogPro
     setDriverLicense({ has_license: false, license_type: '', years_experience: null });
     setFamily({ has_spouse: false, children_ages: '', family_willing_to_relocate: false });
     setPendingDocuments([]); setExtractedFields(new Set()); setUploadProgress(0);
+    setShowErrors(false);
   };
 
   const handleChange = (field: keyof typeof formData, value: any) => {
