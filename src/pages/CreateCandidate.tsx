@@ -95,7 +95,25 @@ export default function CreateCandidate() {
   };
 
   const handleCreate = async () => {
-    if (!form.full_name.trim() || !form.email.trim()) return;
+    if (!form.full_name.trim() || !form.email.trim()) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Required fields missing',
+        description: 'Please fill in the full name and email.',
+      });
+      return;
+    }
+
+    if (!isValidEmail(form.email)) {
+      setShowErrors(true);
+      toast({
+        variant: 'destructive',
+        title: 'Invalid email',
+        description: 'Please enter a valid email address.',
+      });
+      return;
+    }
 
     try {
       const candidate = await createCandidate.mutateAsync({
